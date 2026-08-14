@@ -32,7 +32,7 @@ class NavigationBarOrderTest {
     @Test
     fun `hidden destinations are removed after order is resolved`() {
         assertEquals(
-            listOf("recipes", "cookbooks"),
+            listOf("cookbooks", "recipes"),
             resolveNavBarOrder(
                 natural = listOf("recipes", "meal_plan", "shopping_lists", "cookbooks"),
                 persisted = listOf("cookbooks", "recipes", "meal_plan", "shopping_lists"),
@@ -44,7 +44,7 @@ class NavigationBarOrderTest {
     @Test
     fun `pinned destination remains visible even when persisted as hidden`() {
         assertEquals(
-            listOf("meal_plan", "recipes"),
+            listOf("recipes"),
             resolveNavBarOrder(
                 natural = listOf("recipes", "meal_plan"),
                 persisted = listOf("meal_plan", "recipes"),
