@@ -361,14 +361,32 @@ of this task's scoped "area"). `just check` and on-device verification pending.
 
 ## SW-10: Redesign app icon around a sandwich motif
 
-- [ ] Replace SW-1's sync-ring + fork adaptive launcher icon with a modern, stylized *sandwich*
+- [x] Replace SW-1's sync-ring + fork adaptive launcher icon with a modern, stylized *sandwich*
       depiction (fitting given the app's name, "Syncwich") - keep the terracotta background/warm
       palette established in `docs/branding/` unless a redesign makes a strong case otherwise
-- [ ] Regenerate the adaptive icon layers (foreground/background/monochrome for Android 13+ themed
+- [x] Regenerate the adaptive icon layers (foreground/background/monochrome for Android 13+ themed
       icons) the same way SW-1's icon was produced - a dedicated design pass, not a quick sketch
-- [ ] Update `docs/branding/` with the new source art and any design notes
+- [x] Update `docs/branding/` with the new source art and any design notes
 
-Status: not started.
+Status: **done**, 2026-08-14. Landed on "Toast Stack" - a cartoon, slightly-tilted toast sandwich
+(lettuce/cheese/tomato bulging past the crust, thick warm-brown outlines, a gloss highlight) on the
+unchanged terracotta background - after reviewing four SVG concepts (Deli Stack, Club Triangle,
+Sync Bun, S-Bite) as a proposal artifact and one cartoonish/playful revision pass on the winning
+concept (v1 used a domed kaiser-roll top; v2 switched to flat toast). Replaced
+`app/src/main/res/drawable-nodpi/syncwich_icon.png` (1024×1024 foreground, transparent),
+`app/src/main/res/drawable/ic_launcher_monochrome.xml` (deliberately simplified/flattened vs. the
+color foreground - un-tilted bread pills + filling bumps, since a jaunty rotation reads as
+misaligned once reduced to a single-tone themed icon), and `app/src/main/res/mipmap/ic_launcher.png`
+(512×512 legacy pre-API26 fallback, composited). `@color/icon_background` (`#E4572E`) is unchanged,
+so the adaptive-icon XML and `AndroidManifest.xml` needed no edits. Also produced a Play Store
+feature graphic (`fastlane/metadata/android/en-US/images/featureGraphic.png`, 1024×500, 24-bit/no
+alpha) since `just play-feature-graphic-upload` was already scaffolded and waiting on that exact
+path. `docs/branding/README.md` (new) documents the palette and each asset's provenance; source
+SVGs (`syncwich-icon-foreground.svg`, `syncwich-feature-graphic.svg`) are checked in alongside the
+rendered PNGs. All PNGs rendered from SVG via `magick`'s `librsvg` delegate, `-depth 8`, no external
+services used. Not yet verified on a physical device/launcher (circle vs. squircle vs. rounded-
+square masking) or against Play Console - recommend a follow-up `just deploy-*` + home-screen check
+before considering this fully closed out.
 
 ## SW-11: Populate the top app bar
 
