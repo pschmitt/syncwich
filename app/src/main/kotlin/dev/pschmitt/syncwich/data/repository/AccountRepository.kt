@@ -17,6 +17,7 @@ constructor(private val settingsRepository: SettingsRepository, private val data
 
     suspend fun signOut() {
         settingsRepository.clear()
+        settingsRepository.resetSyncState()
         database.clearAllTables()
     }
 }

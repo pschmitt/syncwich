@@ -466,7 +466,11 @@ Status: not started.
 - [ ] Subsequent app launches (already-synced) skip this and go straight to Recipes as today - this
       is specifically a first-run experience, not something shown on every 6h background resync
 
-Status: not started.
+Status: mostly done, 2026-08-14. Added a cancellable foreground six-stage cache fill with live stage and
+Room item counts, persisted completion only after all stages succeed, and kept retry/continue paths
+safe for partial or offline failures. Unit tests cover progress ordering, failure stopping, and
+cancellation propagation; remote just check reached compilation but is currently blocked by
+unrelated pre-existing SW-8/SW-14/SW-16/SW-17 errors.
 
 ## SW-16: Cookbook grid recipe preview carousel + search
 

@@ -7,6 +7,8 @@ import kotlinx.serialization.Serializable
 sealed interface Route {
     @Serializable data object Onboarding : Route
 
+    @Serializable data object InitialSync : Route
+
     @Serializable data object Recipes : Route
 
     // slug is carried alongside recipeId because Mealie's full-detail endpoint is keyed by slug,

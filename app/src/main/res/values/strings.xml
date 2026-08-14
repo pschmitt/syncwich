@@ -20,4 +20,22 @@
     <string name="onboarding_api_token_label">API token</string>
     <string name="onboarding_api_token_help">Generate a long-lived token in Mealie under Profile → API Tokens, then paste it here. Syncwich never stores your password.</string>
     <string name="onboarding_connect">Connect</string>
+
+    <string name="initial_sync_title">Setting up your recipe box</string>
+    <string name="initial_sync_subtitle">Syncwich is filling its offline cache. You can continue with cached data if you need to.</string>
+    <string name="initial_sync_starting">Preparing the first sync…</string>
+    <string name="initial_sync_stage_syncing">Syncing %1$s…</string>
+    <string name="initial_sync_stage_complete">Synced %1$s</string>
+    <string name="initial_sync_stage_position">Stage %1$d of %2$d</string>
+    <string name="initial_sync_count">%1$d items cached</string>
+    <string name="initial_sync_stage_recipes">recipes</string>
+    <string name="initial_sync_stage_categories">categories</string>
+    <string name="initial_sync_stage_tags">tags</string>
+    <string name="initial_sync_stage_shopping_lists">shopping lists</string>
+    <string name="initial_sync_stage_cookbooks">cookbooks</string>
+    <string name="initial_sync_stage_meal_plan">meal plan</string>
+    <string name="initial_sync_error">Couldn’t finish syncing %1$s</string>
+    <string name="initial_sync_retry">Retry</string>
+    <string name="initial_sync_cancel">Continue to Recipes</string>
+    <string name="initial_sync_continue">Continue with cached data</string>
 </resources>

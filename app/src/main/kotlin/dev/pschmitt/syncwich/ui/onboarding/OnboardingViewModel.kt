@@ -88,7 +88,9 @@ constructor(
         // Only persisted - and only now starts being read by the network layer's interceptors -
         // once the server has actually confirmed this token works.
         settingsRepository.save(serverUrl, apiToken)
-        syncScheduler.scheduleStartup()
+        // The first pass is run in the blocking InitialSyncScreen. Cancel the startup request
+        // queued by Application so it cannot race that foreground pass.
+        syncScheduler.cancelStartup()
         _uiState.value = OnboardingUiState.Success
     }
 

@@ -4,7 +4,15 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import dev.pschmitt.syncwich.ui.navigation.Route
@@ -22,11 +30,28 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Read once at launch, not observed reactively - a mid-session sign-out (SW-7) navigates
-        // back to onboarding explicitly rather than relying on this recomposing.
-        val startDestination =
-            if (settingsRepository.isConfigured) Route.Recipes else Route.Onboarding
+        setContent {
+            SyncwichTheme {
+                val initialSyncCompleted by
+                    settingsRepository.initialSyncCompleted.collectAsStateWithLifecycle(
+                        initialValue = null
+                    )
+                when {
+                    !settingsRepository.isConfigured ->
+                        SyncwichNavHost(startDestination = Route.Onboarding)
+                    initialSyncCompleted == null -> StartupLoadingScreen()
+                    initialSyncCompleted == true ->
+                        SyncwichNavHost(startDestination = Route.Recipes)
+                    else -> SyncwichNavHost(startDestination = Route.InitialSync)
+                }
+            }
+        }
+    }
+}
 
-        setContent { SyncwichTheme { SyncwichNavHost(startDestination = startDestination) } }
+@Composable
+private fun StartupLoadingScreen() {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        CircularProgressIndicator()
     }
 }

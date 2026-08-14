@@ -51,6 +51,11 @@ class SyncScheduler @Inject constructor(private val workManager: WorkManager) {
         workManager.enqueueUniqueWork(STARTUP_WORK_NAME, ExistingWorkPolicy.KEEP, request)
     }
 
+    /** Removes a queued startup pass when the first sync is being run in the foreground. */
+    fun cancelStartup() {
+        workManager.cancelUniqueWork(STARTUP_WORK_NAME)
+    }
+
     private fun syncConstraints(): Constraints =
         Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
 

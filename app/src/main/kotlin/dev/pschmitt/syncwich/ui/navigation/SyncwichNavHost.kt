@@ -29,6 +29,7 @@ import dev.pschmitt.syncwich.data.settings.NavigationBarItemKeys
 import dev.pschmitt.syncwich.data.settings.resolveNavBarOrder
 import dev.pschmitt.syncwich.ui.cookbooks.CookbookDetailScreen
 import dev.pschmitt.syncwich.ui.cookbooks.CookbooksScreen
+import dev.pschmitt.syncwich.ui.initialsync.InitialSyncScreen
 import dev.pschmitt.syncwich.ui.mealplan.MealPlanScreen
 import dev.pschmitt.syncwich.ui.onboarding.OnboardingScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipeDetailScreen
@@ -86,7 +87,9 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
             val currentDestination = backStackEntry?.destination
             // No bottom nav during onboarding - none of the four tabs are usable yet without a
             // connected server.
-            val onOnboarding = currentDestination?.hasRoute(Route.Onboarding::class) == true
+            val onOnboarding =
+                currentDestination?.hasRoute(Route.Onboarding::class) == true ||
+                    currentDestination?.hasRoute(Route.InitialSync::class) == true
 
             if (!onOnboarding) {
                 NavigationBar {
@@ -122,11 +125,27 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
             composable<Route.Onboarding> {
                 OnboardingScreen(
                     onConnected = {
-                        navController.navigate(Route.Recipes) {
+                        navController.navigate(Route.InitialSync) {
                             popUpTo(Route.Onboarding) { inclusive = true }
                             launchSingleTop = true
                         }
                     }
+                )
+            }
+            composable<Route.InitialSync> {
+                InitialSyncScreen(
+                    onFinished = {
+                        navController.navigate(Route.Recipes) {
+                            popUpTo(Route.InitialSync) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    onCancel = {
+                        navController.navigate(Route.Recipes) {
+                            popUpTo(Route.InitialSync) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
                 )
             }
             composable<Route.Recipes> {
