@@ -9,6 +9,7 @@ import coil3.SingletonImageLoader
 import coil3.disk.DiskCache
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import dagger.hilt.android.HiltAndroidApp
+import dev.pschmitt.syncwich.sync.SyncNotifier
 import dev.pschmitt.syncwich.sync.SyncScheduler
 import javax.inject.Inject
 import okhttp3.OkHttpClient
@@ -19,6 +20,7 @@ import timber.log.Timber
 class SyncwichApp : Application(), Configuration.Provider, SingletonImageLoader.Factory {
 
     @Inject lateinit var workerFactory: HiltWorkerFactory
+    @Inject lateinit var syncNotifier: SyncNotifier
     @Inject lateinit var syncScheduler: SyncScheduler
     // Recipe images are cached via Coil (AGENTS.md), but a self-hosted Mealie instance can lock
     // media behind auth same as the API - reusing the app's own authenticated/dynamic-base-URL
@@ -51,6 +53,7 @@ class SyncwichApp : Application(), Configuration.Provider, SingletonImageLoader.
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         }
+        syncNotifier.start()
         // Both calls are no-ops until onboarding is complete (SyncWorker.doWork() returns early
         // when unconfigured) - scheduled unconditionally here so the very first sync fires as soon
         // as a connection is saved, without every screen having to know to kick one off itself.

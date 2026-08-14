@@ -75,6 +75,11 @@ constructor(
         workManager.enqueueUniqueWork(STARTUP_WORK_NAME, ExistingWorkPolicy.KEEP, request)
     }
 
+    /** Queues the same non-blocking one-off pass used at startup for an explicit manual refresh. */
+    fun syncNow() {
+        scheduleStartup()
+    }
+
     /** Removes a queued startup pass when the first sync is being run in the foreground. */
     fun cancelStartup() {
         workManager.cancelUniqueWork(STARTUP_WORK_NAME)
@@ -90,7 +95,7 @@ constructor(
             )
             .build()
 
-    private companion object {
+    companion object {
         const val PERIODIC_WORK_NAME = "syncwich_periodic_sync"
         const val STARTUP_WORK_NAME = "syncwich_startup_sync"
         const val BACKOFF_DELAY_MINUTES = 15L

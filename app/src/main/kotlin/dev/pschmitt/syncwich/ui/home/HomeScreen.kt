@@ -107,6 +107,12 @@ fun HomeScreen(
                     )
                 }
                 item {
+                    HomeSyncStatusCard(
+                        status = uiState.syncStatus,
+                        onSyncNow = viewModel::refresh,
+                    )
+                }
+                item {
                     RefreshErrorBanner(
                         errorMessage = uiState.refreshState.errorMessage,
                         onRetry = viewModel::refresh,

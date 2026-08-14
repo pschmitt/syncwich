@@ -10,8 +10,8 @@
          setForeground() yet). Kept declared so that doesn't require another manifest change. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-    <!-- API 33+ runtime permission for the same not-yet-built sync notification. Nothing in the
-         app requests it yet; sync never depends on it being granted. -->
+    <!-- API 33+ runtime permission for optional background sync result notifications. Sync never
+         depends on it being granted. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application

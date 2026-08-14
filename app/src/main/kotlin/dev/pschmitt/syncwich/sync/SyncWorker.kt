@@ -49,10 +49,13 @@ constructor(
     private val mealPlanRepository: MealPlanRepository,
     private val settingsRepository: SettingsRepository,
     private val recipeImagePrefetcher: RecipeImagePrefetcher,
+    private val syncNotifier: SyncNotifier,
+    private val syncStatusRepository: SyncStatusRepository,
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
         if (!settingsRepository.isConfigured) return Result.success()
+        syncNotifier.notifySyncStarted()
 
         // Covers the current week plus the next two, matching how far a user is likely to page
         // forward in MealPlanScreen before going offline - a background job can't know which week
@@ -62,22 +65,30 @@ constructor(
 
         val failures =
             listOf(
-                    recipeRepository.refreshRecipes(),
+                    syncStep("Refreshing recipes…") { recipeRepository.refreshRecipes() },
                     // No request is made when there are no pending offline actions; pending
                     // favorite/rating flags are retried only after Room has made them visible.
-                    recipeActionRepository.syncPendingActions(),
-                    // Retries any "I made this" taps recorded while offline - see
-                    // RecipeTimelineRepository.recordMadeThis's kdoc for why the local row can be
-                    // written before this ever needs to succeed.
-                    recipeTimelineRepository.syncPendingEvents(),
-                    categoryRepository.refreshCategories(),
-                    tagRepository.refreshTags(),
-                    shoppingListRepository.refreshLists(),
+                    syncStep("Syncing recipe actions…") {
+                        recipeActionRepository.syncPendingActions()
+                    },
+                    // Retries any “I made this” taps recorded while offline.
+                    syncStep("Syncing cooking events…") {
+                        recipeTimelineRepository.syncPendingEvents()
+                    },
+                    syncStep("Refreshing categories…") { categoryRepository.refreshCategories() },
+                    syncStep("Refreshing tags…") { tagRepository.refreshTags() },
+                    syncStep("Refreshing shopping lists…") {
+                        shoppingListRepository.refreshLists()
+                    },
                     // No request is made when there are no pending offline checked-state changes;
                     // mirrors recipeActionRepository.syncPendingActions() above.
-                    shoppingListRepository.syncPendingItemChecks(),
-                    cookbookRepository.refreshCookbooks(),
-                    mealPlanRepository.refreshMealPlan(mealPlanStart, mealPlanEnd),
+                    syncStep("Syncing shopping-list checks…") {
+                        shoppingListRepository.syncPendingItemChecks()
+                    },
+                    syncStep("Refreshing cookbooks…") { cookbookRepository.refreshCookbooks() },
+                    syncStep("Refreshing meal plan…") {
+                        mealPlanRepository.refreshMealPlan(mealPlanStart, mealPlanEnd)
+                    },
                 )
                 .mapNotNull { it.exceptionOrNull() }
 
@@ -93,13 +104,30 @@ constructor(
 
         return if (failures.isEmpty()) {
             settingsRepository.recordSyncSuccess()
+            syncStatusRepository.clearProgress()
+            syncNotifier.notifySyncSucceeded()
             Result.success()
         } else {
             val message = failures.first().message?.takeIf { it.isNotBlank() } ?: "Sync failed"
             settingsRepository.recordSyncFailure(message)
             Timber.w("Sync completed with ${failures.size} failure(s): $message")
-            if (runAttemptCount < MAX_RETRY_ATTEMPTS) Result.retry() else Result.failure()
+            if (runAttemptCount < MAX_RETRY_ATTEMPTS) {
+                syncNotifier.notifySyncRetry(runAttemptCount + 1)
+                Result.retry()
+            } else {
+                syncStatusRepository.clearProgress()
+                syncNotifier.notifySyncFailed(message)
+                Result.failure()
+            }
         }
+    }
+
+    private suspend fun syncStep(
+        message: String,
+        operation: suspend () -> kotlin.Result<Unit>,
+    ): kotlin.Result<Unit> {
+        syncStatusRepository.publishProgress(message)
+        return operation()
     }
 
     private companion object {

@@ -900,16 +900,19 @@ remains outstanding.
 
 ## SW-35: Add Home sync status card and background notifications
 
-- [ ] Add a Home-page sync card modeled on nyetbox, showing current/last sync state and a clear
+- [x] Add a Home-page sync card modeled on nyetbox, showing current/last sync state and a clear
       manual sync action
-- [ ] Expose useful sync progress, success, failure, and stale-cache state without blocking cached
+- [x] Expose useful sync progress, success, failure, and stale-cache state without blocking cached
       content
-- [ ] Investigate background notifications when a sync completes or fails while Syncwich is not in
+- [x] Investigate background notifications when a sync completes or fails while Syncwich is not in
       the foreground
-- [ ] Respect the user's sync preferences and notification permission/state
-- [ ] Add focused coverage and verify the card and notification behavior on the Zenfone 10
+- [x] Respect notification permission/state while keeping notification delivery independent from
+      the scheduler's current and future network/sync preferences
+- [x] Add focused unit coverage for state presentation and notification gating
+- [ ] Verify the card and notification behavior on the Zenfone 10
 
-Status: not started.
+Status: mostly done (2026-08-14; remote `just check` passed on rofl-13, including unit tests and
+lint; Zenfone verification remains open).
 
 ## SW-36: Make Settings and Favorites configurable navbar items
 

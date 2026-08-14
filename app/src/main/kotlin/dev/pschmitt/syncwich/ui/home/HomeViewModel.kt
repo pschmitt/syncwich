@@ -8,14 +8,13 @@ import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.data.repository.CookbookRepository
 import dev.pschmitt.syncwich.data.repository.RecipeRepository
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
+import dev.pschmitt.syncwich.sync.SyncScheduler
+import dev.pschmitt.syncwich.sync.SyncStatus
+import dev.pschmitt.syncwich.sync.SyncStatusRepository
+import dev.pschmitt.syncwich.sync.SyncStatusState
 import dev.pschmitt.syncwich.ui.common.RefreshState
-import dev.pschmitt.syncwich.ui.common.refreshErrorMessage
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -24,7 +23,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 
 data class HomeUiState(
     val recentlyAddedRecipes: List<RecipeSummaryEntity> = emptyList(),
@@ -33,12 +31,13 @@ data class HomeUiState(
     val favoriteCookbook: CookbookEntity? = null,
     val serverUrl: String = "",
     val refreshState: RefreshState = RefreshState(),
+    val syncStatus: SyncStatus = SyncStatus(),
 )
 
 /**
- * Reads every dashboard section from Room first. Refreshing only nudges the existing repositories
- * and is deliberately independent from the state flow, so a disconnected server never hides
- * recipes that are already cached.
+ * Reads every dashboard section from Room first. Refreshing only queues the existing background
+ * worker and is deliberately independent from the state flow, so a disconnected server never
+ * hides recipes that are already cached.
  */
 @HiltViewModel
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -48,9 +47,9 @@ constructor(
     private val recipeRepository: RecipeRepository,
     private val cookbookRepository: CookbookRepository,
     settingsRepository: SettingsRepository,
+    private val syncScheduler: SyncScheduler,
+    syncStatusRepository: SyncStatusRepository,
 ) : ViewModel() {
-
-    private val refreshState = MutableStateFlow(RefreshState())
 
     private val favoriteCookbook =
         cookbookRepository
@@ -70,8 +69,8 @@ constructor(
                 favoriteCookbook,
                 favoriteRecipes,
                 settingsRepository.credentials,
-                refreshState,
-            ) { recipes, favoritesCookbook, favorites, credentials, refresh ->
+                syncStatusRepository.status,
+            ) { recipes, favoritesCookbook, favorites, credentials, syncStatus ->
                 HomeUiState(
                     recentlyAddedRecipes =
                         sortRecipesByDate(recipes, RecipeSummaryEntity::dateAdded),
@@ -80,7 +79,15 @@ constructor(
                     favoriteRecipes = favorites.sortedBy { it.name.lowercase() }.take(MAX_PREVIEW),
                     favoriteCookbook = favoritesCookbook,
                     serverUrl = credentials.serverUrl,
-                    refreshState = refresh,
+                    refreshState =
+                        RefreshState(
+                            isRefreshing = syncStatus.state == SyncStatusState.SYNCING,
+                            errorMessage =
+                                syncStatus.errorMessage?.let {
+                                    "Couldn't refresh. Showing saved data. Check your connection."
+                                },
+                        ),
+                    syncStatus = syncStatus,
                 )
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), HomeUiState())
@@ -90,19 +97,7 @@ constructor(
     }
 
     fun refresh() {
-        viewModelScope.launch {
-            refreshState.value = RefreshState(isRefreshing = true)
-            val results =
-                coroutineScope {
-                    listOf(
-                            async { recipeRepository.refreshRecipes() },
-                            async { cookbookRepository.refreshCookbooks() },
-                        )
-                        .awaitAll()
-                }
-            refreshState.value =
-                RefreshState(errorMessage = results.firstNotNullOfOrNull(::refreshErrorMessage))
-        }
+        syncScheduler.syncNow()
     }
 
     private companion object {
