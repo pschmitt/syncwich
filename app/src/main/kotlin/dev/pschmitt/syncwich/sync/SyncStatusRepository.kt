@@ -80,13 +80,12 @@ constructor(
     private companion object {
         const val STATUS_CLOCK_INTERVAL_MILLIS = 60_000L
 
-        val statusClock: Flow<Long> =
-            flow {
-                while (currentCoroutineContext().isActive) {
-                    emit(System.currentTimeMillis())
-                    delay(STATUS_CLOCK_INTERVAL_MILLIS)
-                }
+        val statusClock: Flow<Long> = flow {
+            while (currentCoroutineContext().isActive) {
+                emit(System.currentTimeMillis())
+                delay(STATUS_CLOCK_INTERVAL_MILLIS)
             }
+        }
     }
 }
 

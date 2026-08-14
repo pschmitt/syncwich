@@ -25,7 +25,8 @@ class HomeOrderingTest {
 
     @Test
     fun `recent recipe previews are capped`() {
-        val recipes = (1..6).map { recipe("recipe-$it", "2026-06-${it.toString().padStart(2, '0')}") }
+        val recipes =
+            (1..6).map { recipe("recipe-$it", "2026-06-${it.toString().padStart(2, '0')}") }
 
         assertEquals(
             listOf("recipe-6", "recipe-5", "recipe-4", "recipe-3", "recipe-2"),
@@ -51,8 +52,9 @@ class HomeOrderingTest {
 
         assertEquals(
             listOf("two", "one"),
-            recipesForHistory(listOf("missing", "two", "one", "three"), recipes, limit = 2)
-                .map { it.name },
+            recipesForHistory(listOf("missing", "two", "one", "three"), recipes, limit = 2).map {
+                it.name
+            },
         )
     }
 

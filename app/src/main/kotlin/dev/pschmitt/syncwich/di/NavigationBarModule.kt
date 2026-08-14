@@ -17,12 +17,12 @@ abstract class NavigationBarModule {
     @Binds
     @Singleton
     abstract fun bindNavigationBarPreferences(
-        settingsRepository: SettingsRepository,
+        settingsRepository: SettingsRepository
     ): NavigationBarPreferences
 
     @Binds
     @Singleton
     abstract fun bindNavigationBarCacheAvailability(
-        cacheAvailability: RoomNavigationBarCacheAvailability,
+        cacheAvailability: RoomNavigationBarCacheAvailability
     ): NavigationBarCacheAvailability
 }

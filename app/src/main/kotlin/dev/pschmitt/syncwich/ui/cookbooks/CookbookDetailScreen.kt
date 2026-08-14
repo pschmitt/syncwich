@@ -13,8 +13,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -105,8 +105,7 @@ fun CookbookDetailScreen(
                     PlaceholderScreen(
                         icon = Icons.Filled.Restaurant,
                         title =
-                            if (refreshState.isRefreshing) "Loading recipes"
-                            else "No recipes yet",
+                            if (refreshState.isRefreshing) "Loading recipes" else "No recipes yet",
                         subtitle =
                             currentCookbook.description.takeIf { it.isNotBlank() }
                                 ?: "This cookbook has no matching recipes synced yet.",

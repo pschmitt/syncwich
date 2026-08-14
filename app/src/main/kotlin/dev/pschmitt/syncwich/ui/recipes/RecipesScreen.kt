@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Restaurant
@@ -134,7 +133,8 @@ fun RecipesScreen(
                             },
                         subtitle =
                             if (hasFilter) "Try a different search or filter."
-                            else "Recipes appear here automatically once Syncwich syncs with your Mealie server.",
+                            else
+                                "Recipes appear here automatically once Syncwich syncs with your Mealie server.",
                         modifier = Modifier.fillMaxSize(),
                         isLoading = uiState.refreshState.isRefreshing,
                         onRetry = if (!hasFilter) viewModel::refresh else null,
@@ -187,7 +187,11 @@ private fun <T> FilterChipRow(
 
 @Composable
 internal fun RecipeCard(recipe: RecipeSummaryEntity, serverUrl: String, onClick: () -> Unit) {
-    Card(onClick = onClick, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+    ) {
         Column {
             val imageUrl = recipeImageUrl(serverUrl, recipe.id, recipe.image)
             Box(

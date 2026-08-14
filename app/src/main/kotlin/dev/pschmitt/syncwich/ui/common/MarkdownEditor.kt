@@ -47,9 +47,7 @@ fun MarkdownEditor(
     var preview by rememberSaveable { mutableStateOf(false) }
     var fieldValue by remember(value) { mutableStateOf(TextFieldValue(value)) }
 
-    LaunchedEffect(value) {
-        if (fieldValue.text != value) fieldValue = TextFieldValue(value)
-    }
+    LaunchedEffect(value) { if (fieldValue.text != value) fieldValue = TextFieldValue(value) }
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(
@@ -126,9 +124,7 @@ private fun FormatButton(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     onClick: () -> Unit,
 ) {
-    IconButton(onClick = onClick) {
-        Icon(icon, contentDescription = description)
-    }
+    IconButton(onClick = onClick) { Icon(icon, contentDescription = description) }
 }
 
 private fun updateSelection(

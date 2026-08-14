@@ -25,7 +25,8 @@ class MealPlanApiDtoTest {
 
     @Test
     fun `decodes an empty paginated meal plan response`() {
-        val body = """{"page":1,"per_page":50,"total":0,"total_pages":0,"items":[],"next":null,"previous":null}"""
+        val body =
+            """{"page":1,"per_page":50,"total":0,"total_pages":0,"items":[],"next":null,"previous":null}"""
 
         val decoded =
             json.decodeFromString(PagedResponseDto.serializer(MealPlanEntryDto.serializer()), body)

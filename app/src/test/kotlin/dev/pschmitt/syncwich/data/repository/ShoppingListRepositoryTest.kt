@@ -134,7 +134,8 @@ class ShoppingListRepositoryTest {
 
     @Test
     fun `addItem caches the server's returned item`() = runTest {
-        val dao = FakeShoppingListDao(lists = listOf(ShoppingListEntity("list-1", "Groceries", null)))
+        val dao =
+            FakeShoppingListDao(lists = listOf(ShoppingListEntity("list-1", "Groceries", null)))
         val api =
             FakeShoppingListsApi(
                 createdItem =
@@ -199,22 +200,24 @@ class ShoppingListRepositoryTest {
     }
 
     @Test
-    fun `setItemChecked updates Room immediately and stays pending when the sync fails`() = runTest {
-        val cachedItems = listOf(ShoppingListItemEntity("item-1", "list-1", "Milk", null, false, 0))
-        val dao =
-            FakeShoppingListDao(
-                lists = listOf(ShoppingListEntity("list-1", "Groceries", null)),
-                items = cachedItems,
-            )
-        val api = FakeShoppingListsApi(failure = IOException("offline"))
-        val repository = ShoppingListRepository(api, dao)
+    fun `setItemChecked updates Room immediately and stays pending when the sync fails`() =
+        runTest {
+            val cachedItems =
+                listOf(ShoppingListItemEntity("item-1", "list-1", "Milk", null, false, 0))
+            val dao =
+                FakeShoppingListDao(
+                    lists = listOf(ShoppingListEntity("list-1", "Groceries", null)),
+                    items = cachedItems,
+                )
+            val api = FakeShoppingListsApi(failure = IOException("offline"))
+            val repository = ShoppingListRepository(api, dao)
 
-        repository.setItemChecked("item-1", true)
+            repository.setItemChecked("item-1", true)
 
-        val item = dao.observeItems("list-1").first().single()
-        assertTrue(item.checked)
-        assertTrue(item.checkedPending)
-    }
+            val item = dao.observeItems("list-1").first().single()
+            assertTrue(item.checked)
+            assertTrue(item.checkedPending)
+        }
 
     @Test
     fun `setItemChecked clears the pending flag once synced`() = runTest {

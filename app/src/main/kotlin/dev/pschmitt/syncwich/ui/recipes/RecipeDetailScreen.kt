@@ -2,6 +2,7 @@ package dev.pschmitt.syncwich.ui.recipes
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,13 +14,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ListAlt
@@ -39,7 +39,6 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.Timeline
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -60,12 +59,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -83,8 +82,8 @@ import dev.pschmitt.syncwich.data.api.dto.RecipeDetailDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeIngredientDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeInstructionDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeNutritionDto
-import dev.pschmitt.syncwich.data.image.isSafeRecipeImageUrl
 import dev.pschmitt.syncwich.data.image.RecipeImageReference
+import dev.pschmitt.syncwich.data.image.isSafeRecipeImageUrl
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
 import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
 
@@ -116,7 +115,11 @@ fun RecipeDetailScreen(
                 },
                 actions = {
                     if (loadedState != null) {
-                        IconButton(onClick = { onEditClick(loadedState.recipe.id, loadedState.recipe.slug) }) {
+                        IconButton(
+                            onClick = {
+                                onEditClick(loadedState.recipe.id, loadedState.recipe.slug)
+                            }
+                        ) {
                             Icon(Icons.Filled.Edit, contentDescription = "Edit recipe")
                         }
                         Box {
@@ -134,13 +137,19 @@ fun RecipeDetailScreen(
                                     shareRecipe(
                                         context,
                                         loadedState.recipe.name,
-                                        recipeWebUrl(loadedState.serverUrl, loadedState.recipe.slug),
+                                        recipeWebUrl(
+                                            loadedState.serverUrl,
+                                            loadedState.recipe.slug,
+                                        ),
                                     )
                                 },
                                 onOpenBrowserClick = {
                                     openRecipeInBrowser(
                                         context,
-                                        recipeWebUrl(loadedState.serverUrl, loadedState.recipe.slug),
+                                        recipeWebUrl(
+                                            loadedState.serverUrl,
+                                            loadedState.recipe.slug,
+                                        ),
                                     )
                                 },
                             )
@@ -568,9 +577,8 @@ private fun RecipeImageViewer(
     onDismiss: () -> Unit,
 ) {
     if (images.isEmpty()) return
-    val pagerState = rememberPagerState(initialPage = initialPage.coerceIn(images.indices)) {
-        images.size
-    }
+    val pagerState =
+        rememberPagerState(initialPage = initialPage.coerceIn(images.indices)) { images.size }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -589,7 +597,11 @@ private fun RecipeImageViewer(
                 onClick = onDismiss,
                 modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
             ) {
-                Icon(Icons.Filled.Close, contentDescription = "Close image viewer", tint = Color.White)
+                Icon(
+                    Icons.Filled.Close,
+                    contentDescription = "Close image viewer",
+                    tint = Color.White,
+                )
             }
             Text(
                 text = "${pagerState.currentPage + 1} / ${images.size}",

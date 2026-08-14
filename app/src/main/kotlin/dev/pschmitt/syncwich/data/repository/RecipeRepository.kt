@@ -6,9 +6,9 @@ import androidx.room.withTransaction
 import dev.pschmitt.syncwich.data.api.RecipesApi
 import dev.pschmitt.syncwich.data.api.dto.CreateRecipeDto
 import dev.pschmitt.syncwich.data.api.dto.OrganizerDto
-import dev.pschmitt.syncwich.data.api.dto.RecipeInputDto
-import dev.pschmitt.syncwich.data.api.dto.RecipeDetailDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeAssetDto
+import dev.pschmitt.syncwich.data.api.dto.RecipeDetailDto
+import dev.pschmitt.syncwich.data.api.dto.RecipeInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeSummaryDto
 import dev.pschmitt.syncwich.data.db.AppDatabase
 import dev.pschmitt.syncwich.data.db.dao.RecipeActionDao
@@ -20,6 +20,7 @@ import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeTagCrossRef
 import dev.pschmitt.syncwich.data.db.entity.TagEntity
 import dev.pschmitt.syncwich.data.image.selectRecipeImagePrefetchUrls
+import java.io.FileInputStream
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +34,6 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import java.io.FileInputStream
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -82,9 +82,9 @@ constructor(
     suspend fun createRecipe(request: CreateRecipeDto): Result<String> =
         withContext(Dispatchers.IO) {
             runCatching {
-                    require(request.name.isNotBlank()) { "Recipe name must not be blank" }
-                    recipesApi.createRecipe(request).use { it.string() }
-                }
+                require(request.name.isNotBlank()) { "Recipe name must not be blank" }
+                recipesApi.createRecipe(request).use { it.string() }
+            }
                 .onFailure { Timber.w(it, "Recipe create failed; keeping cached data") }
         }
 
@@ -110,19 +110,20 @@ constructor(
                         media.fileName,
                         media.bytes.toRequestBody(media.mimeType.toMediaType()),
                     )
-                recipesApi.updateRecipeImage(
-                    slug,
-                    image,
-                    media.extension.toRequestBody("text/plain".toMediaType()),
-                )
-                    .use { }
+                recipesApi
+                    .updateRecipeImage(
+                        slug,
+                        image,
+                        media.extension.toRequestBody("text/plain".toMediaType()),
+                    )
+                    .use {}
             }
                 .onFailure { Timber.w(it, "Recipe cover image update failed; keeping draft") }
         }
 
     suspend fun deleteRecipeImage(slug: String): Result<Unit> =
         withContext(Dispatchers.IO) {
-            runCatching { recipesApi.deleteRecipeImage(slug).use { } }
+            runCatching { recipesApi.deleteRecipeImage(slug).use {} }
                 .onFailure { Timber.w(it, "Recipe cover image deletion failed") }
         }
 
@@ -224,10 +225,14 @@ constructor(
                         recipeDao.deleteAll()
                         recipeDao.deleteAllCategoryCrossRefs()
                         recipeDao.deleteAllTagCrossRefs()
-                        // Non-destructive: unlike the recipe list itself, the category/tag dictionaries
-                        // are authoritatively refreshed by CategoryRepository/TagRepository - upsert
-                        // here only so a name/slug embedded in this response is never stale, without
-                        // racing a delete of a category that has no recipes (and thus never shows up
+                        // Non-destructive: unlike the recipe list itself, the category/tag
+                        // dictionaries
+                        // are authoritatively refreshed by CategoryRepository/TagRepository -
+                        // upsert
+                        // here only so a name/slug embedded in this response is never stale,
+                        // without
+                        // racing a delete of a category that has no recipes (and thus never shows
+                        // up
                         // in this loop) out from under CategoryRepository's own refresh.
                         if (categories.isNotEmpty())
                             database.categoryDao().upsertAll(categories.values.toList())
@@ -258,10 +263,9 @@ constructor(
                 }
                 runCatching {
                     val body = recipesApi.getRecipeDetailRaw(slug).string()
-                    val cachedId =
-                        recipeId.ifBlank {
-                            json.decodeFromString<RecipeDetailDto>(body).id
-                        }
+                    val cachedId = recipeId.ifBlank {
+                        json.decodeFromString<RecipeDetailDto>(body).id
+                    }
                     recipeDao.upsertDetail(
                         RecipeDetailEntity(
                             id = cachedId,
@@ -274,7 +278,10 @@ constructor(
                     Timber.d("Recipe-detail refresh cached $cachedId")
                 }
                     .onFailure {
-                        Timber.w(it, "Recipe detail refresh failed for '$slug'; keeping cached data")
+                        Timber.w(
+                            it,
+                            "Recipe detail refresh failed for '$slug'; keeping cached data",
+                        )
                     }
             }
         }
@@ -290,8 +297,10 @@ constructor(
         request: suspend () -> okhttp3.ResponseBody,
     ): Result<Unit> =
         withContext(Dispatchers.IO) {
-            runCatching { request().use { } }
-                .onFailure { Timber.w(it, "Recipe mutation failed for '$slug'; keeping cached data") }
+            runCatching { request().use {} }
+                .onFailure {
+                    Timber.w(it, "Recipe mutation failed for '$slug'; keeping cached data")
+                }
         }
 
     private fun RecipeSummaryDto.toEntity() =
@@ -322,10 +331,10 @@ private data class LocalMedia(
 
 private fun readLocalMedia(uri: Uri, contentResolver: ContentResolver): LocalMedia {
     val mimeType = contentResolver.getType(uri) ?: "image/jpeg"
-    val extension =
-        mimeType.substringAfter('/', "jpg").lowercase().replace("jpeg", "jpg").take(8)
-    val fileName = uri.lastPathSegment?.substringAfterLast('/')?.takeIf(String::isNotBlank)
-        ?: "syncwich-image.$extension"
+    val extension = mimeType.substringAfter('/', "jpg").lowercase().replace("jpeg", "jpg").take(8)
+    val fileName =
+        uri.lastPathSegment?.substringAfterLast('/')?.takeIf(String::isNotBlank)
+            ?: "syncwich-image.$extension"
     val bytes =
         if (uri.scheme == "file") {
             FileInputStream(uri.path ?: error("The selected image has no file path")).use {

@@ -3,7 +3,8 @@ package dev.pschmitt.syncwich.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // Fallback palette used below Android 12 (no dynamic/Material You color), or when the device's
-// wallpaper-derived palette isn't available. Warm, appetizing tones - a food app, not a spreadsheet.
+// wallpaper-derived palette isn't available. Warm, appetizing tones - a food app, not a
+// spreadsheet.
 val SyncwichTerracotta80 = Color(0xFFFFB59D)
 // Matches the launcher icon's background color (docs/branding/syncwich-icon-preview.png).
 val SyncwichTerracotta40 = Color(0xFFE4572E)

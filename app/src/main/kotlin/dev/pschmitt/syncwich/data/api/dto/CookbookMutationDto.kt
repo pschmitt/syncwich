@@ -3,8 +3,8 @@ package dev.pschmitt.syncwich.data.api.dto
 import kotlinx.serialization.Serializable
 
 /**
- * Body used by Mealie v3.22.0 for both cookbook creation and single-item update. The public
- * OpenAPI schema calls this `CreateCookBook`, including when it is used by the PUT route.
+ * Body used by Mealie v3.22.0 for both cookbook creation and single-item update. The public OpenAPI
+ * schema calls this `CreateCookBook`, including when it is used by the PUT route.
  */
 @Serializable
 data class CreateCookbookDto(

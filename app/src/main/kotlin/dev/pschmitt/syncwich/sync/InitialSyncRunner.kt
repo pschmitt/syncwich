@@ -56,9 +56,10 @@ class InitialSyncRunner @Inject constructor(private val dataSource: InitialSyncD
 
             val result = dataSource.refresh(stage)
             coroutineContext.ensureActive()
-            val itemCount = result.exceptionOrNull()?.let {
-                return Result.failure(InitialSyncException(stage, it))
-            } ?: result.getOrThrow()
+            val itemCount =
+                result.exceptionOrNull()?.let {
+                    return Result.failure(InitialSyncException(stage, it))
+                } ?: result.getOrThrow()
             onProgress(
                 InitialSyncProgress(
                     stage = stage,
@@ -128,7 +129,9 @@ constructor(
         count: suspend () -> Int,
     ): Result<Int> {
         val refreshResult = refresh()
-        refreshResult.exceptionOrNull()?.let { return Result.failure(it) }
+        refreshResult.exceptionOrNull()?.let {
+            return Result.failure(it)
+        }
         // Do not wrap this in runCatching: cancellation must propagate out of a foreground sync.
         return Result.success(count())
     }

@@ -15,12 +15,10 @@ interface UsersApi {
     @GET("api/users/self") suspend fun getSelf(): UserDto
 
     /** Read-only bootstrap for the offline recipe action cache. */
-    @GET("api/users/self/favorites")
-    suspend fun getSelfFavorites(): UserRatingSummariesDto
+    @GET("api/users/self/favorites") suspend fun getSelfFavorites(): UserRatingSummariesDto
 
     /** Read-only bootstrap for the offline recipe action cache. */
-    @GET("api/users/self/ratings")
-    suspend fun getSelfRatings(): UserRatingSummariesDto
+    @GET("api/users/self/ratings") suspend fun getSelfRatings(): UserRatingSummariesDto
 
     /** Confirmed by the public Mealie v3.22.0 schema; callers update Room before invoking it. */
     @POST("api/users/{id}/favorites/{slug}")

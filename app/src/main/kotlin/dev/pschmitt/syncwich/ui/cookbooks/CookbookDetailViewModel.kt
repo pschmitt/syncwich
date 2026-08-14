@@ -13,15 +13,15 @@ import dev.pschmitt.syncwich.ui.common.RefreshState
 import dev.pschmitt.syncwich.ui.common.refreshErrorMessage
 import dev.pschmitt.syncwich.ui.navigation.Route
 import javax.inject.Inject
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -45,10 +45,10 @@ constructor(
 
     val cookbook: StateFlow<CookbookEntity?> =
         (if (requestedCookbookId.isBlank()) {
-            cookbookRepository.observeCookbookBySlug(route.slug)
-        } else {
-            cookbookRepository.observeCookbook(requestedCookbookId)
-        })
+                cookbookRepository.observeCookbookBySlug(route.slug)
+            } else {
+                cookbookRepository.observeCookbook(requestedCookbookId)
+            })
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
     val recipes: StateFlow<List<RecipeSummaryEntity>> =
@@ -59,7 +59,9 @@ constructor(
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), emptyList())
 
-    init { refresh(forceRefresh = false) }
+    init {
+        refresh(forceRefresh = false)
+    }
 
     fun refresh() = refresh(forceRefresh = true)
 
@@ -69,7 +71,8 @@ constructor(
             _refreshState.value = RefreshState(isRefreshing = true)
             val result =
                 if (requestedCookbookId.isBlank()) {
-                    cookbookRepository.refreshCookbooks(forceRefresh)
+                    cookbookRepository
+                        .refreshCookbooks(forceRefresh)
                         .fold(
                             onSuccess = {
                                 val discovered = cookbook.first()
@@ -87,8 +90,7 @@ constructor(
                 } else {
                     cookbookRepository.refreshCookbookRecipes(requestedCookbookId, forceRefresh)
                 }
-            _refreshState.value =
-                RefreshState(errorMessage = refreshErrorMessage(result))
+            _refreshState.value = RefreshState(errorMessage = refreshErrorMessage(result))
         }
     }
 

@@ -68,7 +68,10 @@ class RecipeEditorDraftTest {
             ),
             request.recipeIngredient,
         )
-        assertEquals(listOf(RecipeStepInputDto(text = "Brown the beef")), request.recipeInstructions)
+        assertEquals(
+            listOf(RecipeStepInputDto(text = "Brown the beef")),
+            request.recipeInstructions,
+        )
         // Fields the editor doesn't expose survive untouched from the cached recipe.
         assertEquals("recipe-1", request.id)
         assertEquals("user-1", request.userId)
@@ -82,7 +85,9 @@ class RecipeEditorDraftTest {
                 name = "Saved Soup",
                 description = "Keep warm",
                 recipeIngredient =
-                    listOf(RecipeIngredientInputDto(display = "2 cups broth", note = "2 cups broth")),
+                    listOf(
+                        RecipeIngredientInputDto(display = "2 cups broth", note = "2 cups broth")
+                    ),
                 recipeInstructions = listOf(RecipeStepInputDto(text = "Simmer for 20 minutes")),
             )
 
@@ -117,8 +122,14 @@ class RecipeEditorDraftTest {
     fun `markdown image insertion preserves existing content and cover selection`() {
         val draft = RecipeEditorDraft(description = "Intro", instructions = listOf("Step"))
 
-        assertEquals("Intro\n\n![Image](content://photo/1)", draft.withDescriptionImage("content://photo/1").description)
-        assertEquals("Step\n\n![Image](content://photo/2)", draft.withInstructionImage(0, "content://photo/2").instructions.single())
+        assertEquals(
+            "Intro\n\n![Image](content://photo/1)",
+            draft.withDescriptionImage("content://photo/1").description,
+        )
+        assertEquals(
+            "Step\n\n![Image](content://photo/2)",
+            draft.withInstructionImage(0, "content://photo/2").instructions.single(),
+        )
         assertEquals("content://photo/3", draft.withCoverImage("content://photo/3").coverImageUri)
         assertEquals(true, draft.withoutCoverImage().removeCoverImage)
     }

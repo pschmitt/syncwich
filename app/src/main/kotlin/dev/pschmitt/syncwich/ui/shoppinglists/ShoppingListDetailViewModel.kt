@@ -8,12 +8,12 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.pschmitt.syncwich.data.db.entity.ShoppingListEntity
 import dev.pschmitt.syncwich.data.db.entity.ShoppingListItemEntity
 import dev.pschmitt.syncwich.data.repository.ShoppingListRepository
-import dev.pschmitt.syncwich.ui.navigation.Route
 import dev.pschmitt.syncwich.ui.common.RefreshState
 import dev.pschmitt.syncwich.ui.common.refreshErrorMessage
+import dev.pschmitt.syncwich.ui.navigation.Route
 import javax.inject.Inject
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -51,13 +51,17 @@ constructor(private val repository: ShoppingListRepository, savedStateHandle: Sa
             .observeItems(listId)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    init { refresh() }
+    init {
+        refresh()
+    }
 
     fun refresh() {
         viewModelScope.launch {
             _refreshState.value = RefreshState(isRefreshing = true)
             _refreshState.value =
-                RefreshState(errorMessage = refreshErrorMessage(repository.refreshListDetail(listId)))
+                RefreshState(
+                    errorMessage = refreshErrorMessage(repository.refreshListDetail(listId))
+                )
         }
     }
 
@@ -70,7 +74,9 @@ constructor(private val repository: ShoppingListRepository, savedStateHandle: Sa
         viewModelScope.launch { repository.setItemChecked(itemId, checked) }
     }
 
-    /** Fire-and-forget: a failed delete simply leaves the item cached, which is the correct state. */
+    /**
+     * Fire-and-forget: a failed delete simply leaves the item cached, which is the correct state.
+     */
     fun removeItem(itemId: String) {
         viewModelScope.launch { repository.removeItem(itemId) }
     }

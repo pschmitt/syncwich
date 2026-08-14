@@ -63,35 +63,32 @@ constructor(
     private fun startSync() {
         if (syncJob?.isActive == true) return
         _uiState.value = InitialSyncUiState.Starting
-        syncJob =
-            viewModelScope.launch {
-                if (settingsRepository.initialSyncCompleted.first()) {
-                    _uiState.value = InitialSyncUiState.Completed
-                    return@launch
-                }
-
-                runner
-                    .run { progress -> _uiState.value = InitialSyncUiState.Syncing(progress) }
-                    .fold(
-                        onSuccess = {
-                            settingsRepository.recordInitialSyncSuccess()
-                            _uiState.value = InitialSyncUiState.Completed
-                        },
-                        onFailure = { error ->
-                            if (isActive) {
-                                val initialSyncError = error as? InitialSyncException
-                                _uiState.value =
-                                    InitialSyncUiState.Failed(
-                                        stage =
-                                            initialSyncError?.stage
-                                                ?: InitialSyncStage.Recipes,
-                                        message =
-                                            initialSyncError?.cause?.message?.takeIf { it.isNotBlank() }
-                                                ?: "Couldn't finish the first sync.",
-                                    )
-                            }
-                        },
-                    )
+        syncJob = viewModelScope.launch {
+            if (settingsRepository.initialSyncCompleted.first()) {
+                _uiState.value = InitialSyncUiState.Completed
+                return@launch
             }
+
+            runner
+                .run { progress -> _uiState.value = InitialSyncUiState.Syncing(progress) }
+                .fold(
+                    onSuccess = {
+                        settingsRepository.recordInitialSyncSuccess()
+                        _uiState.value = InitialSyncUiState.Completed
+                    },
+                    onFailure = { error ->
+                        if (isActive) {
+                            val initialSyncError = error as? InitialSyncException
+                            _uiState.value =
+                                InitialSyncUiState.Failed(
+                                    stage = initialSyncError?.stage ?: InitialSyncStage.Recipes,
+                                    message =
+                                        initialSyncError?.cause?.message?.takeIf { it.isNotBlank() }
+                                            ?: "Couldn't finish the first sync.",
+                                )
+                        }
+                    },
+                )
+        }
     }
 }

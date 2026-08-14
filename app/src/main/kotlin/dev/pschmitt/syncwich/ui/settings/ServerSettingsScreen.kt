@@ -1,8 +1,8 @@
 package dev.pschmitt.syncwich.ui.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -85,7 +85,9 @@ fun ServerSettingsScreen(
                         subtitle = "Remove this connection and clear its offline cache",
                         onClick = { showSignOutConfirmation = true },
                         enabled = !isSigningOut,
-                        icon = { Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null) },
+                        icon = {
+                            Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null)
+                        },
                     )
                 }
             }
@@ -96,9 +98,7 @@ fun ServerSettingsScreen(
         AlertDialog(
             onDismissRequest = { showSignOutConfirmation = false },
             title = { Text("Sign out?") },
-            text = {
-                Text("Your saved connection and offline recipe cache will be removed.")
-            },
+            text = { Text("Your saved connection and offline recipe cache will be removed.") },
             dismissButton = {
                 TextButton(onClick = { showSignOutConfirmation = false }) { Text("Cancel") }
             },
@@ -107,7 +107,7 @@ fun ServerSettingsScreen(
                     onClick = {
                         showSignOutConfirmation = false
                         viewModel.signOut(onSignedOut)
-                    },
+                    }
                 ) {
                     Text("Sign out")
                 }
@@ -138,10 +138,10 @@ private fun SettingsActionRow(
 ) {
     SettingsListItem(
         modifier =
-                Modifier.clickable(enabled = enabled, role = Role.Button, onClick = onClick).semantics {
-                    contentDescription = "$title: $subtitle"
-                    role = Role.Button
-                },
+            Modifier.clickable(enabled = enabled, role = Role.Button, onClick = onClick).semantics {
+                contentDescription = "$title: $subtitle"
+                role = Role.Button
+            },
         leadingContent = icon,
         headlineContent = { Text(title) },
         supportingContent = { Text(subtitle) },

@@ -42,14 +42,11 @@ fun extractRecipeImageReferences(content: String, serverUrl: String): List<Recip
     HTML_IMAGE.findAll(content).forEach { imageMatch ->
         val attributes = imageMatch.groupValues[1]
         val srcMatch =
-            HTML_ATTRIBUTE.findAll(attributes).firstOrNull {
-                it.groupValues[1].equals("src", true)
-            }
+            HTML_ATTRIBUTE.findAll(attributes).firstOrNull { it.groupValues[1].equals("src", true) }
         val candidate = srcMatch?.let(::attributeValue) ?: return@forEach
         val altText =
-            HTML_ATTRIBUTE.findAll(attributes).firstOrNull {
-                it.groupValues[1].equals("alt", true)
-            }
+            HTML_ATTRIBUTE.findAll(attributes)
+                .firstOrNull { it.groupValues[1].equals("alt", true) }
                 ?.let(::attributeValue)
                 ?.trim()
                 ?.take(MAX_ALT_TEXT_LENGTH)
@@ -70,12 +67,15 @@ fun resolveRecipeImageUrl(serverUrl: String, candidate: String): String? {
     val base =
         runCatching { URI(serverUrl.trimEnd('/') + "/") }
             .getOrNull()
-            ?.takeIf { it.scheme?.lowercase() in setOf("http", "https") && !it.host.isNullOrBlank() }
-            ?: return null
+            ?.takeIf {
+                it.scheme?.lowercase() in setOf("http", "https") && !it.host.isNullOrBlank()
+            } ?: return null
     val candidateUri = runCatching { URI(trimmedCandidate) }.getOrNull() ?: return null
     val resolved = runCatching { base.resolve(candidateUri) }.getOrNull() ?: return null
     if (!isSafeRecipeImageUrl(resolved.toString())) return null
-    if (!candidateUri.isAbsolute && candidateUri.rawAuthority != null && !sameOrigin(base, resolved)) {
+    if (
+        !candidateUri.isAbsolute && candidateUri.rawAuthority != null && !sameOrigin(base, resolved)
+    ) {
         return null
     }
     return resolved.toString()
@@ -108,11 +108,10 @@ fun selectRecipeImagePrefetchUrls(
         if (inlineImageCount >= maxInlineImages) return@forEach
 
         val recipe =
-            runCatching { json.decodeFromString<RecipeDetailDto>(detail.detailJson) }
-                .getOrNull() ?: return@forEach
+            runCatching { json.decodeFromString<RecipeDetailDto>(detail.detailJson) }.getOrNull()
+                ?: return@forEach
 
-        val remainingForRecipe =
-            minOf(maxInlineImagesPerRecipe, maxInlineImages - inlineImageCount)
+        val remainingForRecipe = minOf(maxInlineImagesPerRecipe, maxInlineImages - inlineImageCount)
         val recipeUrls =
             recipe.recipeInstructions
                 .asSequence()
@@ -144,17 +143,19 @@ suspend fun prefetchImageUrls(
     val outcomes =
         urls.distinct().chunked(maxConcurrent).flatMap { batch ->
             coroutineScope {
-                batch.map { url ->
-                    async {
-                        try {
-                            prefetch(url)
-                        } catch (cancellation: CancellationException) {
-                            throw cancellation
-                        } catch (_: Exception) {
-                            false
+                batch
+                    .map { url ->
+                        async {
+                            try {
+                                prefetch(url)
+                            } catch (cancellation: CancellationException) {
+                                throw cancellation
+                            } catch (_: Exception) {
+                                false
+                            }
                         }
                     }
-                }.awaitAll()
+                    .awaitAll()
             }
         }
     val succeeded = outcomes.count { it }
@@ -183,17 +184,21 @@ private fun effectivePort(uri: URI): Int =
     if (uri.port != -1) uri.port else if (uri.scheme.equals("https", true)) 443 else 80
 
 private fun markdownImageCandidates(markdown: String): List<Pair<String, String?>> =
-    MARKDOWN_IMAGE.findAll(markdown).mapNotNull { match ->
-        val candidate = match.groups[2]?.value ?: match.groups[3]?.value ?: return@mapNotNull null
-        val altText = match.groups[1]?.value?.trim()?.take(MAX_ALT_TEXT_LENGTH)
-        candidate to altText?.takeIf(String::isNotBlank)
-    }.toList()
+    MARKDOWN_IMAGE.findAll(markdown)
+        .mapNotNull { match ->
+            val candidate =
+                match.groups[2]?.value ?: match.groups[3]?.value ?: return@mapNotNull null
+            val altText = match.groups[1]?.value?.trim()?.take(MAX_ALT_TEXT_LENGTH)
+            candidate to altText?.takeIf(String::isNotBlank)
+        }
+        .toList()
 
 private fun attributeValue(match: MatchResult): String =
     match.groupValues.drop(2).firstOrNull(String::isNotEmpty).orEmpty()
 
 private fun decodeHtmlAttribute(value: String): String =
-    value.replace("&amp;", "&", ignoreCase = true)
+    value
+        .replace("&amp;", "&", ignoreCase = true)
         .replace("&quot;", "\"", ignoreCase = true)
         .replace("&#39;", "'", ignoreCase = true)
         .replace("&lt;", "<", ignoreCase = true)
@@ -207,9 +212,7 @@ private val MARKDOWN_IMAGE =
 private val HTML_IMAGE = Regex("""<img\b([^>]*)>""", setOf(RegexOption.IGNORE_CASE))
 
 private val HTML_ATTRIBUTE =
-    Regex(
-        """\b([a-zA-Z_:][a-zA-Z0-9_.:-]*)\s*=\s*(?:\"([^\"]*)\"|'([^']*)'|([^\s>]+))"""
-    )
+    Regex("""\b([a-zA-Z_:][a-zA-Z0-9_.:-]*)\s*=\s*(?:\"([^\"]*)\"|'([^']*)'|([^\s>]+))""")
 
 const val DEFAULT_MAX_INLINE_IMAGES_PER_RECIPE = 8
 const val DEFAULT_MAX_INLINE_IMAGES = 256

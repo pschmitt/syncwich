@@ -15,6 +15,6 @@ object InitialSyncModule {
     @Provides
     @Singleton
     fun provideInitialSyncDataSource(
-        dataSource: RepositoryInitialSyncDataSource,
+        dataSource: RepositoryInitialSyncDataSource
     ): InitialSyncDataSource = dataSource
 }

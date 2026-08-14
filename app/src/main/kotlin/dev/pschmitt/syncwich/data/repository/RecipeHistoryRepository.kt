@@ -17,9 +17,9 @@ import kotlinx.serialization.json.Json
 private val Context.recipeHistoryDataStore by preferencesDataStore(name = "recipe_history")
 
 /**
- * Durable local history of recipe detail pages opened in Syncwich. Only recipe IDs are stored;
- * Home resolves them against the Room summary cache so an evicted or deleted recipe simply does
- * not appear until it is cached again.
+ * Durable local history of recipe detail pages opened in Syncwich. Only recipe IDs are stored; Home
+ * resolves them against the Room summary cache so an evicted or deleted recipe simply does not
+ * appear until it is cached again.
  */
 @Singleton
 class RecipeHistoryRepository
@@ -75,7 +75,9 @@ internal fun updatedRecipeHistory(
 
 private fun decodeRecipeHistory(json: Json, serialized: String?): List<String> =
     serialized
-        ?.let { raw -> runCatching { json.decodeFromString<List<String>>(raw) }.getOrDefault(emptyList()) }
+        ?.let { raw ->
+            runCatching { json.decodeFromString<List<String>>(raw) }.getOrDefault(emptyList())
+        }
         .orEmpty()
         .map(String::trim)
         .filter(String::isNotEmpty)

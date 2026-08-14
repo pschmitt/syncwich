@@ -24,9 +24,7 @@ fun recipeImageUrl(serverUrl: String, recipeId: String, image: String?): String?
     if (explicitImageUrl != null) {
         return explicitImageUrl
             .takeIf {
-                it.scheme == baseUrl.scheme &&
-                    it.host == baseUrl.host &&
-                    it.port == baseUrl.port
+                it.scheme == baseUrl.scheme && it.host == baseUrl.host && it.port == baseUrl.port
             }
             ?.toString()
     }

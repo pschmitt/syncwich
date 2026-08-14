@@ -15,12 +15,11 @@ data class PasswordLoginResponseDto(
 )
 
 /** `/api/users/api-tokens` request body. */
-@Serializable
-data class LongLiveTokenRequestDto(val name: String, val integrationId: String)
+@Serializable data class LongLiveTokenRequestDto(val name: String, val integrationId: String)
 
 /**
- * `/api/users/api-tokens` response (confirmed live against v3.22.0). [token] is the long-lived
- * API token itself - the only field this app persists (via `SettingsRepository`).
+ * `/api/users/api-tokens` response (confirmed live against v3.22.0). [token] is the long-lived API
+ * token itself - the only field this app persists (via `SettingsRepository`).
  */
 @Serializable
 data class LongLiveTokenResponseDto(
