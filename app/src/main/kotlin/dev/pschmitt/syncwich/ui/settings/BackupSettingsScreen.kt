@@ -36,7 +36,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -312,10 +311,4 @@ fun BackupSettingsScreen(
         }
     }
 
-    LaunchedEffect(operation) {
-        if (operation is BackupOperationState.Success) {
-            // Keep the result visible until the user leaves the page, while future operations can
-            // still replace it naturally.
-        }
-    }
 }

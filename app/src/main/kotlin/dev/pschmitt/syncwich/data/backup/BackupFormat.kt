@@ -9,7 +9,6 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.pschmitt.syncwich.BuildConfig
 import dev.pschmitt.syncwich.data.db.AppDatabase
-import dev.pschmitt.syncwich.data.settings.MealieCredentials
 import dev.pschmitt.syncwich.data.settings.SettingsBackupSnapshot
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import java.io.ByteArrayInputStream
