@@ -614,3 +614,12 @@ Status: not started.
 - [ ] Verify the setting visually on the Zenfone 10
 
 Status: not started.
+
+## SW-26: Cache images embedded in recipe steps
+
+- [ ] Display images referenced within recipe step instructions
+- [ ] Cache recipe-step images for offline viewing alongside other recipe images
+- [ ] Skip malformed or unsupported image references safely and add focused coverage
+- [ ] Verify cached step images on the Zenfone 10
+
+Status: not started.
