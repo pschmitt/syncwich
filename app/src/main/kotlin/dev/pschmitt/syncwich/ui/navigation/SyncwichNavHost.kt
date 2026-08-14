@@ -227,10 +227,7 @@ fun SyncwichNavHost(
                 HomeScreen(
                     onRecipeClick = { recipe -> openRecipe(recipe.id, recipe.slug) },
                     onRecipesClick = { navController.navigate(Route.Recipes) },
-                    onCookbooksClick = { navController.navigate(Route.Cookbooks) },
-                    onCookbookClick = { cookbookId ->
-                        navController.navigate(Route.CookbookDetail(cookbookId))
-                    },
+                    onFavoritesClick = { navController.navigate(Route.Favorites) },
                     onSettingsClick = { navController.navigate(Route.Settings) },
                 )
             }

@@ -31,7 +31,9 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.automirrored.filled.ListAlt
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.StickyNote2
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.ChevronLeft
@@ -91,6 +93,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
@@ -386,18 +389,13 @@ private fun RecipeDetailContent(
     ) {
         if (imageUrl != null) {
             item {
-                AsyncImage(
-                    model = imageUrl,
-                    contentDescription = recipe.name,
-                    contentScale = ContentScale.Crop,
-                    modifier =
-                        Modifier.fillMaxWidth()
-                            .height(220.dp)
-                            .clickable {
-                                viewerPage =
-                                    viewerImages.indexOfFirst { it.url == imageUrl }.coerceAtLeast(0)
-                            }
-                            .semantics { contentDescription = "Open recipe images" },
+                RecipeTitleImage(
+                    imageUrl = imageUrl,
+                    recipeName = recipe.name,
+                    onClick = {
+                        viewerPage =
+                            viewerImages.indexOfFirst { it.url == imageUrl }.coerceAtLeast(0)
+                    },
                 )
             }
         }
@@ -416,7 +414,7 @@ private fun RecipeDetailContent(
         item {
             Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(modifier = Modifier.fillMaxWidth()) {
                         val times =
                             listOfNotNull(
                                 recipe.prepTime?.let { "Prep" to it },
@@ -425,7 +423,7 @@ private fun RecipeDetailContent(
                                 recipe.totalTime?.let { "Total" to it },
                             )
                         if (times.isNotEmpty()) {
-                            Column(modifier = Modifier.weight(1f)) {
+                            Column(modifier = Modifier.padding(end = 52.dp)) {
                                 times.forEach { (label, value) ->
                                     LabeledRow(
                                         icon = Icons.Filled.Schedule,
@@ -440,7 +438,7 @@ private fun RecipeDetailContent(
                             globalRating = recipe.rating,
                             onRatingSelected = onRatingSelected,
                             compact = true,
-                            modifier = Modifier.weight(0.82f),
+                            modifier = Modifier.align(Alignment.TopEnd),
                         )
                     }
 
@@ -568,6 +566,31 @@ private fun RecipeDetailContent(
 }
 
 @Composable
+internal fun RecipeTitleImage(
+    imageUrl: String,
+    recipeName: String,
+    onClick: () -> Unit,
+) {
+    Card(
+        modifier =
+            Modifier.fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .testTag("recipe-title-image-card")
+    ) {
+        AsyncImage(
+            model = imageUrl,
+            contentDescription = recipeName,
+            contentScale = ContentScale.Crop,
+            modifier =
+                Modifier.fillMaxWidth()
+                    .height(220.dp)
+                    .clickable(onClick = onClick)
+                    .semantics { contentDescription = "Open recipe images" },
+        )
+    }
+}
+
+@Composable
 internal fun RecipeMetadataCard(
     tags: List<dev.pschmitt.syncwich.data.api.dto.OrganizerDto>,
     cookbooks: List<CookbookEntity>,
@@ -575,10 +598,9 @@ internal fun RecipeMetadataCard(
     onOpenCookbook: (String) -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Recipe details", style = MaterialTheme.typography.titleMedium)
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (tags.isNotEmpty()) {
-                Text("Tags", style = MaterialTheme.typography.labelLarge)
+                MetadataLabel(icon = Icons.AutoMirrored.Filled.Label, text = "Tags")
                 Row(
                     modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -592,7 +614,7 @@ internal fun RecipeMetadataCard(
                 }
             }
             if (cookbooks.isNotEmpty()) {
-                Text("Cookbooks", style = MaterialTheme.typography.labelLarge)
+                MetadataLabel(icon = Icons.AutoMirrored.Filled.MenuBook, text = "Cookbooks")
                 Row(
                     modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -610,6 +632,23 @@ internal fun RecipeMetadataCard(
 }
 
 @Composable
+private fun MetadataLabel(icon: ImageVector, text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(18.dp),
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(start = 8.dp),
+        )
+    }
+}
+
+@Composable
 internal fun RecipeActionControls(
     actions: RecipeActionUiState,
     globalRating: Double? = null,
@@ -622,12 +661,12 @@ internal fun RecipeActionControls(
     Column(
         modifier =
             modifier
-                .fillMaxWidth()
+                .then(if (compact) Modifier else Modifier.fillMaxWidth())
                 .padding(horizontal = if (compact) 4.dp else 16.dp, vertical = 8.dp)
     ) {
         Row(
             modifier =
-                Modifier.fillMaxWidth()
+                (if (compact) Modifier else Modifier.fillMaxWidth())
                     .clickable { ratingDialogVisible = true }
                     .semantics { contentDescription = "Open rating dialog" }
                     .padding(vertical = 4.dp),

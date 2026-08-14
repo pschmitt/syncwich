@@ -1541,3 +1541,67 @@ card-internal spacing instead. Focused instrumentation passed on the Zenfone 10.
 Status: **done**, 2026-08-14. Rated recipes show only the compact star/value pair; unrated recipes
 show an accessible empty star, including in the rating dialog. Focused instrumentation, remote
 unit tests, lint, and ZF10 verification pass.
+
+## SW-87: Compact recipe metadata card
+
+- [x] Remove the “Recipe details” heading from the recipe metadata card
+- [x] Replace the standalone “Tags” and “Cookbooks” labels with compact icon-led labels
+- [x] Preserve clickable tag/cookbook navigation and accessible labeling
+- [x] Add focused UI coverage and verify the compact metadata card on the Zenfone 10
+
+Status: **done**, 2026-08-14. The metadata card now contains compact icon-led Tags and Cookbooks
+rows without the redundant card heading; navigation remains clickable and accessible. Focused
+metadata instrumentation passed on ZF10.
+
+## SW-88: Place the recipe title image in a card
+
+- [x] Wrap the recipe title image in the same card-based visual hierarchy as the recipe content
+- [x] Preserve image cropping, click-to-open viewer behavior, and accessibility labeling
+- [x] Keep spacing consistent with the metadata and content cards
+- [x] Add focused UI coverage and verify the updated recipe view on the Zenfone 10
+
+Status: **done**, 2026-08-14. The title image is rendered inside a padded Material card while
+retaining crop, viewer, and accessibility behavior. Focused title-image instrumentation passed on
+ZF10.
+
+## SW-89: Reposition the recipe rating star
+
+- [x] Move the recipe rating star to the card’s top-right corner
+- [x] Keep it aligned to the top edge and visually separated from timing metadata
+- [x] Preserve the rating dialog interaction and accessibility semantics
+- [x] Add focused UI coverage and verify the updated layout on the Zenfone 10
+
+Status: **done**, 2026-08-14. Compact rating controls are anchored to the top-right of the timing
+card, retaining the rating dialog and accessibility semantics. Focused rating instrumentation and
+remote checks passed on ZF10.
+
+## SW-90: Add favorite recipes to the home page
+
+- [x] Add a home-page section showing favorite recipes
+- [x] Use cached data first and preserve offline-first behavior
+- [x] Make favorite recipe entries open the corresponding recipe view
+- [x] Add focused UI/data coverage and verify the section on the Zenfone 10
+
+Status: **done**, 2026-08-14. Home favorites are sourced from cached per-user favorite action state,
+sorted and limited for preview, and link to the existing Favorites destination or recipe detail.
+Remote unit/lint checks passed.
+
+## SW-91: Standardize home recipe card heights
+
+- [x] Make recipe cards on the home view use a consistent height
+- [x] Preserve readable titles, images, metadata, and accessible actions within the fixed layout
+- [x] Ensure the layout remains adaptive across screen sizes and orientations
+- [x] Add focused UI coverage and verify the home view on the Zenfone 10
+
+Status: **done**, 2026-08-14. Home recipe cards use a shared fixed height with adaptive horizontal
+rows, preserved image/title/rating content, and click semantics. Focused card instrumentation passed
+on ZF10.
+
+## SW-92: Add recipes from URLs through Mealie parsing
+
+- [ ] Add a recipe-import flow that accepts a URL and sends it through Mealie’s parser/AI endpoint
+- [ ] Route URLs shared to Syncwich into the same import flow
+- [ ] Keep import results and failures cache-safe and clearly surfaced to the user
+- [ ] Add focused parser/share coverage and verify the flow on the Zenfone 10
+
+Status: not started.

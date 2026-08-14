@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Settings
@@ -37,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -55,8 +55,7 @@ import dev.pschmitt.syncwich.ui.recipes.formatRating
 fun HomeScreen(
     onRecipeClick: (RecipeSummaryEntity) -> Unit,
     onRecipesClick: () -> Unit,
-    onCookbooksClick: () -> Unit,
-    onCookbookClick: (String) -> Unit,
+    onFavoritesClick: () -> Unit,
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
@@ -148,17 +147,13 @@ fun HomeScreen(
                         )
                     }
                 }
-                if (uiState.favoriteCookbook != null || uiState.favoriteRecipes.isNotEmpty()) {
+                if (uiState.favoriteRecipes.isNotEmpty()) {
                     item {
                         FavoriteSection(
                             recipes = uiState.favoriteRecipes,
-                            cookbookId = uiState.favoriteCookbook?.id,
                             serverUrl = uiState.serverUrl,
                             onRecipeClick = onRecipeClick,
-                            onOpenFavorites = { cookbookId ->
-                                if (cookbookId == null) onCookbooksClick()
-                                else onCookbookClick(cookbookId)
-                            },
+                            onOpenFavorites = onFavoritesClick,
                         )
                     }
                 }
@@ -189,44 +184,22 @@ private fun RecipeSection(
 @Composable
 private fun FavoriteSection(
     recipes: List<RecipeSummaryEntity>,
-    cookbookId: String?,
     serverUrl: String,
     onRecipeClick: (RecipeSummaryEntity) -> Unit,
-    onOpenFavorites: (String?) -> Unit,
+    onOpenFavorites: () -> Unit,
 ) {
     Column {
         SectionHeader(
             title = "Favorites",
-            actionLabel = if (cookbookId == null) "Find cookbooks" else "Open cookbook",
-            onAction = { onOpenFavorites(cookbookId) },
+            actionLabel = "View all favorites",
+            onAction = onOpenFavorites,
         )
         Spacer(Modifier.height(8.dp))
-        if (recipes.isEmpty()) {
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(Icons.Filled.Favorite, contentDescription = null)
-                    Text(
-                        text =
-                            if (cookbookId == null) {
-                                "A cookbook named Favorites will appear here."
-                            } else {
-                                "Your Favorites cookbook has no cached recipes yet."
-                            },
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(start = 12.dp),
-                    )
-                }
-            }
-        } else {
-            RecipeRow(
-                recipes = recipes,
-                serverUrl = serverUrl,
-                onRecipeClick = onRecipeClick,
-            )
-        }
+        RecipeRow(
+            recipes = recipes,
+            serverUrl = serverUrl,
+            onRecipeClick = onRecipeClick,
+        )
     }
 }
 
@@ -260,13 +233,18 @@ private fun RecipeRow(
 }
 
 @Composable
-private fun HomeRecipeCard(
+internal fun HomeRecipeCard(
     recipe: RecipeSummaryEntity,
     serverUrl: String,
     onClick: () -> Unit,
 ) {
-    Card(onClick = onClick, modifier = Modifier.width(184.dp), shape = MaterialTheme.shapes.large) {
-        Column {
+    Card(
+        onClick = onClick,
+        modifier =
+            Modifier.width(184.dp).height(HOME_RECIPE_CARD_HEIGHT).testTag("home-recipe-card"),
+        shape = MaterialTheme.shapes.large,
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
             Box(
                 modifier =
                     Modifier.fillMaxWidth()
@@ -320,3 +298,5 @@ private fun HomeRecipeCard(
         }
     }
 }
+
+internal val HOME_RECIPE_CARD_HEIGHT = 244.dp

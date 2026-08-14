@@ -1,6 +1,5 @@
 package dev.pschmitt.syncwich.ui.home
 
-import dev.pschmitt.syncwich.data.db.entity.CookbookEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -35,15 +34,18 @@ class HomeOrderingTest {
     }
 
     @Test
-    fun `favorite cookbook matching is case insensitive and supports British spelling`() {
-        val cookbooks =
+    fun `favorite recipe previews sort alphabetically and are capped`() {
+        val recipes =
             listOf(
-                CookbookEntity("meal-prep", "Meal prep", "meal-prep", "", 0),
-                CookbookEntity("favourites", "  FAVOURITES ", "favourites", "", 1),
+                recipe("Ziti", null),
+                recipe("apple pie", null),
+                recipe("Bread", null),
             )
 
-        assertEquals("favourites", findFavoriteCookbook(cookbooks)?.id)
-        assertEquals(null, findFavoriteCookbook(cookbooks.take(1)))
+        assertEquals(
+            listOf("apple pie", "Bread"),
+            sortFavoriteRecipes(recipes, limit = 2).map { it.name },
+        )
     }
 
     @Test

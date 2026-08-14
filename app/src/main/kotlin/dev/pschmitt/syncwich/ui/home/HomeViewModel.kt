@@ -3,9 +3,7 @@ package dev.pschmitt.syncwich.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.pschmitt.syncwich.data.db.entity.CookbookEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
-import dev.pschmitt.syncwich.data.repository.CookbookRepository
 import dev.pschmitt.syncwich.data.repository.RecipeHistoryRepository
 import dev.pschmitt.syncwich.data.repository.RecipeRepository
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
@@ -15,15 +13,10 @@ import dev.pschmitt.syncwich.sync.SyncStatusRepository
 import dev.pschmitt.syncwich.sync.SyncStatusState
 import dev.pschmitt.syncwich.ui.common.RefreshState
 import javax.inject.Inject
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 data class HomeUiState(
@@ -31,7 +24,6 @@ data class HomeUiState(
     val recentlyAddedRecipes: List<RecipeSummaryEntity> = emptyList(),
     val recentlyCookedRecipes: List<RecipeSummaryEntity> = emptyList(),
     val favoriteRecipes: List<RecipeSummaryEntity> = emptyList(),
-    val favoriteCookbook: CookbookEntity? = null,
     val serverUrl: String = "",
     val refreshState: RefreshState = RefreshState(),
     val syncStatus: SyncStatus = SyncStatus(),
@@ -43,13 +35,11 @@ data class HomeUiState(
  * recipes that are already cached.
  */
 @HiltViewModel
-@OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModel
 @Inject
 constructor(
     private val recipeRepository: RecipeRepository,
     private val recipeHistoryRepository: RecipeHistoryRepository,
-    private val cookbookRepository: CookbookRepository,
     settingsRepository: SettingsRepository,
     private val syncScheduler: SyncScheduler,
     syncStatusRepository: SyncStatusRepository,
@@ -57,12 +47,7 @@ constructor(
 
     private val userRefreshRequested = MutableStateFlow(false)
 
-    private val favoriteCookbook =
-        cookbookRepository.observeCookbooks().map(::findFavoriteCookbook).distinctUntilChanged()
-
-    private val favoriteRecipes = favoriteCookbook.flatMapLatest { cookbook ->
-        cookbook?.let { cookbookRepository.observeCookbookRecipes(it.id) } ?: flowOf(emptyList())
-    }
+    private val favoriteRecipes = recipeRepository.observeFavoriteRecipes()
 
     private val recipeSections =
         combine(recipeRepository.observeRecipes(), recipeHistoryRepository.recipeIds) {
@@ -79,13 +64,11 @@ constructor(
     val uiState: StateFlow<HomeUiState> =
         combine(
                 recipeSections,
-                favoriteCookbook,
                 favoriteRecipes,
                 settingsRepository.credentials,
                 syncPresentation,
             ) {
                 (recipes, recentlyViewed),
-                favoritesCookbook,
                 favorites,
                 credentials,
                 (syncStatus, userRefresh) ->
@@ -95,8 +78,7 @@ constructor(
                         sortRecipesByDate(recipes, RecipeSummaryEntity::dateAdded),
                     recentlyCookedRecipes =
                         sortRecipesByDate(recipes, RecipeSummaryEntity::lastMade),
-                    favoriteRecipes = favorites.sortedBy { it.name.lowercase() }.take(MAX_PREVIEW),
-                    favoriteCookbook = favoritesCookbook,
+                    favoriteRecipes = sortFavoriteRecipes(favorites, MAX_PREVIEW),
                     serverUrl = credentials.serverUrl,
                     refreshState =
                         RefreshState(
@@ -135,12 +117,6 @@ internal const val HOME_RECIPE_PREVIEW_LIMIT = 5
 internal fun isHomePullToRefreshActive(status: SyncStatus, userRefreshRequested: Boolean): Boolean =
     userRefreshRequested && status.state == SyncStatusState.SYNCING
 
-fun findFavoriteCookbook(cookbooks: List<CookbookEntity>): CookbookEntity? =
-    cookbooks.firstOrNull { cookbook ->
-        cookbook.name.trim().equals("favorites", ignoreCase = true) ||
-            cookbook.name.trim().equals("favourites", ignoreCase = true)
-    }
-
 fun sortRecipesByDate(
     recipes: List<RecipeSummaryEntity>,
     date: (RecipeSummaryEntity) -> String?,
@@ -153,6 +129,12 @@ fun sortRecipesByDate(
                 .thenBy { it.name.lowercase() }
         )
         .take(limit.coerceAtLeast(0))
+
+fun sortFavoriteRecipes(
+    recipes: List<RecipeSummaryEntity>,
+    limit: Int = HOME_RECIPE_PREVIEW_LIMIT,
+): List<RecipeSummaryEntity> =
+    recipes.sortedBy { it.name.lowercase() }.take(limit.coerceAtLeast(0))
 
 /** Resolves the ordered local history against cached summaries, omitting missing cache entries. */
 fun recipesForHistory(
