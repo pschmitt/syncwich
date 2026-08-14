@@ -1658,3 +1658,12 @@ actions while retaining the license list.
 - [ ] Add focused layout coverage
 
 Status: not started.
+
+## SW-98: Compact the full-screen steps font widget
+
+- [ ] Make the floating font-size controls more compact
+- [ ] Add sufficient bottom content padding beneath the final step
+- [ ] Preserve readable step content and both font-size actions
+- [ ] Add focused layout coverage
+
+Status: not started.
