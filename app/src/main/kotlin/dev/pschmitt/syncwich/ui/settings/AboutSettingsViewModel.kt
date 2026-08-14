@@ -7,6 +7,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -17,14 +18,18 @@ import kotlinx.coroutines.launch
 class AboutSettingsViewModel @Inject constructor(private val settingsRepository: SettingsRepository) :
     ViewModel() {
 
-    val developerMode: StateFlow<Boolean> =
+    private val developerMode: StateFlow<Boolean> =
         settingsRepository.developerMode.stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
             false,
         )
 
-    private val _developerModeToast = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    private val _developerModeToast =
+        MutableSharedFlow<String>(
+            extraBufferCapacity = 1,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        )
     val developerModeToast = _developerModeToast.asSharedFlow()
 
     private var buildRowTapCount = 0
@@ -42,7 +47,7 @@ class AboutSettingsViewModel @Inject constructor(private val settingsRepository:
             unlockInProgress = true
             viewModelScope.launch {
                 settingsRepository.setDeveloperMode(true)
-                _developerModeToast.emit("Developer mode enabled")
+                _developerModeToast.tryEmit("Developer mode enabled")
                 unlockInProgress = false
             }
         } else {

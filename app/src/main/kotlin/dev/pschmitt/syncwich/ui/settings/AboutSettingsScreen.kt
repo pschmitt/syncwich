@@ -33,7 +33,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalContext
@@ -117,9 +122,14 @@ fun AboutSettingsScreen(
     developerModeToast: Flow<String> = emptyFlow(),
 ) {
     val context = LocalContext.current
+    var progressToast by remember { mutableStateOf<Toast?>(null) }
+    DisposableEffect(Unit) {
+        onDispose { progressToast?.cancel() }
+    }
     LaunchedEffect(developerModeToast) {
         developerModeToast.collect { message ->
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            progressToast?.cancel()
+            progressToast = Toast.makeText(context, message, Toast.LENGTH_SHORT).also { it.show() }
         }
     }
     Scaffold(
