@@ -1,9 +1,15 @@
 package dev.pschmitt.syncwich.ui.onboarding
 
+import android.net.Uri
 import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.pschmitt.syncwich.data.backup.BackupFormatException
+import dev.pschmitt.syncwich.data.backup.BackupManager
+import dev.pschmitt.syncwich.data.backup.BackupPasswordRequiredException
+import dev.pschmitt.syncwich.data.backup.BackupScheduler
+import dev.pschmitt.syncwich.data.backup.BackupWrongPasswordException
 import dev.pschmitt.syncwich.data.onboarding.OnboardingError
 import dev.pschmitt.syncwich.data.onboarding.OnboardingValidationException
 import dev.pschmitt.syncwich.data.onboarding.OnboardingValidator
@@ -23,7 +29,9 @@ sealed interface OnboardingUiState {
 
     data class Error(val message: String) : OnboardingUiState
 
-    data object Success : OnboardingUiState
+    data class PasswordRequired(val uri: Uri) : OnboardingUiState
+
+    data class Success(val restoredBackup: Boolean = false) : OnboardingUiState
 }
 
 /** Which of onboarding's two paths an in-flight connection attempt (or its error) belongs to. */
@@ -40,6 +48,8 @@ constructor(
     private val passwordTokenMinter: PasswordTokenMinter,
     private val settingsRepository: SettingsRepository,
     private val syncScheduler: SyncScheduler,
+    private val backupManager: BackupManager,
+    private val backupScheduler: BackupScheduler,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<OnboardingUiState>(OnboardingUiState.Idle)
@@ -85,6 +95,38 @@ constructor(
         }
     }
 
+    fun restoreBackup(uri: Uri, password: String? = null) {
+        _uiState.value = OnboardingUiState.Validating
+        viewModelScope.launch {
+            runCatching { backupManager.restore(uri, password) }
+                .onSuccess {
+                    backupScheduler.schedule()
+                    _uiState.value = OnboardingUiState.Success(restoredBackup = true)
+                }
+                .onFailure { error ->
+                    _uiState.value =
+                        when (error) {
+                            is BackupPasswordRequiredException ->
+                                OnboardingUiState.PasswordRequired(uri)
+                            is BackupWrongPasswordException,
+                            is BackupFormatException ->
+                                OnboardingUiState.Error(
+                                    error.message ?: "The backup could not be restored."
+                                )
+                            else ->
+                                OnboardingUiState.Error(
+                                    error.message?.takeIf(String::isNotBlank)
+                                        ?: "The backup could not be restored."
+                                )
+                        }
+                }
+        }
+    }
+
+    fun consumeRestoredBackup() {
+        _uiState.value = OnboardingUiState.Idle
+    }
+
     private fun persistAndSucceed(serverUrl: String, apiToken: String) {
         // Only persisted - and only now starts being read by the network layer's interceptors -
         // once the server has actually confirmed this token works.
@@ -92,7 +134,7 @@ constructor(
         // The first pass is run in the blocking InitialSyncScreen. Cancel the startup request
         // queued by Application so it cannot race that foreground pass.
         syncScheduler.cancelStartup()
-        _uiState.value = OnboardingUiState.Success
+        _uiState.value = OnboardingUiState.Success()
     }
 
     private fun Throwable.toUserMessage(mode: OnboardingMode): String =

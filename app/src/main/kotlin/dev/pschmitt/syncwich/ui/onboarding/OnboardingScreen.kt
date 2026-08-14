@@ -1,5 +1,7 @@
 package dev.pschmitt.syncwich.ui.onboarding
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -18,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
@@ -68,9 +71,54 @@ fun OnboardingScreen(
     var password by remember { mutableStateOf("") }
     var tokenVisible by rememberSaveable { mutableStateOf(false) }
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
+    var restorePassword by rememberSaveable { mutableStateOf("") }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isValidating = uiState is OnboardingUiState.Validating
     val keyboardController = LocalSoftwareKeyboardController.current
+    val restoreLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            uri?.let(viewModel::restoreBackup)
+        }
+
+    val passwordRequiredState = uiState as? OnboardingUiState.PasswordRequired
+    if (passwordRequiredState != null) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = {
+                restorePassword = ""
+                viewModel.consumeRestoredBackup()
+            },
+            title = { Text("Password required") },
+            text = {
+                OutlinedTextField(
+                    value = restorePassword,
+                    onValueChange = { restorePassword = it },
+                    label = { Text("Backup password") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    singleLine = true,
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = {
+                        viewModel.restoreBackup(passwordRequiredState.uri, restorePassword)
+                        restorePassword = ""
+                    }
+                ) {
+                    Text("Restore")
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = {
+                        restorePassword = ""
+                        viewModel.consumeRestoredBackup()
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            },
+        )
+    }
 
     fun submit() {
         keyboardController?.hide()
@@ -243,6 +291,14 @@ fun OnboardingScreen(
                     } else {
                         Text(stringResource(R.string.onboarding_connect))
                     }
+                }
+                androidx.compose.material3.OutlinedButton(
+                    onClick = { restoreLauncher.launch(arrayOf("*/*")) },
+                    enabled = !isValidating,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(Icons.Filled.Restore, contentDescription = null)
+                    Text("Restore from backup", modifier = Modifier.padding(start = 8.dp))
                 }
             }
         }

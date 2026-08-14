@@ -9,6 +9,7 @@ import coil3.SingletonImageLoader
 import coil3.disk.DiskCache
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import dagger.hilt.android.HiltAndroidApp
+import dev.pschmitt.syncwich.data.backup.BackupScheduler
 import dev.pschmitt.syncwich.sync.SyncNotifier
 import dev.pschmitt.syncwich.sync.SyncScheduler
 import javax.inject.Inject
@@ -22,6 +23,7 @@ class SyncwichApp : Application(), Configuration.Provider, SingletonImageLoader.
     @Inject lateinit var workerFactory: HiltWorkerFactory
     @Inject lateinit var syncNotifier: SyncNotifier
     @Inject lateinit var syncScheduler: SyncScheduler
+    @Inject lateinit var backupScheduler: BackupScheduler
     // Recipe images are cached via Coil (AGENTS.md), but a self-hosted Mealie instance can lock
     // media behind auth same as the API - reusing the app's own authenticated/dynamic-base-URL
     // OkHttpClient (see NetworkModule) instead of Coil's default client covers that case for free.
@@ -58,5 +60,6 @@ class SyncwichApp : Application(), Configuration.Provider, SingletonImageLoader.
         // gated so disabling "Sync on app start" does not generate a surprise network request.
         syncScheduler.schedulePeriodic()
         syncScheduler.scheduleStartupIfEnabled()
+        backupScheduler.schedule()
     }
 }

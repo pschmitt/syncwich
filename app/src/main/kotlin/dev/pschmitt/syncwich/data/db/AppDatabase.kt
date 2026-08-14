@@ -84,4 +84,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun mealPlanDao(): MealPlanDao
 
     abstract fun cookbookDao(): CookbookDao
+
+    companion object {
+        const val SCHEMA_VERSION = 9
+    }
 }

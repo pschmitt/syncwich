@@ -9,10 +9,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FormatBold
+import androidx.compose.material.icons.filled.FormatIndentIncrease
 import androidx.compose.material.icons.filled.FormatItalic
 import androidx.compose.material.icons.filled.FormatListBulleted
+import androidx.compose.material.icons.filled.FormatListNumbered
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,7 +36,11 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.m3.Markdown
 
-/** A small Markdown/HTML editor with formatting tools and an immediate rendered preview. */
+/**
+ * A Markdown-aware rich-text editor. The toolbar writes portable Markdown while the rendered
+ * preview updates on every keystroke, so users do not need to mentally translate the stored
+ * representation or switch screens to check formatting.
+ */
 @Composable
 fun MarkdownEditor(
     value: String,
@@ -92,6 +99,30 @@ fun MarkdownEditor(
                         onValueChange(updated.text)
                     }
                 }
+                FormatButton("Numbered list", Icons.Filled.FormatListNumbered) {
+                    updateSelection(fieldValue, "1. ", "", "list item") { updated ->
+                        fieldValue = updated
+                        onValueChange(updated.text)
+                    }
+                }
+                FormatButton("Heading", Icons.Filled.FormatIndentIncrease) {
+                    updateSelection(fieldValue, "## ", "", "heading") { updated ->
+                        fieldValue = updated
+                        onValueChange(updated.text)
+                    }
+                }
+                FormatButton("Quote", Icons.Filled.FormatIndentIncrease) {
+                    updateSelection(fieldValue, "> ", "", "quoted text") { updated ->
+                        fieldValue = updated
+                        onValueChange(updated.text)
+                    }
+                }
+                FormatButton("Code", Icons.Filled.Code) {
+                    updateSelection(fieldValue, "`", "`", "code") { updated ->
+                        fieldValue = updated
+                        onValueChange(updated.text)
+                    }
+                }
                 FormatButton("Link", Icons.Filled.Link) {
                     updateSelection(fieldValue, "[", "](https://)", "link text") { updated ->
                         fieldValue = updated
@@ -112,6 +143,15 @@ fun MarkdownEditor(
                 enabled = enabled,
                 minLines = minLines,
                 modifier = Modifier.fillMaxWidth(),
+            )
+            Text(
+                "Live preview",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Markdown(
+                content = value.ifBlank { "Nothing to preview yet." },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
             )
         }
         HorizontalDivider()

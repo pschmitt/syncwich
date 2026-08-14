@@ -97,6 +97,7 @@ fun SettingsScreen(
             item {
                 SettingsGroupCard(title = "Data & sync", icon = Icons.Filled.Sync) {
                     SettingsCategoryRow(SettingsCategory.Sync, onCategoryClick)
+                    SettingsCategoryRow(SettingsCategory.Backup, onCategoryClick)
                 }
             }
             item {
@@ -212,6 +213,7 @@ fun SettingsCategoryScreen(
             )
         SettingsCategory.Sync ->
             SyncSettingsScreen(onBack = onBack, modifier = modifier, viewModel = viewModel)
+        SettingsCategory.Backup -> BackupSettingsScreen(onBack = onBack, modifier = modifier)
         SettingsCategory.About -> AboutSettingsScreen(onBack = onBack, modifier = modifier)
     }
 }

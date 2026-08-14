@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 private val Context.syncwichDataStore by preferencesDataStore(name = "syncwich_prefs")
@@ -111,6 +112,27 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
 
     val ingredientChecklistEnabled: Flow<Boolean> =
         context.syncwichDataStore.data.map { it[KEY_INGREDIENT_CHECKLIST] ?: false }
+
+    val scheduledBackupEnabled: Flow<Boolean> =
+        context.syncwichDataStore.data.map { it[KEY_BACKUP_ENABLED] ?: false }
+
+    val scheduledBackupFrequency: Flow<BackupFrequency> =
+        context.syncwichDataStore.data.map {
+            BackupFrequency.fromStorage(it[KEY_BACKUP_FREQUENCY])
+        }
+
+    val scheduledBackupFolderUri: Flow<String?> =
+        context.syncwichDataStore.data.map { it[KEY_BACKUP_FOLDER_URI] }
+
+    val lastBackupAt: Flow<Long?> = context.syncwichDataStore.data.map { it[KEY_LAST_BACKUP_AT] }
+
+    val lastBackupError: Flow<String?> =
+        context.syncwichDataStore.data.map { it[KEY_LAST_BACKUP_ERROR] }
+
+    private val _scheduledBackupPasswordSet =
+        MutableStateFlow(loadScheduledBackupPassword().isNotEmpty())
+    val scheduledBackupPasswordSet: StateFlow<Boolean> =
+        _scheduledBackupPasswordSet.asStateFlow()
 
     /** Destination keys explicitly shown by the user, even when their cache is empty. */
     override val navigationBarShownItems: Flow<Set<String>> =
@@ -210,6 +232,104 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         context.syncwichDataStore.edit { prefs -> prefs[KEY_INGREDIENT_CHECKLIST] = enabled }
     }
 
+    suspend fun setScheduledBackupEnabled(enabled: Boolean) {
+        context.syncwichDataStore.edit { prefs -> prefs[KEY_BACKUP_ENABLED] = enabled }
+    }
+
+    suspend fun setScheduledBackupFrequency(frequency: BackupFrequency) {
+        context.syncwichDataStore.edit { prefs -> prefs[KEY_BACKUP_FREQUENCY] = frequency.storageValue }
+    }
+
+    suspend fun setScheduledBackupFolderUri(uri: String?) {
+        context.syncwichDataStore.edit { prefs ->
+            if (uri.isNullOrBlank()) prefs.remove(KEY_BACKUP_FOLDER_URI)
+            else prefs[KEY_BACKUP_FOLDER_URI] = uri
+        }
+    }
+
+    fun scheduledBackupPassword(): String? = loadScheduledBackupPassword().takeIf(String::isNotEmpty)
+
+    fun setScheduledBackupPassword(password: String?) {
+        if (password.isNullOrEmpty()) prefs.edit().remove(KEY_BACKUP_PASSWORD).apply()
+        else prefs.edit().putString(KEY_BACKUP_PASSWORD, password).apply()
+        _scheduledBackupPasswordSet.value = !password.isNullOrEmpty()
+    }
+
+    suspend fun recordBackupSuccess() {
+        context.syncwichDataStore.edit { prefs ->
+            prefs[KEY_LAST_BACKUP_AT] = System.currentTimeMillis()
+            prefs.remove(KEY_LAST_BACKUP_ERROR)
+        }
+    }
+
+    suspend fun recordBackupFailure(message: String) {
+        context.syncwichDataStore.edit { prefs ->
+            prefs[KEY_LAST_BACKUP_ERROR] = message.take(MAX_BACKUP_ERROR_LENGTH)
+        }
+    }
+
+    suspend fun exportBackupSettings(): SettingsBackupSnapshot {
+        val prefs = context.syncwichDataStore.data.first()
+        return SettingsBackupSnapshot(
+            navigationBarOrder = navigationBarOrderFromString(prefs[KEY_NAV_BAR_ORDER]),
+            navigationBarHiddenItems =
+                navigationBarOrderFromString(prefs[KEY_NAV_BAR_HIDDEN_ITEMS]).toSet(),
+            navigationBarShownItems =
+                navigationBarOrderFromString(prefs[KEY_NAV_BAR_SHOWN_ITEMS]).toSet(),
+            fontScale = sanitizeFontScale(prefs[KEY_FONT_SCALE] ?: DEFAULT_FONT_SCALE),
+            themeMode = prefs[KEY_THEME_MODE],
+            ingredientChecklistEnabled = prefs[KEY_INGREDIENT_CHECKLIST] ?: false,
+            initialSyncCompleted = prefs[KEY_INITIAL_SYNC_COMPLETED] ?: false,
+            lastSyncAt = prefs[KEY_LAST_SYNC_AT],
+            lastSyncError = prefs[KEY_LAST_SYNC_ERROR],
+            syncOnlyOnWifi = prefs[KEY_SYNC_ONLY_ON_WIFI] ?: false,
+            syncWhileRoaming = prefs[KEY_SYNC_WHILE_ROAMING] ?: true,
+            syncIntervalHours =
+                sanitizeSyncIntervalHours(
+                    prefs[KEY_SYNC_INTERVAL_HOURS] ?: DEFAULT_SYNC_INTERVAL_HOURS
+                ),
+            syncOnAppStart = prefs[KEY_SYNC_ON_APP_START] ?: DEFAULT_SYNC_ON_APP_START,
+            scheduledBackupEnabled = prefs[KEY_BACKUP_ENABLED] ?: false,
+            scheduledBackupFrequency =
+                BackupFrequency.fromStorage(prefs[KEY_BACKUP_FREQUENCY]).storageValue,
+            scheduledBackupFolderUri = prefs[KEY_BACKUP_FOLDER_URI],
+            lastBackupAt = prefs[KEY_LAST_BACKUP_AT],
+            lastBackupError = prefs[KEY_LAST_BACKUP_ERROR],
+        )
+    }
+
+    suspend fun restoreBackupSettings(snapshot: SettingsBackupSnapshot) {
+        context.syncwichDataStore.edit { prefs ->
+            prefs[KEY_NAV_BAR_ORDER] = navigationBarOrderToString(snapshot.navigationBarOrder)
+            prefs[KEY_NAV_BAR_HIDDEN_ITEMS] =
+                navigationBarOrderToString(snapshot.navigationBarHiddenItems.toList())
+            prefs[KEY_NAV_BAR_SHOWN_ITEMS] =
+                navigationBarOrderToString(snapshot.navigationBarShownItems.toList())
+            prefs[KEY_FONT_SCALE] = sanitizeFontScale(snapshot.fontScale)
+            snapshot.themeMode?.let { prefs[KEY_THEME_MODE] = it }
+                ?: prefs.remove(KEY_THEME_MODE)
+            prefs[KEY_INGREDIENT_CHECKLIST] = snapshot.ingredientChecklistEnabled
+            prefs[KEY_INITIAL_SYNC_COMPLETED] = snapshot.initialSyncCompleted
+            snapshot.lastSyncAt?.let { prefs[KEY_LAST_SYNC_AT] = it }
+                ?: prefs.remove(KEY_LAST_SYNC_AT)
+            snapshot.lastSyncError?.let { prefs[KEY_LAST_SYNC_ERROR] = it }
+                ?: prefs.remove(KEY_LAST_SYNC_ERROR)
+            prefs[KEY_SYNC_ONLY_ON_WIFI] = snapshot.syncOnlyOnWifi
+            prefs[KEY_SYNC_WHILE_ROAMING] = snapshot.syncWhileRoaming
+            prefs[KEY_SYNC_INTERVAL_HOURS] = sanitizeSyncIntervalHours(snapshot.syncIntervalHours)
+            prefs[KEY_SYNC_ON_APP_START] = snapshot.syncOnAppStart
+            prefs[KEY_BACKUP_ENABLED] = snapshot.scheduledBackupEnabled
+            prefs[KEY_BACKUP_FREQUENCY] =
+                BackupFrequency.fromStorage(snapshot.scheduledBackupFrequency).storageValue
+            snapshot.scheduledBackupFolderUri?.let { prefs[KEY_BACKUP_FOLDER_URI] = it }
+                ?: prefs.remove(KEY_BACKUP_FOLDER_URI)
+            snapshot.lastBackupAt?.let { prefs[KEY_LAST_BACKUP_AT] = it }
+                ?: prefs.remove(KEY_LAST_BACKUP_AT)
+            snapshot.lastBackupError?.let { prefs[KEY_LAST_BACKUP_ERROR] = it }
+                ?: prefs.remove(KEY_LAST_BACKUP_ERROR)
+        }
+    }
+
     /** Atomically records the first sync as complete and updates the ordinary sync metadata. */
     suspend fun recordInitialSyncSuccess() {
         context.syncwichDataStore.edit { prefs ->
@@ -237,10 +357,14 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
             apiToken = prefs.getString(KEY_API_TOKEN, "") ?: "",
         )
 
+    private fun loadScheduledBackupPassword(): String =
+        prefs.getString(KEY_BACKUP_PASSWORD, "") ?: ""
+
     private companion object {
         const val KEY_SERVER_URL = "server_url"
         const val KEY_API_TOKEN = "api_token"
         const val MAX_SYNC_ERROR_LENGTH = 500
+        const val MAX_BACKUP_ERROR_LENGTH = 500
         val KEY_NAV_BAR_ORDER = stringPreferencesKey("navigation_bar_order")
         val KEY_NAV_BAR_HIDDEN_ITEMS = stringPreferencesKey("navigation_bar_hidden_items")
         val KEY_FONT_SCALE = androidx.datastore.preferences.core.floatPreferencesKey("font_scale")
@@ -254,5 +378,11 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         val KEY_SYNC_WHILE_ROAMING = booleanPreferencesKey("sync_while_roaming")
         val KEY_SYNC_INTERVAL_HOURS = intPreferencesKey("sync_interval_hours")
         val KEY_SYNC_ON_APP_START = booleanPreferencesKey("sync_on_app_start")
+        val KEY_BACKUP_ENABLED = booleanPreferencesKey("scheduled_backup_enabled")
+        val KEY_BACKUP_FREQUENCY = stringPreferencesKey("scheduled_backup_frequency")
+        val KEY_BACKUP_FOLDER_URI = stringPreferencesKey("scheduled_backup_folder_uri")
+        val KEY_LAST_BACKUP_AT = longPreferencesKey("last_backup_at")
+        val KEY_LAST_BACKUP_ERROR = stringPreferencesKey("last_backup_error")
+        const val KEY_BACKUP_PASSWORD = "scheduled_backup_password"
     }
 }
