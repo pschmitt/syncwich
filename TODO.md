@@ -1214,22 +1214,22 @@ editor verification passed.
 - [x] Store the keystore and environment attachment in Bitwarden as `Syncwich CI Signing Keystore`
 - [x] Configure `CI_KEYSTORE_BASE64`, `CI_KEYSTORE_PASSWORD`, `CI_KEY_ALIAS`, and
   `CI_KEY_PASSWORD` as GitHub Actions repository secrets
-- [ ] Run a release workflow with the new secrets and verify the signed artifacts
+- [x] Run a release workflow with the new secrets and verify the signed artifacts
 
-Status: mostly done, 2026-08-14. The keystore was generated on rofl-13, stored in Bitwarden, and
-the four GitHub secrets are present. The release workflow decoded the key, passed signing
-validation, and passed unit tests; its later release build is blocked by SW-58's unrelated R8
-missing-class failure.
+Status: **done**, 2026-08-14. The keystore was generated on rofl-13, stored in Bitwarden, and the
+four GitHub secrets are present. GitHub Actions run `31832281469` decoded the key, built and signed
+the release APK/AAB, verified the embedded revision, generated checksums, and published the latest
+release successfully.
 
 ## SW-58: Fix release R8 missing annotations
 
 - [x] Resolve the missing `com.google.errorprone.annotations.*` classes reported by R8
 - [x] Keep the release minification behavior intact and avoid weakening shrinker coverage
-- [ ] Verify signed APK and AAB release builds in GitHub Actions
+- [x] Verify signed APK and AAB release builds in GitHub Actions
 
-Status: in progress, 2026-08-14. The missing annotations are now an explicit dependency; remote
-ktfmt/unit-test/lint checks and minified release APK/AAB builds both pass. GitHub Actions verification
-of the CI-signed artifacts is pending.
+Status: **done**, 2026-08-14. The missing annotations are an explicit dependency; remote
+ktfmt/unit-test/lint checks and minified release APK/AAB builds pass, and GitHub Actions run
+`31832281469` verified the CI-signed artifacts and published them successfully.
 
 ## SW-59: Add an About page
 
