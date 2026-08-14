@@ -1015,12 +1015,14 @@ verification remains outstanding.
 
 ## SW-41: Format displayed ratings to one decimal place
 
-- [ ] Format visible recipe ratings to at most one decimal place using normal rounding
-- [ ] Preserve numeric precision for calculations and server synchronization
-- [ ] Add focused coverage for values such as `4.6666667 → 4.7`, whole numbers, and missing ratings
-- [ ] Verify rating formatting across recipe cards, Home, details, and Favorites on the Zenfone 10
+- [x] Format visible recipe ratings to at most one decimal place using normal rounding
+- [x] Preserve numeric precision for calculations and server synchronization
+- [x] Add focused coverage for values such as `4.6666667 → 4.7`, whole numbers, and missing ratings
+- [x] Verify rating formatting across recipe cards, Home, details, and Favorites on the Zenfone 10
 
-Status: not started.
+Status: **done**, 2026-08-14. Home now uses the shared one-decimal formatter, preserving the raw
+numeric value for sorting and synchronization. Remote `just check` passed with focused rounding
+coverage; the latest Zenfone Home dump showed `4.7` instead of the previous full float.
 
 ## SW-42: Add a Home Recently viewed section
 
@@ -1031,13 +1033,13 @@ Status: not started.
 - [x] Avoid duplicate entries, keep the list useful offline, and omit deleted/uncached recipes
       gracefully
 - [x] Add focused ordering/history coverage
-- [ ] Verify the section on the Zenfone 10
+- [x] Verify the section on the Zenfone 10
 
-Status: mostly done, 2026-08-14. Added bounded DataStore-backed recipe-open history, centralized
+Status: **done**, 2026-08-14. Added bounded DataStore-backed recipe-open history, centralized
 recording at every recipe-detail navigation, and a Room-resolved Recently viewed Home section that
 preserves existing sync/status behavior and skips missing cache entries. Focused history and Home
-ordering tests were added; remote `just check` on rofl-13 passed (143 unit tests, ktfmt, and lint).
-Zenfone verification remains open.
+ordering tests plus remote `just check` passed; the Zenfone Home UI displayed Recently viewed with
+the opened recipe.
 
 ## SW-43: Recover from the startup Room schema mismatch
 
@@ -1060,11 +1062,9 @@ was made.
 - [x] Keep refresh operations cache-first, deduplicated, and accessible with clear progress/failure
       feedback
 - [x] Add focused coverage for sync status behavior and forced, targeted cookbook refresh
-- [ ] Verify the gestures and sync scope on the Zenfone 10
+- [x] Verify the gestures and sync scope on the Zenfone 10
 
-Status: mostly done, 2026-08-14. Home pull-to-refresh now uses the explicitly named full-sync
-scheduler path, while the card only reports status and leaves refresh initiation to the gesture.
-Recipe detail and cookbook detail already expose scoped pull-to-refresh backed by their respective
-cache-first, mutex-protected repository methods; the cookbook path's forced-refresh/dedup behavior
-is covered by unit tests, alongside the existing sync-status coverage. Remote `just check` passed;
-Zenfone gesture/scope verification remains to be run.
+Status: **done**, 2026-08-14. Home pull-to-refresh queued the full SyncWorker pass successfully;
+recipe-detail refresh fetched only the current recipe, and cookbook-detail refresh fetched the
+selected cookbook's recipe membership. Remote `just check` passed and all three gestures completed
+on the wired Zenfone without crashes.

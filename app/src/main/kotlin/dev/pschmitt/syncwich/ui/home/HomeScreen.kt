@@ -47,6 +47,7 @@ import dev.pschmitt.syncwich.data.api.recipeImageUrl
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
 import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
+import dev.pschmitt.syncwich.ui.recipes.formatRating
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -317,7 +318,7 @@ private fun HomeRecipeCard(
                             modifier = Modifier.size(16.dp),
                         )
                         Text(
-                            " ${rating.toString().trimEnd('0').trimEnd('.')}",
+                            " ${formatRating(rating)}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
