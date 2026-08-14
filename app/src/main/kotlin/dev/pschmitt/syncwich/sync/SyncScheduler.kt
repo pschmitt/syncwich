@@ -4,22 +4,42 @@ import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
-import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import dev.pschmitt.syncwich.data.settings.SettingsRepository
+import dev.pschmitt.syncwich.data.settings.SyncPreferences
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 /** Enqueues [SyncWorker] periodically and once at app/onboarding startup. */
 @Singleton
-class SyncScheduler @Inject constructor(private val workManager: WorkManager) {
+class SyncScheduler
+@Inject
+constructor(
+    private val workManager: WorkManager,
+    private val settingsRepository: SettingsRepository,
+) {
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     fun schedulePeriodic() {
+        scope.launch { enqueuePeriodic(settingsRepository.syncPreferences.first()) }
+    }
+
+    private fun enqueuePeriodic(preferences: SyncPreferences) {
         val request =
-            PeriodicWorkRequestBuilder<SyncWorker>(SYNC_INTERVAL_HOURS, TimeUnit.HOURS)
-                .setConstraints(syncConstraints())
+            PeriodicWorkRequestBuilder<SyncWorker>(
+                    preferences.syncIntervalHours.toLong(),
+                    TimeUnit.HOURS,
+                )
+                .setConstraints(syncConstraints(preferences))
                 .setBackoffCriteria(
                     BackoffPolicy.EXPONENTIAL,
                     BACKOFF_DELAY_MINUTES,
@@ -39,9 +59,13 @@ class SyncScheduler @Inject constructor(private val workManager: WorkManager) {
      * onboarding succeeds (so the very first sync doesn't wait for the periodic schedule).
      */
     fun scheduleStartup() {
+        scope.launch { enqueueStartup(settingsRepository.syncPreferences.first()) }
+    }
+
+    private fun enqueueStartup(preferences: SyncPreferences) {
         val request =
             OneTimeWorkRequestBuilder<SyncWorker>()
-                .setConstraints(syncConstraints())
+                .setConstraints(syncConstraints(preferences))
                 .setBackoffCriteria(
                     BackoffPolicy.EXPONENTIAL,
                     BACKOFF_DELAY_MINUTES,
@@ -56,13 +80,19 @@ class SyncScheduler @Inject constructor(private val workManager: WorkManager) {
         workManager.cancelUniqueWork(STARTUP_WORK_NAME)
     }
 
-    private fun syncConstraints(): Constraints =
-        Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
+    private fun syncConstraints(preferences: SyncPreferences): Constraints =
+        Constraints.Builder()
+            .setRequiredNetworkType(
+                SyncNetworkPolicy.requiredNetworkType(
+                    syncOnlyOnWifi = preferences.syncOnlyOnWifi,
+                    syncWhileRoaming = preferences.syncWhileRoaming,
+                )
+            )
+            .build()
 
     private companion object {
         const val PERIODIC_WORK_NAME = "syncwich_periodic_sync"
         const val STARTUP_WORK_NAME = "syncwich_startup_sync"
-        const val SYNC_INTERVAL_HOURS = 6L
         const val BACKOFF_DELAY_MINUTES = 15L
     }
 }

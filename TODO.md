@@ -883,18 +883,20 @@ remain a separate follow-up pass.
 
 ## SW-34: Improve recipe-detail loading and add sync preferences
 
-- [ ] Investigate why opening a cached recipe still shows a loading state; trace the detail route,
+- [x] Investigate why opening a cached recipe still shows a loading state; trace the detail route,
       Room cache, JSON decode, and network refresh path, then keep cached content visible while a
       best-effort refresh runs
-- [ ] Add regression coverage proving cached recipe details render without waiting for network
+- [x] Add regression coverage proving cached recipe details render without waiting for network
       availability
-- [ ] Inspect nyetbox's sync settings and add equivalent Syncwich controls for Wi-Fi-only sync,
+- [x] Inspect nyetbox's sync settings and add equivalent Syncwich controls for Wi-Fi-only sync,
       allowing sync while roaming, and configurable sync frequency
-- [ ] Persist the sync preferences and apply them to WorkManager constraints/scheduling without
+- [x] Persist the sync preferences and apply them to WorkManager constraints/scheduling without
       weakening offline-first behavior or manual refresh
 - [ ] Verify the loading behavior and sync settings on the Zenfone 10
 
-Status: not started.
+Status: mostly done, 2026-08-14. Cached detail state and sync-policy tests plus `just check`
+(ktfmtCheck, unit tests, and Android Lint) passed on rofl-13. The Zenfone 10 physical verification
+remains outstanding.
 
 ## SW-35: Add Home sync status card and background notifications
 

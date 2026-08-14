@@ -12,6 +12,7 @@ import dev.pschmitt.syncwich.data.repository.AccountRepository
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import dev.pschmitt.syncwich.data.settings.MealieCredentials
 import dev.pschmitt.syncwich.data.settings.DEFAULT_FONT_SCALE
+import dev.pschmitt.syncwich.data.settings.DEFAULT_SYNC_INTERVAL_HOURS
 import dev.pschmitt.syncwich.sync.SyncScheduler
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -73,6 +74,27 @@ constructor(
             DEFAULT_FONT_SCALE,
         )
 
+    val syncOnlyOnWifi: StateFlow<Boolean> =
+        settingsRepository.syncOnlyOnWifi.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
+            false,
+        )
+
+    val syncWhileRoaming: StateFlow<Boolean> =
+        settingsRepository.syncWhileRoaming.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
+            true,
+        )
+
+    val syncIntervalHours: StateFlow<Int> =
+        settingsRepository.syncIntervalHours.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
+            DEFAULT_SYNC_INTERVAL_HOURS,
+        )
+
     fun saveNavigationBarOrder(order: List<String>) {
         viewModelScope.launch { settingsRepository.saveNavigationBarOrder(order) }
     }
@@ -83,6 +105,27 @@ constructor(
 
     fun saveFontScale(scale: Float) {
         viewModelScope.launch { settingsRepository.saveFontScale(scale) }
+    }
+
+    fun setSyncOnlyOnWifi(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setSyncOnlyOnWifi(enabled)
+            syncScheduler.schedulePeriodic()
+        }
+    }
+
+    fun setSyncWhileRoaming(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setSyncWhileRoaming(enabled)
+            syncScheduler.schedulePeriodic()
+        }
+    }
+
+    fun setSyncIntervalHours(hours: Int) {
+        viewModelScope.launch {
+            settingsRepository.setSyncIntervalHours(hours)
+            syncScheduler.schedulePeriodic()
+        }
     }
 
     fun updateConnection(serverUrl: String, apiToken: String) {

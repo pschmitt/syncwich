@@ -87,11 +87,13 @@ constructor(
             .map { it?.detailJson }
             .distinctUntilChanged()
 
-    private val decodedRecipe: Flow<RecipeDetailDto?> =
+    /** Starts with the screen/view-model, so cached detail decoding never waits for a refresh. */
+    private val decodedRecipe: StateFlow<RecipeDetailDto?> =
         detailJson
             .map { rawJson -> rawJson?.let { decodeRecipeDetail(json, it) } }
             .distinctUntilChanged()
             .flowOn(Dispatchers.Default)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private val actions: Flow<RecipeActionUiState> =
         combine(
@@ -109,17 +111,7 @@ constructor(
                 settingsRepository.credentials,
                 refreshState,
             ) { recipe, recipeActions, credentials, refresh ->
-                when {
-                    recipe != null ->
-                        RecipeDetailUiState.Loaded(
-                            recipe = recipe,
-                            serverUrl = credentials.serverUrl,
-                            actions = recipeActions,
-                            refreshError = refresh.errorMessage,
-                        )
-                    refresh.isRefreshing -> RecipeDetailUiState.Loading
-                    else -> RecipeDetailUiState.Unavailable(refresh.errorMessage)
-                }
+                recipeDetailUiState(recipe, recipeActions, credentials.serverUrl, refresh)
             }
             .stateIn(
                 viewModelScope,
@@ -167,6 +159,24 @@ constructor(
         viewModelScope.launch { recipeActionRepository.refreshFromServer() }
     }
 }
+
+internal fun recipeDetailUiState(
+    recipe: RecipeDetailDto?,
+    actions: RecipeActionUiState,
+    serverUrl: String,
+    refresh: RefreshState,
+): RecipeDetailUiState =
+    when {
+        recipe != null ->
+            RecipeDetailUiState.Loaded(
+                recipe = recipe,
+                serverUrl = serverUrl,
+                actions = actions,
+                refreshError = refresh.errorMessage,
+            )
+        refresh.isRefreshing -> RecipeDetailUiState.Loading
+        else -> RecipeDetailUiState.Unavailable(refresh.errorMessage)
+    }
 
 internal fun decodeRecipeDetail(json: Json, rawJson: String): RecipeDetailDto? =
     runCatching { json.decodeFromString<RecipeDetailDto>(rawJson) }.getOrNull()

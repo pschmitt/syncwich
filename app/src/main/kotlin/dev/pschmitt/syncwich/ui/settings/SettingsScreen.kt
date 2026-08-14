@@ -127,6 +127,8 @@ fun SettingsCategoryScreen(
                 modifier = modifier,
                 viewModel = viewModel,
             )
+        SettingsCategory.Sync ->
+            SyncSettingsScreen(onBack = onBack, modifier = modifier, viewModel = viewModel)
     }
 }
 

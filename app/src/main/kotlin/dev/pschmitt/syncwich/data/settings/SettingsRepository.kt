@@ -3,6 +3,7 @@ package dev.pschmitt.syncwich.data.settings
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -69,6 +70,23 @@ constructor(@ApplicationContext private val context: Context) : NavigationBarPre
     val lastSyncError: Flow<String?> =
         context.syncwichDataStore.data.map { it[KEY_LAST_SYNC_ERROR] }
 
+    /** Preferences used for background work; manual refreshes remain unrestricted. */
+    val syncPreferences: Flow<SyncPreferences> =
+        context.syncwichDataStore.data.map { prefs ->
+            SyncPreferences(
+                syncOnlyOnWifi = prefs[KEY_SYNC_ONLY_ON_WIFI] ?: false,
+                syncWhileRoaming = prefs[KEY_SYNC_WHILE_ROAMING] ?: true,
+                syncIntervalHours =
+                    sanitizeSyncIntervalHours(
+                        prefs[KEY_SYNC_INTERVAL_HOURS] ?: DEFAULT_SYNC_INTERVAL_HOURS
+                    ),
+            )
+        }
+
+    val syncOnlyOnWifi: Flow<Boolean> = syncPreferences.map { it.syncOnlyOnWifi }
+    val syncWhileRoaming: Flow<Boolean> = syncPreferences.map { it.syncWhileRoaming }
+    val syncIntervalHours: Flow<Int> = syncPreferences.map { it.syncIntervalHours }
+
     /** The user's preferred order, with unknown or missing keys resolved by the caller. */
     override val navigationBarOrder: Flow<List<String>> =
         context.syncwichDataStore.data.map { navigationBarOrderFromString(it[KEY_NAV_BAR_ORDER]) }
@@ -124,6 +142,20 @@ constructor(@ApplicationContext private val context: Context) : NavigationBarPre
     suspend fun recordSyncFailure(message: String) {
         context.syncwichDataStore.edit { prefs ->
             prefs[KEY_LAST_SYNC_ERROR] = message.take(MAX_SYNC_ERROR_LENGTH)
+        }
+    }
+
+    suspend fun setSyncOnlyOnWifi(enabled: Boolean) {
+        context.syncwichDataStore.edit { prefs -> prefs[KEY_SYNC_ONLY_ON_WIFI] = enabled }
+    }
+
+    suspend fun setSyncWhileRoaming(enabled: Boolean) {
+        context.syncwichDataStore.edit { prefs -> prefs[KEY_SYNC_WHILE_ROAMING] = enabled }
+    }
+
+    suspend fun setSyncIntervalHours(hours: Int) {
+        context.syncwichDataStore.edit { prefs ->
+            prefs[KEY_SYNC_INTERVAL_HOURS] = sanitizeSyncIntervalHours(hours)
         }
     }
 
@@ -191,5 +223,8 @@ constructor(@ApplicationContext private val context: Context) : NavigationBarPre
         val KEY_INITIAL_SYNC_COMPLETED = booleanPreferencesKey("initial_sync_completed")
         val KEY_LAST_SYNC_AT = longPreferencesKey("last_sync_at")
         val KEY_LAST_SYNC_ERROR = stringPreferencesKey("last_sync_error")
+        val KEY_SYNC_ONLY_ON_WIFI = booleanPreferencesKey("sync_only_on_wifi")
+        val KEY_SYNC_WHILE_ROAMING = booleanPreferencesKey("sync_while_roaming")
+        val KEY_SYNC_INTERVAL_HOURS = intPreferencesKey("sync_interval_hours")
     }
 }
