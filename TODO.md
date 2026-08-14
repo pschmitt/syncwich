@@ -1037,3 +1037,14 @@ Status: **done**, 2026-08-14. Remote `just check` passed on rofl-13. The v9 debu
 in-place on the wired Zenfone 10, Room recreated the conflicting cache, and `MainActivity` reached
 the focused window with no crash-buffer entries or Room errors. No uninstall or live Mealie write
 was made.
+
+## SW-44: Simplify sync status and add scoped pull-to-refresh
+
+- [ ] Reduce the Home sync card to essential status information and remove its “Sync now” button
+- [ ] Add pull-to-refresh to Home that runs a complete recursive sync of all supported data
+- [ ] Add scoped pull-to-refresh to other pages (current recipe, or current cookbook and its recipes)
+- [ ] Keep refresh operations cache-first, deduplicated, and accessible with clear progress/failure
+      feedback
+- [ ] Add focused coverage and verify the gestures and sync scope on the Zenfone 10
+
+Status: not started.
