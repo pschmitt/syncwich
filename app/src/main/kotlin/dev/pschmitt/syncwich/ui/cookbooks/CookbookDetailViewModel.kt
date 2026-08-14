@@ -24,6 +24,16 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+sealed interface CookbookDeleteUiState {
+    data object Idle : CookbookDeleteUiState
+
+    data object Deleting : CookbookDeleteUiState
+
+    data class Failed(val message: String) : CookbookDeleteUiState
+
+    data object Deleted : CookbookDeleteUiState
+}
+
 @HiltViewModel
 class CookbookDetailViewModel
 @Inject
@@ -37,7 +47,10 @@ constructor(
     private val requestedCookbookId = route.cookbookId
     private val _refreshState = MutableStateFlow(RefreshState())
     val refreshState: StateFlow<RefreshState> = _refreshState.asStateFlow()
+    private val _deleteState = MutableStateFlow<CookbookDeleteUiState>(CookbookDeleteUiState.Idle)
+    val deleteState: StateFlow<CookbookDeleteUiState> = _deleteState.asStateFlow()
     private var refreshJob: Job? = null
+    private var lastDeleteCookbookId: String? = null
 
     /** Used to build a recipe's cover-image URL - see `RecipeSummaryEntity.image`'s kdoc. */
     val serverUrl: String
@@ -64,6 +77,29 @@ constructor(
     }
 
     fun refresh() = refresh(forceRefresh = true)
+
+    fun deleteCookbook(cookbookId: String = requestedCookbookId) {
+        if (_deleteState.value is CookbookDeleteUiState.Deleting) return
+        if (cookbookId.isBlank()) return
+        lastDeleteCookbookId = cookbookId
+        viewModelScope.launch {
+            _deleteState.value = CookbookDeleteUiState.Deleting
+            _deleteState.value =
+                cookbookRepository.deleteCookbook(cookbookId).fold(
+                    onSuccess = { CookbookDeleteUiState.Deleted },
+                    onFailure = {
+                        CookbookDeleteUiState.Failed(
+                            "Couldn't delete the cookbook. Your saved copy is still available; " +
+                                "check your connection and try again."
+                        )
+                    },
+                )
+        }
+    }
+
+    fun retryDelete() {
+        lastDeleteCookbookId?.let(::deleteCookbook)
+    }
 
     private fun refresh(forceRefresh: Boolean) {
         if (refreshJob?.isActive == true) return

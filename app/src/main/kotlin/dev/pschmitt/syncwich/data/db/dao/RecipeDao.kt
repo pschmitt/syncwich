@@ -83,6 +83,31 @@ interface RecipeDao {
     @Query("DELETE FROM recipe_cookbook_cross_refs WHERE cookbookId = :cookbookId")
     suspend fun deleteCookbookCrossRefs(cookbookId: String)
 
+    @Query("DELETE FROM recipe_summaries WHERE id = :recipeId")
+    suspend fun deleteSummary(recipeId: String)
+
+    @Query("DELETE FROM recipe_details WHERE id = :recipeId")
+    suspend fun deleteDetail(recipeId: String)
+
+    @Query("DELETE FROM recipe_category_cross_refs WHERE recipeId = :recipeId")
+    suspend fun deleteCategoryCrossRefs(recipeId: String)
+
+    @Query("DELETE FROM recipe_tag_cross_refs WHERE recipeId = :recipeId")
+    suspend fun deleteTagCrossRefs(recipeId: String)
+
+    @Query("DELETE FROM recipe_cookbook_cross_refs WHERE recipeId = :recipeId")
+    suspend fun deleteRecipeCookbookCrossRefs(recipeId: String)
+
+    /** Removes every cached representation of one recipe after a confirmed server deletion. */
+    @Transaction
+    suspend fun deleteRecipeCache(recipeId: String) {
+        deleteSummary(recipeId)
+        deleteDetail(recipeId)
+        deleteCategoryCrossRefs(recipeId)
+        deleteTagCrossRefs(recipeId)
+        deleteRecipeCookbookCrossRefs(recipeId)
+    }
+
     /** Atomically replaces the complete cached cookbook membership set. */
     @Transaction
     suspend fun replaceCookbookCrossRefs(refs: List<RecipeCookbookCrossRef>) {

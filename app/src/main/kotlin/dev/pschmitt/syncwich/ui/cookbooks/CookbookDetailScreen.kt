@@ -1,6 +1,7 @@
 package dev.pschmitt.syncwich.ui.cookbooks
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -13,19 +14,29 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,12 +58,20 @@ fun CookbookDetailScreen(
     onRecipeClick: (String, String) -> Unit = { _, _ -> },
     onEditClick: (String) -> Unit = {},
     onBack: () -> Unit = {},
+    onDeleted: () -> Unit = {},
     viewModel: CookbookDetailViewModel = hiltViewModel(),
 ) {
     val cookbook by viewModel.cookbook.collectAsStateWithLifecycle()
     val recipes by viewModel.recipes.collectAsStateWithLifecycle()
     val serverUrl = viewModel.serverUrl
     val refreshState by viewModel.refreshState.collectAsStateWithLifecycle()
+    val deleteState by viewModel.deleteState.collectAsStateWithLifecycle()
+    var overflowExpanded by rememberSaveable { mutableStateOf(false) }
+    var deleteDialogVisible by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(deleteState) {
+        if (deleteState is CookbookDeleteUiState.Deleted) onDeleted()
+    }
 
     Scaffold(
         modifier = modifier,
@@ -66,8 +85,19 @@ fun CookbookDetailScreen(
                 },
                 actions = {
                     cookbook?.let { currentCookbook ->
-                        IconButton(onClick = { onEditClick(currentCookbook.id) }) {
-                            Icon(Icons.Filled.Edit, contentDescription = "Edit cookbook")
+                        Box {
+                            IconButton(
+                                enabled = deleteState !is CookbookDeleteUiState.Deleting,
+                                onClick = { overflowExpanded = true },
+                            ) {
+                                Icon(Icons.Filled.MoreVert, contentDescription = "More actions")
+                            }
+                            CookbookOverflowMenu(
+                                expanded = overflowExpanded,
+                                onDismiss = { overflowExpanded = false },
+                                onEditClick = { onEditClick(currentCookbook.id) },
+                                onDeleteClick = { deleteDialogVisible = true },
+                            )
                         }
                     }
                 },
@@ -99,8 +129,15 @@ fun CookbookDetailScreen(
             } else if (recipes.isEmpty()) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     RefreshErrorBanner(
-                        errorMessage = refreshState.errorMessage,
-                        onRetry = viewModel::refresh,
+                        errorMessage =
+                            (deleteState as? CookbookDeleteUiState.Failed)?.message
+                                ?: refreshState.errorMessage,
+                        onRetry =
+                            if (deleteState is CookbookDeleteUiState.Failed) {
+                                viewModel::retryDelete
+                            } else {
+                                viewModel::refresh
+                            },
                     )
                     PlaceholderScreen(
                         icon = Icons.Filled.Restaurant,
@@ -117,8 +154,15 @@ fun CookbookDetailScreen(
             } else {
                 Column(modifier = Modifier.fillMaxSize()) {
                     RefreshErrorBanner(
-                        errorMessage = refreshState.errorMessage,
-                        onRetry = viewModel::refresh,
+                        errorMessage =
+                            (deleteState as? CookbookDeleteUiState.Failed)?.message
+                                ?: refreshState.errorMessage,
+                        onRetry =
+                            if (deleteState is CookbookDeleteUiState.Failed) {
+                                viewModel::retryDelete
+                            } else {
+                                viewModel::refresh
+                            },
                     )
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
@@ -137,6 +181,91 @@ fun CookbookDetailScreen(
             }
         }
     }
+
+    if (deleteDialogVisible) {
+        cookbook?.let { currentCookbook ->
+            CookbookDeleteConfirmationDialog(
+                cookbookName = currentCookbook.name,
+                isDeleting = deleteState is CookbookDeleteUiState.Deleting,
+                errorMessage = (deleteState as? CookbookDeleteUiState.Failed)?.message,
+                onConfirm = { viewModel.deleteCookbook(currentCookbook.id) },
+                onDismiss = { deleteDialogVisible = false },
+            )
+        }
+    }
+}
+
+@Composable
+internal fun CookbookOverflowMenu(
+    expanded: Boolean,
+    onDismiss: () -> Unit,
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit,
+) {
+    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+        DropdownMenuItem(
+            text = { Text("Edit") },
+            leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
+            onClick = {
+                onDismiss()
+                onEditClick()
+            },
+        )
+        DropdownMenuItem(
+            text = { Text("Delete") },
+            leadingIcon = {
+                Icon(
+                    Icons.Filled.Delete,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                )
+            },
+            onClick = {
+                onDismiss()
+                onDeleteClick()
+            },
+        )
+    }
+}
+
+@Composable
+internal fun CookbookDeleteConfirmationDialog(
+    cookbookName: String,
+    isDeleting: Boolean,
+    errorMessage: String?,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = { if (!isDeleting) onDismiss() },
+        icon = {
+            Icon(
+                Icons.Filled.Delete,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+            )
+        },
+        title = { Text("Delete cookbook?") },
+        text = {
+            Column {
+                Text("Delete \"$cookbookName\" from Mealie? This cannot be undone.")
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 12.dp),
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = !isDeleting, onClick = onConfirm) { Text("Delete") }
+        },
+        dismissButton = {
+            TextButton(enabled = !isDeleting, onClick = onDismiss) { Text("Cancel") }
+        },
+    )
 }
 
 @Composable

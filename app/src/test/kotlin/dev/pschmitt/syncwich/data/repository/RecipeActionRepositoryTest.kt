@@ -56,6 +56,22 @@ class RecipeActionRepositoryTest {
         assertEquals(1, usersApi.addFavoriteCalls)
     }
 
+    @Test
+    fun `rating is visible and pending when network sync fails`() = runTest {
+        val dao = FakeRecipeActionDao()
+        val repository =
+            RecipeActionRepository(
+                FakeUsersApi(failure = IOException("offline")),
+                dao,
+            )
+
+        assertTrue(repository.setRating("recipe-1", "toast", 4).isFailure)
+
+        val action = dao.get("recipe-1")!!
+        assertEquals(4, action.rating)
+        assertTrue(action.ratingPending)
+    }
+
     @Test(expected = IllegalArgumentException::class)
     fun `rating outside the five star range is rejected before network`() = runTest {
         RecipeActionRepository(FakeUsersApi(), FakeRecipeActionDao())
@@ -82,6 +98,10 @@ class RecipeActionRepositoryTest {
 
         override suspend fun upsertAll(actions: List<RecipeActionEntity>) {
             actions.forEach { upsert(it) }
+        }
+
+        override suspend fun delete(recipeId: String) {
+            state.value = state.value - recipeId
         }
     }
 

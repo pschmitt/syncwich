@@ -96,6 +96,19 @@ constructor(
     suspend fun patchRecipe(slug: String, request: RecipeInputDto): Result<Unit> =
         mutateRecipe(slug) { recipesApi.patchRecipe(slug, request) }
 
+    /** Deletes the server recipe first; the offline cache is removed only after that succeeds. */
+    suspend fun deleteRecipe(recipeId: String, slug: String): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                recipesApi.deleteRecipe(slug).use {}
+                recipeDao.deleteRecipeCache(recipeId)
+                recipeActionDao.delete(recipeId)
+            }
+                .onFailure {
+                    Timber.w(it, "Recipe deletion failed for '$slug'; keeping cached data")
+                }
+        }
+
     suspend fun updateRecipeImage(
         slug: String,
         uri: Uri,

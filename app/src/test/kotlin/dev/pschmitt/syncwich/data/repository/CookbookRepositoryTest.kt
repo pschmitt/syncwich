@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import okhttp3.ResponseBody
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -90,6 +91,52 @@ class CookbookRepositoryTest {
 
         assertTrue(result.isFailure)
         assertEquals(listOf(cached), cookbookDao.observeAll().first())
+    }
+
+    @Test
+    fun `failed cookbook delete leaves the cached cookbook and membership untouched`() = runTest {
+        val cached = CookbookEntity("keep-1", "Keep me", "keep-me", "", 0)
+        val cookbookDao = FakeCookbookDao(seed = listOf(cached))
+        val recipeDao =
+            FakeRecipeDao(
+                seedRecipes = listOf(recipe("recipe-1")),
+                seedCookbookRefs = listOf(RecipeCookbookCrossRef("recipe-1", "keep-1")),
+            )
+        val repository =
+            CookbookRepository(
+                FakeCookbooksApi(mutationFailure = IOException("offline")),
+                FakeRecipesApi(),
+                cookbookDao,
+                recipeDao,
+            )
+
+        val result = repository.deleteCookbook("keep-1")
+
+        assertTrue(result.isFailure)
+        assertEquals(listOf(cached), cookbookDao.observeAll().first())
+        assertEquals(listOf("recipe-1"), recipeDao.observeByCookbook("keep-1").first().map { it.id })
+    }
+
+    @Test
+    fun `successful cookbook delete removes its dictionary row and membership`() = runTest {
+        val cookbookDao =
+            FakeCookbookDao(seed = listOf(CookbookEntity("remove-1", "Remove me", "remove", "", 0)))
+        val recipeDao =
+            FakeRecipeDao(
+                seedRecipes = listOf(recipe("recipe-1")),
+                seedCookbookRefs = listOf(RecipeCookbookCrossRef("recipe-1", "remove-1")),
+            )
+        val repository =
+            CookbookRepository(
+                FakeCookbooksApi(),
+                FakeRecipesApi(),
+                cookbookDao,
+                recipeDao,
+            )
+
+        assertTrue(repository.deleteCookbook("remove-1").isSuccess)
+        assertEquals(emptyList<CookbookEntity>(), cookbookDao.observeAll().first())
+        assertEquals(emptyList<RecipeSummaryEntity>(), recipeDao.observeByCookbook("remove-1").first())
     }
 
     @Test
@@ -246,6 +293,10 @@ class CookbookRepositoryTest {
             state.value = byId.values.toList()
         }
 
+        override suspend fun deleteById(id: String) {
+            state.value = state.value.filterNot { it.id == id }
+        }
+
         override suspend fun deleteAll() {
             state.value = emptyList()
         }
@@ -291,6 +342,28 @@ class CookbookRepositoryTest {
 
         override suspend fun upsertDetail(detail: RecipeDetailEntity) {
             error("not used by CookbookRepository")
+        }
+
+        override suspend fun deleteSummary(recipeId: String) {
+            recipes.value = recipes.value - recipeId
+        }
+
+        override suspend fun deleteDetail(recipeId: String) = Unit
+
+        override suspend fun deleteCategoryCrossRefs(recipeId: String) = Unit
+
+        override suspend fun deleteTagCrossRefs(recipeId: String) = Unit
+
+        override suspend fun deleteRecipeCookbookCrossRefs(recipeId: String) {
+            cookbookRefs.value = cookbookRefs.value.filterNot { it.recipeId == recipeId }
+        }
+
+        override suspend fun deleteRecipeCache(recipeId: String) {
+            deleteSummary(recipeId)
+            deleteDetail(recipeId)
+            deleteCategoryCrossRefs(recipeId)
+            deleteTagCrossRefs(recipeId)
+            deleteRecipeCookbookCrossRefs(recipeId)
         }
 
         override suspend fun insertCategoryCrossRefs(refs: List<RecipeCategoryCrossRef>) {
@@ -359,6 +432,11 @@ class CookbookRepositoryTest {
                 ?: updateResponse
                 ?: error("not used by CookbookRepositoryTest")
 
+        override suspend fun deleteCookbook(itemId: String): ResponseBody {
+            mutationFailure?.let { throw it }
+            return "".toResponseBody()
+        }
+
         override suspend fun getCookbooks(page: Int, perPage: Int): PagedResponseDto<CookbookDto> {
             requestCount++
             failure?.let { throw it }
@@ -391,6 +469,9 @@ class CookbookRepositoryTest {
         override suspend fun deleteRecipeImage(slug: String): ResponseBody =
             error("not used by CookbookRepositoryTest")
 
+        override suspend fun deleteRecipe(slug: String): ResponseBody =
+            error("not used by CookbookRepositoryTest")
+
         override suspend fun uploadRecipeAsset(
             slug: String,
             name: okhttp3.RequestBody,
@@ -417,5 +498,21 @@ class CookbookRepositoryTest {
             val items = byCookbook[cookbookId].orEmpty()
             return PagedResponseDto(1, items.size, items.size, 1, items)
         }
+    }
+
+    private companion object {
+        fun recipe(id: String) =
+            RecipeSummaryEntity(
+                id = id,
+                slug = id,
+                name = id,
+                description = "",
+                image = null,
+                rating = null,
+                prepTime = null,
+                totalTime = null,
+                dateAdded = null,
+                lastMade = null,
+            )
     }
 }

@@ -274,6 +274,7 @@ fun SyncwichNavHost(
                     onEditClick = { cookbookId ->
                         navController.navigate(Route.CookbookEditor(cookbookId))
                     },
+                    onDeleted = { navController.popBackStack() },
                     onBack = { navController.popBackStack() },
                 )
             }
@@ -318,6 +319,7 @@ fun SyncwichNavHost(
                     onOpenTimeline = { recipeId ->
                         navController.navigate(Route.RecipeTimeline(recipeId))
                     },
+                    onDeleted = { navController.popBackStack() },
                 )
             }
             composable<Route.RecipeEditor> {

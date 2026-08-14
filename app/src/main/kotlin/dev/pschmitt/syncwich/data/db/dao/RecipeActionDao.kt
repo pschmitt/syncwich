@@ -26,4 +26,7 @@ interface RecipeActionDao {
     @Upsert suspend fun upsert(action: RecipeActionEntity)
 
     @Upsert suspend fun upsertAll(actions: List<RecipeActionEntity>)
+
+    @Query("DELETE FROM recipe_actions WHERE recipeId = :recipeId")
+    suspend fun delete(recipeId: String)
 }

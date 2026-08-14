@@ -3,7 +3,9 @@ package dev.pschmitt.syncwich.data.api
 import dev.pschmitt.syncwich.data.api.dto.CookbookDto
 import dev.pschmitt.syncwich.data.api.dto.CreateCookbookDto
 import dev.pschmitt.syncwich.data.api.dto.PagedResponseDto
+import okhttp3.ResponseBody
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
@@ -31,6 +33,10 @@ interface CookbooksApi {
         @Path("itemId") itemId: String,
         @Body request: CreateCookbookDto,
     ): CookbookDto
+
+    /** Confirmed by the live Mealie OpenAPI schema: deletes one cookbook by id. */
+    @DELETE("api/households/cookbooks/{itemId}")
+    suspend fun deleteCookbook(@Path("itemId") itemId: String): ResponseBody
 
     @GET("api/households/cookbooks")
     suspend fun getCookbooks(

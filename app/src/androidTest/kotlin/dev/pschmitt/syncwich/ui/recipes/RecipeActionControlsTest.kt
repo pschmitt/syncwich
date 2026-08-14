@@ -34,19 +34,23 @@ class RecipeActionControlsTest {
                     onOpenTimelineClick = {},
                     onShareClick = {},
                     onOpenBrowserClick = {},
+                    onDeleteClick = {},
                 )
                 RecipeActionControls(
                     actions = RecipeActionUiState(),
+                    globalRating = 4.6666667,
                     onRatingSelected = { rating = it },
                 )
             }
         }
 
         composeTestRule.onNodeWithText("Favorite").performClick()
+        composeTestRule.onNodeWithContentDescription("Open rating dialog").performClick()
         composeTestRule.onNodeWithContentDescription("Rate 4 out of 5 stars").performClick()
 
         assertEquals(true, favorite)
         assertEquals(4, rating)
+        composeTestRule.onNodeWithText("4.7 / 5").assertIsDisplayed()
     }
 
     @Test
@@ -64,15 +68,61 @@ class RecipeActionControlsTest {
                     onOpenTimelineClick = { openTimelineCalls++ },
                     onShareClick = {},
                     onOpenBrowserClick = {},
+                    onDeleteClick = {},
                 )
             }
         }
 
         composeTestRule.onNodeWithText("I made this").performClick()
-        composeTestRule.onNodeWithText("Open timeline").performClick()
+        composeTestRule.onNodeWithText("Show timeline").performClick()
 
         assertEquals(1, madeThisCalls)
         assertEquals(1, openTimelineCalls)
+    }
+
+    @Test
+    fun deleteMenuItemInvokesDeleteRequest() {
+        var deleteMenuCalls = 0
+        composeTestRule.setContent {
+            MaterialTheme {
+                RecipeOverflowMenu(
+                    expanded = true,
+                    actions = RecipeActionUiState(),
+                    onDismiss = {},
+                    onFavoriteClick = {},
+                    onMadeThisClick = {},
+                    onOpenTimelineClick = {},
+                    onShareClick = {},
+                    onOpenBrowserClick = {},
+                    onDeleteClick = { deleteMenuCalls++ },
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("Delete").performClick()
+
+        assertEquals(1, deleteMenuCalls)
+    }
+
+    @Test
+    fun deleteConfirmationRequiresExplicitConfirmation() {
+        var confirmed = 0
+        composeTestRule.setContent {
+            MaterialTheme {
+                RecipeDeleteConfirmationDialog(
+                    recipeName = "Toast",
+                    isDeleting = false,
+                    errorMessage = null,
+                    onConfirm = { confirmed++ },
+                    onDismiss = {},
+                )
+            }
+        }
+        composeTestRule.onNodeWithText("Delete recipe?").assertIsDisplayed()
+
+        assertEquals(0, confirmed)
+        composeTestRule.onNodeWithText("Delete").performClick()
+        assertEquals(1, confirmed)
     }
 
     @Test
@@ -90,14 +140,21 @@ class RecipeActionControlsTest {
     }
 
     @Test
-    fun ratingControlsStayCompactWithout_a_redundant_your_rating_row() {
+    fun ratingControlUsesTheGlobalDisplayAndOpensOneRatingDialog() {
         composeTestRule.setContent {
             MaterialTheme {
-                RecipeActionControls(actions = RecipeActionUiState(), onRatingSelected = {})
+                RecipeActionControls(
+                    actions = RecipeActionUiState(),
+                    globalRating = 4.6666667,
+                    onRatingSelected = {},
+                )
             }
         }
 
         composeTestRule.onAllNodesWithText("Your rating").assertCountEquals(0)
+        composeTestRule.onNodeWithText("4.7 / 5").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Open rating dialog").performClick()
+        composeTestRule.onNodeWithText("Your rating").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Rate 1 out of 5 stars").assertIsDisplayed()
     }
 }

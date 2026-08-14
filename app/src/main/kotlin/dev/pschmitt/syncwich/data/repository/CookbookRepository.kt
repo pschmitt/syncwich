@@ -73,6 +73,22 @@ constructor(
         request: CreateCookbookDto,
     ): Result<CookbookEntity> = mutateCookbook { cookbooksApi.updateCookbook(cookbookId, request) }
 
+    /** Deletes the server cookbook first; its cached dictionary and membership are then removed. */
+    suspend fun deleteCookbook(cookbookId: String): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                cookbooksApi.deleteCookbook(cookbookId).use {}
+                cookbookDao.deleteById(cookbookId)
+                recipeDao.deleteCookbookCrossRefs(cookbookId)
+            }
+                .onFailure {
+                    Timber.w(
+                        it,
+                        "Cookbook deletion failed for '$cookbookId'; keeping cached data",
+                    )
+                }
+        }
+
     suspend fun refreshCookbooks(forceRefresh: Boolean = false): Result<Unit> =
         withContext(Dispatchers.IO) {
             refreshMutex.withLock {

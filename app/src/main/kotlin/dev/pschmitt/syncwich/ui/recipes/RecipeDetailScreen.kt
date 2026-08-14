@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -52,6 +53,7 @@ import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -59,6 +61,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -124,14 +127,21 @@ fun RecipeDetailScreen(
     onOpenTimeline: (String) -> Unit,
     modifier: Modifier = Modifier,
     onEditClick: (recipeId: String, slug: String) -> Unit = { _, _ -> },
+    onDeleted: () -> Unit = {},
     viewModel: RecipeDetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val refreshState by viewModel.refreshState.collectAsStateWithLifecycle()
+    val deleteState by viewModel.deleteState.collectAsStateWithLifecycle()
     val loadedState = uiState as? RecipeDetailUiState.Loaded
     val title = loadedState?.recipe?.name ?: "Recipe"
     var overflowExpanded by remember { mutableStateOf(false) }
+    var deleteDialogVisible by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
+
+    LaunchedEffect(deleteState) {
+        if (deleteState is RecipeDeleteUiState.Deleted) onDeleted()
+    }
 
     Scaffold(
         modifier = modifier,
@@ -146,6 +156,7 @@ fun RecipeDetailScreen(
                 actions = {
                     if (loadedState != null) {
                         IconButton(
+                            enabled = deleteState !is RecipeDeleteUiState.Deleting,
                             onClick = {
                                 onEditClick(loadedState.recipe.id, loadedState.recipe.slug)
                             }
@@ -182,6 +193,7 @@ fun RecipeDetailScreen(
                                         ),
                                     )
                                 },
+                                onDeleteClick = { deleteDialogVisible = true },
                             )
                         }
                     }
@@ -217,8 +229,15 @@ fun RecipeDetailScreen(
                 is RecipeDetailUiState.Loaded -> {
                     Column(modifier = Modifier.fillMaxSize()) {
                         RefreshErrorBanner(
-                            errorMessage = state.refreshError,
-                            onRetry = viewModel::refresh,
+                            errorMessage =
+                                (deleteState as? RecipeDeleteUiState.Failed)?.message
+                                    ?: state.refreshError,
+                            onRetry =
+                                if (deleteState is RecipeDeleteUiState.Failed) {
+                                    viewModel::retryDelete
+                                } else {
+                                    viewModel::refresh
+                                },
                         )
                         RecipeDetailContent(
                             recipe = state.recipe,
@@ -233,6 +252,18 @@ fun RecipeDetailScreen(
             }
         }
     }
+
+    if (deleteDialogVisible && loadedState != null) {
+        RecipeDeleteConfirmationDialog(
+            recipeName = loadedState.recipe.name,
+            isDeleting = deleteState is RecipeDeleteUiState.Deleting,
+            errorMessage = (deleteState as? RecipeDeleteUiState.Failed)?.message,
+            onConfirm = {
+                viewModel.deleteRecipe(loadedState.recipe.id, loadedState.recipe.slug)
+            },
+            onDismiss = { deleteDialogVisible = false },
+        )
+    }
 }
 
 @Composable
@@ -245,6 +276,7 @@ internal fun RecipeOverflowMenu(
     onOpenTimelineClick: () -> Unit,
     onShareClick: () -> Unit,
     onOpenBrowserClick: () -> Unit,
+    onDeleteClick: () -> Unit,
 ) {
     DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
         DropdownMenuItem(
@@ -292,6 +324,20 @@ internal fun RecipeOverflowMenu(
                 onOpenBrowserClick()
             },
         )
+        DropdownMenuItem(
+            text = { Text("Delete") },
+            leadingIcon = {
+                Icon(
+                    Icons.Filled.Delete,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                )
+            },
+            onClick = {
+                onDismiss()
+                onDeleteClick()
+            },
+        )
     }
 }
 
@@ -331,6 +377,7 @@ private fun RecipeDetailContent(
         item {
             RecipeActionControls(
                 actions = actions,
+                globalRating = recipe.rating,
                 onRatingSelected = onRatingSelected,
             )
         }
@@ -344,15 +391,8 @@ private fun RecipeDetailContent(
                         recipe.performTime?.let { "Active" to it },
                         recipe.totalTime?.let { "Total" to it },
                     )
-                if (recipe.rating != null || times.isNotEmpty()) {
+                if (times.isNotEmpty()) {
                     Column(modifier = Modifier.padding(top = 12.dp)) {
-                        recipe.rating?.let { rating ->
-                            LabeledRow(
-                                icon = Icons.Filled.Star,
-                                label = "Rating",
-                                value = "${formatRating(rating)} / 5",
-                            )
-                        }
                         times.forEach { (label, value) ->
                             LabeledRow(icon = Icons.Filled.Schedule, label = label, value = value)
                         }
@@ -445,30 +485,49 @@ private fun RecipeDetailContent(
 @Composable
 internal fun RecipeActionControls(
     actions: RecipeActionUiState,
+    globalRating: Double? = null,
     onRatingSelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var ratingDialogVisible by rememberSaveable { mutableStateOf(false) }
+
     Column(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+            modifier =
+                Modifier.fillMaxWidth()
+                    .clickable { ratingDialogVisible = true }
+                    .semantics { contentDescription = "Open rating dialog" }
+                    .padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            (1..5).forEach { star ->
-                IconButton(
-                    onClick = { onRatingSelected(star) },
-                    modifier = Modifier.size(44.dp),
-                ) {
-                    Icon(
-                        imageVector =
-                            if (star <= (actions.rating ?: 0)) Icons.Filled.Star
-                            else Icons.Filled.StarBorder,
-                        contentDescription = ratingContentDescription(star),
-                        tint =
-                            if (star <= (actions.rating ?: 0)) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
+            Icon(
+                imageVector = Icons.Filled.Star,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+            )
+            Text(
+                text = globalRating?.let { "${formatRating(it)} / 5" } ?: "No ratings yet",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.padding(start = 8.dp),
+            )
+            Text(
+                text = "Rate",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 8.dp),
+            )
+        }
+
+        if (ratingDialogVisible) {
+            RecipeRatingDialog(
+                globalRating = globalRating,
+                selectedRating = actions.rating,
+                onRatingSelected = {
+                    onRatingSelected(it)
+                    ratingDialogVisible = false
+                },
+                onDismiss = { ratingDialogVisible = false },
+            )
         }
 
         if (actions.favoritePending || actions.ratingPending || actions.madeThisPending) {
@@ -493,9 +552,99 @@ internal fun RecipeActionControls(
     }
 }
 
+@Composable
+private fun RecipeRatingDialog(
+    globalRating: Double?,
+    selectedRating: Int?,
+    onRatingSelected: (Int) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Rate this recipe") },
+        text = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text =
+                        globalRating?.let { "Overall rating: ${formatRating(it)} / 5" }
+                            ?: "No ratings yet",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Text(
+                    text = "Your rating",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(top = 16.dp),
+                )
+                Row(modifier = Modifier.padding(top = 4.dp)) {
+                    (1..5).forEach { star ->
+                        IconButton(
+                            onClick = { onRatingSelected(star) },
+                            modifier = Modifier.size(44.dp),
+                        ) {
+                            Icon(
+                                imageVector =
+                                    if (star <= (selectedRating ?: 0)) Icons.Filled.Star
+                                    else Icons.Filled.StarBorder,
+                                contentDescription = ratingContentDescription(star),
+                                tint =
+                                    if (star <= (selectedRating ?: 0)) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Done") } },
+    )
+}
+
 internal fun ratingContentDescription(star: Int): String {
     require(star in 1..5) { "Recipe rating must be between 1 and 5" }
     return "Rate $star out of 5 stars"
+}
+
+@Composable
+internal fun RecipeDeleteConfirmationDialog(
+    recipeName: String,
+    isDeleting: Boolean,
+    errorMessage: String?,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = { if (!isDeleting) onDismiss() },
+        icon = {
+            Icon(
+                Icons.Filled.Delete,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+            )
+        },
+        title = { Text("Delete recipe?") },
+        text = {
+            Column {
+                Text("Delete \"$recipeName\" from Mealie? This cannot be undone.")
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 12.dp),
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = !isDeleting, onClick = onConfirm) { Text("Delete") }
+        },
+        dismissButton = {
+            TextButton(enabled = !isDeleting, onClick = onDismiss) { Text("Cancel") }
+        },
+    )
 }
 
 fun recipeImageGalleryUrls(serverUrl: String, recipe: RecipeDetailDto): List<String> =

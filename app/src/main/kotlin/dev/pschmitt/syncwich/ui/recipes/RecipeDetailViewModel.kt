@@ -50,6 +50,16 @@ sealed interface RecipeDetailUiState {
     ) : RecipeDetailUiState
 }
 
+sealed interface RecipeDeleteUiState {
+    data object Idle : RecipeDeleteUiState
+
+    data object Deleting : RecipeDeleteUiState
+
+    data class Failed(val message: String) : RecipeDeleteUiState
+
+    data object Deleted : RecipeDeleteUiState
+}
+
 data class RecipeActionUiState(
     val isFavorite: Boolean = false,
     val rating: Int? = null,
@@ -99,7 +109,10 @@ constructor(
     private val requestedRecipeId = route.recipeId
     private val _refreshState = MutableStateFlow(RefreshState())
     val refreshState: StateFlow<RefreshState> = _refreshState.asStateFlow()
+    private val _deleteState = MutableStateFlow<RecipeDeleteUiState>(RecipeDeleteUiState.Idle)
+    val deleteState: StateFlow<RecipeDeleteUiState> = _deleteState.asStateFlow()
     private var refreshJob: Job? = null
+    private var lastDeleteTarget: Pair<String, String>? = null
 
     private val detailJson: Flow<String?> =
         (if (requestedRecipeId.isBlank()) {
@@ -212,6 +225,28 @@ constructor(
         viewModelScope.launch {
             recipeActionRepository.setRating(effectiveRecipeId.value, route.slug, rating)
         }
+    }
+
+    fun deleteRecipe(recipeId: String, slug: String) {
+        if (_deleteState.value is RecipeDeleteUiState.Deleting) return
+        lastDeleteTarget = recipeId to slug
+        viewModelScope.launch {
+            _deleteState.value = RecipeDeleteUiState.Deleting
+            _deleteState.value =
+                recipeRepository.deleteRecipe(recipeId, slug).fold(
+                    onSuccess = { RecipeDeleteUiState.Deleted },
+                    onFailure = {
+                        RecipeDeleteUiState.Failed(
+                            "Couldn't delete the recipe. Your saved copy is still available; " +
+                                "check your connection and try again."
+                        )
+                    },
+                )
+        }
+    }
+
+    fun retryDelete() {
+        lastDeleteTarget?.let { (recipeId, slug) -> deleteRecipe(recipeId, slug) }
     }
 
     /** Records a durable "I made this" cooking event - see [RecipeTimelineRepository]'s kdoc. */
