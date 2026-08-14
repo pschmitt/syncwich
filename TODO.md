@@ -617,16 +617,39 @@ showed only Recipes and Cookbooks while empty Meal Plan/Shopping destinations st
 - [ ] Add support for updating existing recipes, cookbooks, meal plans, and shopping lists
 - [x] Add the recipe/cookbook mutation DTOs, Retrofit routes, and repository entry points for the
       confirmed v3.22.0 single-item routes
+- [x] Add the meal-plan-entry create/update/delete DTOs, Retrofit routes, and repository entry
+      points for the confirmed v3.22.0 single-item routes, plus shopping-list item add/remove
+      routes and a durable checked-state optimistic-update-with-retry path
 - [x] Preserve cache-first reads and leave existing Room data untouched when a mutation fails
 - [x] Confirm the recipe/cookbook write request shapes against the public schema
+- [x] Confirm the meal-plan (`CreatePlanEntry`/`UpdatePlanEntry`/`ReadPlanEntry`) and shopping-list
+      item (`ShoppingListItemCreate`/`ShoppingListItemUpdate`/`ShoppingListItemsCollectionOut`)
+      write request/response shapes against the public schema
 - [ ] Add focused coverage and verify the editing flows on the Zenfone 10
 
-Status: in progress, 2026-08-14. Data-layer groundwork is implemented, but full editor UI and
-meal-plan/shopping-list mutations remain. Read-only inspection of
-`https://nom.brkn.lol/openapi.json` confirmed `CreateRecipe`, `Recipe-Input`, and the
-`CreateCookBook` single-item PUT shape; no POST/PUT/PATCH/DELETE request was made. Remote `just
-check` passed; Zenfone editor-flow verification is still blocked because no editor UI is included
-in this bounded slice.
+Status: in progress, 2026-08-14. Meal-plan entry create/update/delete and shopping-list item
+add/remove/checked-toggle mutations are now implemented end-to-end (DTOs, Retrofit routes,
+repository methods, cache-first Room writes, and minimal Compose UI); recipe/cookbook editor status
+is unchanged from this entry's prior note (cookbook editor is done per SW-33, recipe editor is
+still data-layer only). Read-only inspection of `https://nom.brkn.lol/openapi.json` additionally
+confirmed, for meal plans: `POST /api/households/mealplans` (`CreatePlanEntry` -> `ReadPlanEntry`),
+`PUT /api/households/mealplans/{item_id}` (`UpdatePlanEntry`, which additionally requires
+`id`/`groupId`/`userId` - now cached from `ReadPlanEntry` and round-tripped rather than guessed),
+and `DELETE /api/households/mealplans/{item_id}`; for shopping lists: `POST
+/api/households/shopping/items` (`ShoppingListItemCreate` -> `ShoppingListItemsCollectionOut`),
+`PUT /api/households/shopping/items/{item_id}` (`ShoppingListItemUpdate`), and `DELETE
+/api/households/shopping/items/{item_id}`. No POST/PUT/PATCH/DELETE request was made against the
+live instance. Because the public schema alone can't confirm whether Mealie's shopping-list-item
+PUT resets omitted fields to their model defaults or preserves the existing row, the checked-state
+toggle never sends a partial body - it fetches the item's live JSON representation, flips only
+`checked`, and PUTs that same object back, which is correct under either server semantics; see
+`ShoppingListsApi`'s kdoc. Attaching an existing recipe to a meal-plan entry from the add/edit
+dialog is out of scope for this slice (would need a full recipe picker) - only freeform title/note
+entries are created/edited, though a recipe-linked entry can still be deleted. Editing a
+shopping-list item's display text was not added to the UI, only checked-toggle and add/remove, per
+this slice's minimal-UI ask. Remote `just check` on rofl-13: **PASS** (`ktfmtCheck` +
+`:app:testDebugUnitTest` + `lintDebug`, 110 tests, 0 failures). Zenfone verification of the new
+meal-plan/shopping-list flows is still pending - a separate device-verification pass.
 
 ## SW-25: Make font size configurable in Appearance settings
 
@@ -730,14 +753,34 @@ wired Zenfone 10 and exposed the Home sections and navigation nodes without cras
 ## SW-33: Add and edit recipes and collections
 
 - [x] Add a bounded cookbook create/edit flow with an explicit save action and validation
-- [ ] Add recipe creation/editing and editing flows for meal plans and shopping lists
+- [ ] Add recipe creation/editing flows
+- [x] Add a meal-plan entry add/edit/delete flow (freeform title/note, entry-type picker, inline on
+      `MealPlanScreen`) and a shopping-list item checked-toggle + add/remove flow (inline on
+      `ShoppingListDetailScreen`)
 - [x] Preserve the in-session draft on validation/network failure, read cached cookbook edits from
       Room first, and retain cookbook visibility/filter fields in the cache
 - [x] Reuse the already-confirmed Mealie cookbook write shape; no live write was made
+- [x] Reuse the already-confirmed Mealie meal-plan/shopping-list-item write shapes; no live write
+      was made; the shopping-list checked-toggle round-trips the item's own live JSON rather than
+      sending a partial body, since the public schema can't confirm the server's PUT-merge
+      semantics (see SW-24's status note)
 - [ ] Verify create/edit flows on the Zenfone 10
 
 Status: in progress, 2026-08-14. Added the standalone cookbook editor route for create and cached
 edit flows, with draft validation, explicit save, cache-safe repository mutations, and an offline
-error that keeps the draft. Focused draft/repository/DTO tests and remote `just check` passed. No
-meal-plan, shopping-list, or recipe editor was claimed, no live instance was contacted, and
-Zenfone verification remains pending.
+error that keeps the draft (unchanged from this entry's prior note). Additionally added: an inline
+meal-plan entry add/edit/delete dialog on `MealPlanScreen` (per-day "+" button, per-entry edit
+button, entry-type `FilterChip` row, title/note fields, delete action) backed by
+`MealPlanRepository.createEntry`/`updateEntry`/`deleteEntry`; and an inline shopping-list add-item
+dialog plus a functioning checkbox and remove button on `ShoppingListDetailScreen`, backed by
+`ShoppingListRepository.addItem`/`removeItem`/`setItemChecked`. The checked-toggle is optimistic and
+durable offline (Room is written before any network call, mirroring
+`RecipeActionRepository.setFavorite`'s pattern from SW-30, with `syncPendingItemChecks` wired into
+`SyncWorker` for later retry); create/update/delete instead mirror the cookbook editor's simpler
+network-first, explicit-save shape. `refreshListDetail` now preserves a not-yet-synced checked
+change instead of overwriting it with a stale server value. No recipe editor, no recipe-linking in
+the meal-plan add/edit dialog (would need a full recipe picker - out of scope here), and no
+shopping-list item text-editing UI (only checked-toggle/add/remove, per this slice's ask) were
+added. Focused draft/repository/DTO tests plus new meal-plan- and shopping-list-repository/DTO
+tests were added; no live instance was contacted for any of this. Remote `just check` on rofl-13:
+**PASS** (110 tests, 0 failures). Zenfone verification of the new flows remains pending.
