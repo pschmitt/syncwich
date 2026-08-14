@@ -91,4 +91,31 @@ class PasswordTokenMinterTest {
         )
         assertEquals(1, server.requestCount)
     }
+
+    @Test
+    fun `server URL does not need a trailing slash`() = runTest {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody("{\"access_token\":\"short-lived-jwt\"}"),
+        )
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody("{\"name\":\"Syncwich (test)\",\"id\":2,\"token\":\"long-lived-token\"}"),
+        )
+
+        val result =
+            minter.mintToken(
+                server.url("/").toString().trimEnd('/'),
+                username = "ai@example.test",
+                password = "not-persisted",
+                tokenName = "Syncwich (test)",
+            )
+
+        assertTrue("result=$result", result.isSuccess)
+        assertEquals("long-lived-token", result.getOrThrow())
+        assertEquals("/api/auth/token", server.takeRequest().path)
+        assertEquals("/api/users/api-tokens", server.takeRequest().path)
+    }
 }

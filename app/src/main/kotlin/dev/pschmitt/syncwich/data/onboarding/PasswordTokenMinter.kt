@@ -43,7 +43,11 @@ constructor(@ValidationClient private val client: OkHttpClient, private val json
         tokenName: String,
     ): Result<String> {
         val baseUrl =
-            serverUrl.trim().trimEnd('/').toHttpUrlOrNull()
+            serverUrl.trim().trimEnd('/').toHttpUrlOrNull()?.let { url ->
+                // Retrofit requires a directory-style base URL, while users naturally enter
+                // `https://mealie.example.com` without a trailing slash.
+                url.newBuilder().encodedPath(url.encodedPath.trimEnd('/') + "/").build()
+            }
                 ?: return Result.failure(
                     OnboardingValidationException(OnboardingError.MalformedUrl)
                 )
