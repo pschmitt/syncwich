@@ -651,7 +651,8 @@ showed only Recipes and Cookbooks while empty Meal Plan/Shopping destinations st
 - [x] Confirm the meal-plan (`CreatePlanEntry`/`UpdatePlanEntry`/`ReadPlanEntry`) and shopping-list
       item (`ShoppingListItemCreate`/`ShoppingListItemUpdate`/`ShoppingListItemsCollectionOut`)
       write request/response shapes against the public schema
-- [ ] Verify the editing flows on the Zenfone 10
+- [ ] Verify the editing flows on the Zenfone 10 (blocked by the existing Room identity mismatch;
+      no editor screen was reachable)
 
 Status: mostly done, 2026-08-14. Recipes and cookbooks now have full create/edit UIs (see SW-33) on
 top of the previously-landed data-layer groundwork. Meal-plan entry create/update/delete and
@@ -680,8 +681,12 @@ this slice's minimal-UI ask. Remote `just check` on rofl-13 passed for both slic
 shopping-list pass, 0 failures in either), and `lintDebug`. The coordinator also fixed a bug found
 in review: `ShoppingListRepository.syncPendingItemChecks` used `getOrThrow()` inside a `forEach`, so
 one item's sync failure aborted the whole retry batch instead of leaving only the failed items
-pending - now every pending item is retried independently. Zenfone verification of the recipe
-editor, cookbook editor, and meal-plan/shopping-list flows all remain a separate follow-up pass.
+pending - now every pending item is retried independently. Remote `just check` from the isolated
+verification worktree passed on rofl-13 (`ktfmtCheck`, `:app:testDebugUnitTest`, and `lintDebug`).
+A safe launch attempt on the existing Zenfone install reached `MainActivity`/the splash screen but
+then crashed on Room identity verification (expected
+`816f755f03f0c2b5c88998d7e42a5cc1`, found `b195d6d25b6962f1a341002f117978e7`), so the editing flows
+remain unverified. No uninstall, data wipe, or live Mealie write was made.
 
 ## SW-25: Make font size configurable in Appearance settings
 
@@ -878,8 +883,11 @@ for the recipe/cookbook editor pass, 110 for the meal-plan/shopping-list pass, 0
 The coordinator also fixed a bug found in review: `ShoppingListRepository.syncPendingItemChecks`
 used `getOrThrow()` inside a `forEach`, so one item's sync failure aborted the whole retry batch
 instead of leaving only the failed items pending - now every pending item is retried independently.
-Zenfone verification of the recipe editor, cookbook editor, and meal-plan/shopping-list flows all
-remain a separate follow-up pass.
+Remote `just check` from the isolated verification worktree passed on rofl-13 (`ktfmtCheck`,
+`:app:testDebugUnitTest`, and `lintDebug`). A safe launch attempt on the existing Zenfone install
+reached `MainActivity`/the splash screen but then crashed on Room identity verification (expected
+`816f755f03f0c2b5c88998d7e42a5cc1`, found `b195d6d25b6962f1a341002f117978e7`), so the editor
+screens remain unverified. No uninstall, data wipe, or live Mealie write was made.
 
 ## SW-34: Improve recipe-detail loading and add sync preferences
 
@@ -892,11 +900,14 @@ remain a separate follow-up pass.
       allowing sync while roaming, and configurable sync frequency
 - [x] Persist the sync preferences and apply them to WorkManager constraints/scheduling without
       weakening offline-first behavior or manual refresh
-- [ ] Verify the loading behavior and sync settings on the Zenfone 10
+- [ ] Verify the loading behavior and sync settings on the Zenfone 10 (blocked by the existing Room
+      identity mismatch; no settings/detail screen was reachable)
 
-Status: mostly done, 2026-08-14. Cached detail state and sync-policy tests plus `just check`
-(ktfmtCheck, unit tests, and Android Lint) passed on rofl-13. The Zenfone 10 physical verification
-remains outstanding.
+Status: mostly done, 2026-08-14. Cached detail state and sync-policy tests plus remote `just check`
+(`ktfmtCheck`, `:app:testDebugUnitTest`, and `lintDebug`) passed on rofl-13. The safe Zenfone launch
+attempt reached the splash screen but crashed on the existing Room identity mismatch before cached
+recipe loading or sync settings could be inspected; no uninstall, data wipe, or live Mealie write
+was made.
 
 ## SW-35: Add Home sync status card and background notifications
 
@@ -909,10 +920,13 @@ remains outstanding.
 - [x] Respect notification permission/state while keeping notification delivery independent from
       the scheduler's current and future network/sync preferences
 - [x] Add focused unit coverage for state presentation and notification gating
-- [ ] Verify the card and notification behavior on the Zenfone 10
+- [ ] Verify the card and notification behavior on the Zenfone 10 (blocked by the existing Room
+      identity mismatch; Home was not reachable)
 
-Status: mostly done (2026-08-14; remote `just check` passed on rofl-13, including unit tests and
-lint; Zenfone verification remains open).
+Status: mostly done (2026-08-14; remote `just check` passed on rofl-13, including `ktfmtCheck`, unit
+tests, and lint). A safe Zenfone launch attempt crashed on the existing Room identity mismatch
+before Home or its sync card could be inspected; notification behavior therefore remains open. No
+uninstall, data wipe, or live Mealie write was made.
 
 ## SW-36: Make Settings and Favorites configurable navbar items
 
@@ -923,12 +937,14 @@ lint; Zenfone verification remains open).
       preferences
 - [x] Preserve sensible defaults, ordering, visibility rules, and accessibility for both items
 - [x] Add focused coverage
-- [ ] Verify configurable navbar behavior on the Zenfone 10
+- [ ] Verify configurable navbar behavior on the Zenfone 10 (blocked by the existing Room identity
+      mismatch; navigation was not reachable)
 
 Status: mostly done, 2026-08-14. Settings and Favorites are opt-in configurable destinations,
 Favorites reads cached action state, and focused resolver/ViewModel/route tests pass in remote
-`just check`; the debug APK installed on the Zenfone and Mi Pad, but launch verification is blocked
-by an existing same-version Room identity mismatch on those installs.
+`just check`. The existing Zenfone install was left untouched; a safe launch attempt crashed on the
+Room identity mismatch before navbar behavior could be inspected. No uninstall, data wipe, or live
+Mealie write was made.
 
 ## SW-37: Audit image caching and unnecessary API calls
 
@@ -941,23 +957,27 @@ by an existing same-version Room identity mismatch on those installs.
 - [x] Add focused cache/request-count regression coverage and useful debug diagnostics without
       logging credentials
 - [ ] Verify offline and slow-network behavior, especially cookbook recipe lists, on the Zenfone 10
+      (blocked by the existing Room identity mismatch; cookbook lists were not reachable)
 
 Status: mostly done, 2026-08-14. Room remains the immediate read source; automatic list, cookbook,
 and detail refreshes are mutex-protected and freshness-coalesced, cookbook detail refreshes only
 query the selected cookbook, and cover URLs are versioned Coil keys. Focused request-count/cache
-tests plus remote `just check` on rofl-13 passed (129 unit tests, no lint failures). Physical
-offline/slow-network verification on the Zenfone 10 remains outstanding.
+tests plus remote `just check` on rofl-13 passed (no lint failures). The safe Zenfone launch attempt
+crashed on the existing Room identity mismatch before cookbook lists could be tested offline or
+under slow network; no uninstall, data wipe, or live Mealie write was made.
 
 ## SW-38: Remove the Home Shortcuts section
 
 - [x] Remove the “Shortcuts” section from the Home view
 - [x] Preserve the remaining Home sections, spacing, cache-first behavior, and accessibility
 - [x] Keep focused Home ordering/cache coverage passing
-- [ ] Verify the simplified Home view on the Zenfone 10
+- [ ] Verify the simplified Home view on the Zenfone 10 (blocked by the existing Room identity
+      mismatch; Home was not reachable)
 
 Status: mostly done, 2026-08-14. The shortcut carousel is removed while cached Home sections and
-accessible actions remain; remote `just check` passed and the debug APK installed on the Zenfone
-and Mi Pad, but launch verification is blocked by an existing same-version Room identity mismatch.
+accessible actions remain; remote `just check` passed. The existing Zenfone install was left
+untouched, but a safe launch attempt crashed on the Room identity mismatch before Home could be
+inspected. No uninstall, data wipe, or live Mealie write was made.
 
 ## SW-39: Redesign Settings menus to match nyetbox patterns
 
@@ -968,12 +988,14 @@ and Mi Pad, but launch verification is blocked by an existing same-version Room 
 - [x] Preserve the existing Server, Appearance, and navigation preferences behavior while improving
       labels, affordances, accessibility, and back navigation
 - [x] Add focused menu/navigation coverage for the redesigned menu structure
-- [ ] Verify the updated Settings experience visually and accessibly on the Zenfone 10
+- [ ] Verify the updated Settings experience visually and accessibly on the Zenfone 10 (blocked by
+      the existing Room identity mismatch; Settings was not reachable)
 
 Status: mostly done, 2026-08-14. Landing, Server, Appearance, and navigation menus now use the
 nyetbox-style grouped Material 3 cards with preserved semantics and behavior; remote `just check`
-passed and the debug APK installed on the Zenfone and Mi Pad, but launch verification is blocked by
-an existing same-version Room identity mismatch.
+passed. The existing Zenfone install was left untouched, but a safe launch attempt crashed on the
+Room identity mismatch before Settings could be inspected visually or accessibly. No uninstall, data
+wipe, or live Mealie write was made.
 
 ## SW-40: Audit UI/UX against current Material 3 guidance
 
