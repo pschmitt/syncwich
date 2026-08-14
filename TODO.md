@@ -1207,3 +1207,15 @@ Ingredient checklist preference; remote checks and Zenfone settings/recipe verif
 Status: **done**, 2026-08-14. Accessible move-up/move-down controls preserve formatted step
 content and feed the existing explicit-save payload; draft tests, remote checks, and Zenfone
 editor verification passed.
+
+## SW-57: Configure persistent CI release signing
+
+- [x] Generate a persistent Android upload keystore with a dedicated Syncwich alias
+- [x] Store the keystore and environment attachment in Bitwarden as `Syncwich CI Signing Keystore`
+- [x] Configure `CI_KEYSTORE_BASE64`, `CI_KEYSTORE_PASSWORD`, `CI_KEY_ALIAS`, and
+  `CI_KEY_PASSWORD` as GitHub Actions repository secrets
+- [ ] Run a release workflow with the new secrets and verify the signed artifacts
+
+Status: mostly done, 2026-08-14. The keystore was generated on rofl-13, stored in Bitwarden, and
+the four GitHub secrets are present. The previous release run failed before secret configuration
+with `encodedString value is not set`; a new release workflow run remains as final validation.
