@@ -96,6 +96,47 @@ class NavigationBarOrderTest {
     }
 
     @Test
+    fun `settings and favorites can be opted into without changing existing defaults`() {
+        val natural =
+            listOf(
+                NavigationBarItemKeys.HOME,
+                NavigationBarItemKeys.RECIPES,
+                NavigationBarItemKeys.FAVORITES,
+                NavigationBarItemKeys.SETTINGS,
+            )
+
+        assertEquals(
+            listOf(NavigationBarItemKeys.HOME, NavigationBarItemKeys.RECIPES),
+            resolveNavBarOrder(
+                natural = natural,
+                persisted = emptyList(),
+                hidden = emptySet(),
+                pinned = setOf(NavigationBarItemKeys.RECIPES),
+                defaultHidden =
+                    setOf(NavigationBarItemKeys.FAVORITES, NavigationBarItemKeys.SETTINGS),
+            ),
+        )
+        assertEquals(
+            listOf(
+                NavigationBarItemKeys.HOME,
+                NavigationBarItemKeys.RECIPES,
+                NavigationBarItemKeys.FAVORITES,
+                NavigationBarItemKeys.SETTINGS,
+            ),
+            resolveNavBarOrder(
+                natural = natural,
+                persisted = emptyList(),
+                hidden = emptySet(),
+                pinned = setOf(NavigationBarItemKeys.RECIPES),
+                defaultHidden =
+                    setOf(NavigationBarItemKeys.FAVORITES, NavigationBarItemKeys.SETTINGS),
+                explicitlyShown =
+                    setOf(NavigationBarItemKeys.FAVORITES, NavigationBarItemKeys.SETTINGS),
+            ),
+        )
+    }
+
+    @Test
     fun `preference encoding trims and deduplicates keys`() {
         val encoded = navigationBarOrderToString(listOf(" recipes ", "", "meal_plan", "recipes"))
 

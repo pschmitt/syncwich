@@ -6,9 +6,11 @@ import kotlinx.coroutines.flow.Flow
 object NavigationBarItemKeys {
     const val HOME = "home"
     const val RECIPES = "recipes"
+    const val FAVORITES = "favorites"
     const val MEAL_PLAN = "meal_plan"
     const val SHOPPING_LISTS = "shopping_lists"
     const val COOKBOOKS = "cookbooks"
+    const val SETTINGS = "settings"
 }
 
 /** Preferences used by the cache-aware bottom-navigation resolver. */

@@ -18,13 +18,10 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -56,8 +53,6 @@ import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
 fun HomeScreen(
     onRecipeClick: (RecipeSummaryEntity) -> Unit,
     onRecipesClick: () -> Unit,
-    onMealPlanClick: () -> Unit,
-    onShoppingListsClick: () -> Unit,
     onCookbooksClick: () -> Unit,
     onCookbookClick: (String) -> Unit,
     onSettingsClick: () -> Unit,
@@ -98,14 +93,6 @@ fun HomeScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp),
             ) {
-                item {
-                    QuickLinks(
-                        onRecipesClick = onRecipesClick,
-                        onMealPlanClick = onMealPlanClick,
-                        onShoppingListsClick = onShoppingListsClick,
-                        onCookbooksClick = onCookbooksClick,
-                    )
-                }
                 item {
                     HomeSyncStatusCard(
                         status = uiState.syncStatus,
@@ -172,55 +159,6 @@ fun HomeScreen(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun QuickLinks(
-    onRecipesClick: () -> Unit,
-    onMealPlanClick: () -> Unit,
-    onShoppingListsClick: () -> Unit,
-    onCookbooksClick: () -> Unit,
-) {
-    Column {
-        Text("Shortcuts", style = MaterialTheme.typography.titleLarge)
-        Spacer(Modifier.height(12.dp))
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(end = 8.dp),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            item {
-                ShortcutCard(Icons.Filled.Restaurant, "Recipes", onRecipesClick)
-            }
-            item {
-                ShortcutCard(Icons.AutoMirrored.Filled.MenuBook, "Cookbooks", onCookbooksClick)
-            }
-            item {
-                ShortcutCard(Icons.Filled.CalendarMonth, "Meal plan", onMealPlanClick)
-            }
-            item {
-                ShortcutCard(Icons.Filled.ShoppingCart, "Shopping", onShoppingListsClick)
-            }
-        }
-    }
-}
-
-@Composable
-private fun ShortcutCard(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    onClick: () -> Unit,
-) {
-    Card(onClick = onClick, modifier = Modifier.width(132.dp)) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.height(8.dp))
-            Text(label, style = MaterialTheme.typography.labelLarge)
         }
     }
 }

@@ -1,6 +1,7 @@
 package dev.pschmitt.syncwich.ui.settings
 
 import dev.pschmitt.syncwich.ui.navigation.Route
+import dev.pschmitt.syncwich.ui.navigation.TopLevelDestination
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
@@ -29,6 +30,14 @@ class SettingsNavigationTest {
     fun `server connection route is distinct from the category menu`() {
         assertNotEquals(Route.Settings, Route.SettingsConnection)
         assertNotEquals(Route.SettingsCategory(SettingsCategory.Server), Route.SettingsConnection)
+    }
+
+    @Test
+    fun `settings and favorites are real top-level destinations`() {
+        assertEquals(Route.Favorites, TopLevelDestination.FAVORITES.route)
+        assertEquals(Route.Settings, TopLevelDestination.SETTINGS.route)
+        assertEquals("Favorites", TopLevelDestination.FAVORITES.label)
+        assertEquals("Settings", TopLevelDestination.SETTINGS.label)
     }
 
     @Test

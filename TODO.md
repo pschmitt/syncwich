@@ -916,15 +916,19 @@ lint; Zenfone verification remains open).
 
 ## SW-36: Make Settings and Favorites configurable navbar items
 
-- [ ] Allow Settings to be added to and removed from the bottom navigation through navigation
+- [x] Allow Settings to be added to and removed from the bottom navigation through navigation
       preferences
-- [ ] Add a dedicated Favorites destination backed by cached recipe-action/favorite state
-- [ ] Allow Favorites to be added to and removed from the bottom navigation through navigation
+- [x] Add a dedicated Favorites destination backed by cached recipe-action/favorite state
+- [x] Allow Favorites to be added to and removed from the bottom navigation through navigation
       preferences
-- [ ] Preserve sensible defaults, ordering, visibility rules, and accessibility for both items
-- [ ] Add focused coverage and verify configurable navbar behavior on the Zenfone 10
+- [x] Preserve sensible defaults, ordering, visibility rules, and accessibility for both items
+- [x] Add focused coverage
+- [ ] Verify configurable navbar behavior on the Zenfone 10
 
-Status: not started.
+Status: mostly done, 2026-08-14. Settings and Favorites are opt-in configurable destinations,
+Favorites reads cached action state, and focused resolver/ViewModel/route tests pass in remote
+`just check`; the debug APK installed on the Zenfone and Mi Pad, but launch verification is blocked
+by an existing same-version Room identity mismatch on those installs.
 
 ## SW-37: Audit image caching and unnecessary API calls
 
@@ -946,24 +950,30 @@ offline/slow-network verification on the Zenfone 10 remains outstanding.
 
 ## SW-38: Remove the Home Shortcuts section
 
-- [ ] Remove the “Shortcuts” section from the Home view
-- [ ] Preserve the remaining Home sections, spacing, cache-first behavior, and accessibility
-- [ ] Update focused coverage and verify the simplified Home view on the Zenfone 10
+- [x] Remove the “Shortcuts” section from the Home view
+- [x] Preserve the remaining Home sections, spacing, cache-first behavior, and accessibility
+- [x] Keep focused Home ordering/cache coverage passing
+- [ ] Verify the simplified Home view on the Zenfone 10
 
-Status: not started.
+Status: mostly done, 2026-08-14. The shortcut carousel is removed while cached Home sections and
+accessible actions remain; remote `just check` passed and the debug APK installed on the Zenfone
+and Mi Pad, but launch verification is blocked by an existing same-version Room identity mismatch.
 
 ## SW-39: Redesign Settings menus to match nyetbox patterns
 
-- [ ] Inspect nyetbox's settings menu hierarchy, row treatments, spacing, icons, and navigation
+- [x] Inspect nyetbox's settings menu hierarchy, row treatments, spacing, icons, and navigation
       patterns
-- [ ] Redesign Syncwich's Settings landing page and category menus with a current Material 3 visual
+- [x] Redesign Syncwich's Settings landing page and category menus with a current Material 3 visual
       treatment
-- [ ] Preserve the existing Server, Appearance, and navigation preferences behavior while improving
+- [x] Preserve the existing Server, Appearance, and navigation preferences behavior while improving
       labels, affordances, accessibility, and back navigation
-- [ ] Add focused UI coverage for the redesigned menu structure
+- [x] Add focused menu/navigation coverage for the redesigned menu structure
 - [ ] Verify the updated Settings experience visually and accessibly on the Zenfone 10
 
-Status: not started.
+Status: mostly done, 2026-08-14. Landing, Server, Appearance, and navigation menus now use the
+nyetbox-style grouped Material 3 cards with preserved semantics and behavior; remote `just check`
+passed and the debug APK installed on the Zenfone and Mi Pad, but launch verification is blocked by
+an existing same-version Room identity mismatch.
 
 ## SW-40: Audit UI/UX against current Material 3 guidance
 
@@ -975,8 +985,6 @@ Status: not started.
       navigation preferences
 - [ ] Add focused coverage for behavior/accessibility changes and verify the refreshed experience on
       the Zenfone 10
-
-Status: not started.
 
 ## SW-41: Format displayed ratings to one decimal place
 

@@ -7,6 +7,7 @@ import dev.pschmitt.syncwich.data.api.dto.OrganizerDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeSummaryDto
 import dev.pschmitt.syncwich.data.db.AppDatabase
+import dev.pschmitt.syncwich.data.db.dao.RecipeActionDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeDao
 import dev.pschmitt.syncwich.data.db.entity.CategoryEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeCategoryCrossRef
@@ -18,7 +19,11 @@ import dev.pschmitt.syncwich.data.image.selectRecipeImagePrefetchUrls
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -31,11 +36,13 @@ import timber.log.Timber
  * existing cache) on failure. `CategoryRepository`/`TagRepository` mirror this same shape.
  */
 @Singleton
+@OptIn(ExperimentalCoroutinesApi::class)
 class RecipeRepository
 @Inject
 constructor(
     private val recipesApi: RecipesApi,
     private val recipeDao: RecipeDao,
+    private val recipeActionDao: RecipeActionDao,
     private val database: AppDatabase,
 ) {
 
@@ -44,6 +51,18 @@ constructor(
     private val lastDetailRefreshAt = mutableMapOf<String, Long>()
 
     fun observeRecipes(): Flow<List<RecipeSummaryEntity>> = recipeDao.observeAll()
+
+    /** Returns cached recipe summaries whose existing per-user action state marks them favorite. */
+    fun observeFavoriteRecipes(): Flow<List<RecipeSummaryEntity>> =
+        recipeDao.observeAll().flatMapLatest { recipes ->
+            if (recipes.isEmpty()) {
+                flowOf(emptyList())
+            } else {
+                combine(recipes.map { recipe -> recipeActionDao.observe(recipe.id) }) { actions ->
+                    recipes.filterIndexed { index, _ -> actions[index]?.isFavorite == true }
+                }
+            }
+        }
 
     /**
      * Sends the minimal `CreateRecipe` body. No cache is cleared on failure; a later refresh can

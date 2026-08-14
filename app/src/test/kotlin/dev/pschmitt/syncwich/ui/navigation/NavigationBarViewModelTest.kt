@@ -80,6 +80,37 @@ class NavigationBarViewModelTest {
         )
     }
 
+    @Test
+    fun `settings and favorites are available when explicitly shown`() = runTest {
+        val preferences =
+            FakePreferences(
+                shown =
+                    setOf(
+                        NavigationBarItemKeys.FAVORITES,
+                        NavigationBarItemKeys.SETTINGS,
+                    )
+            )
+        val viewModel = NavigationBarViewModel(preferences, FakeCache())
+
+        assertEquals(
+            listOf(
+                NavigationBarItemKeys.HOME,
+                NavigationBarItemKeys.RECIPES,
+                NavigationBarItemKeys.FAVORITES,
+                NavigationBarItemKeys.SETTINGS,
+            ),
+            viewModel.visibleItemKeys.first {
+                it ==
+                    listOf(
+                        NavigationBarItemKeys.HOME,
+                        NavigationBarItemKeys.RECIPES,
+                        NavigationBarItemKeys.FAVORITES,
+                        NavigationBarItemKeys.SETTINGS,
+                    )
+            },
+        )
+    }
+
     private class FakePreferences(
         private val order: List<String> = emptyList(),
         private val hidden: Set<String> = emptySet(),

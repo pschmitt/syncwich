@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Settings
@@ -38,6 +39,7 @@ import dev.pschmitt.syncwich.ui.onboarding.OnboardingScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipeDetailScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipeEditorScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipeTimelineScreen
+import dev.pschmitt.syncwich.ui.recipes.FavoritesScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipesScreen
 import dev.pschmitt.syncwich.ui.settings.SettingsScreen
 import dev.pschmitt.syncwich.ui.settings.ConnectionSettingsScreen
@@ -55,6 +57,7 @@ private val topLevelNavItems =
     listOf(
         TopLevelNavItem(TopLevelDestination.HOME, Icons.Filled.Home, "Home"),
         TopLevelNavItem(TopLevelDestination.RECIPES, Icons.Filled.Restaurant, "Recipes"),
+        TopLevelNavItem(TopLevelDestination.FAVORITES, Icons.Filled.Favorite, "Favorites"),
         TopLevelNavItem(TopLevelDestination.MEAL_PLAN, Icons.Filled.CalendarMonth, "Meal Plan"),
         TopLevelNavItem(TopLevelDestination.SHOPPING_LISTS, Icons.Filled.ShoppingCart, "Shopping"),
         TopLevelNavItem(
@@ -62,6 +65,7 @@ private val topLevelNavItems =
             Icons.AutoMirrored.Filled.MenuBook,
             "Cookbooks",
         ),
+        TopLevelNavItem(TopLevelDestination.SETTINGS, Icons.Filled.Settings, "Settings"),
     )
 
 /**
@@ -162,8 +166,6 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
                         navController.navigate(Route.RecipeDetail(recipe.id, recipe.slug))
                     },
                     onRecipesClick = { navController.navigate(Route.Recipes) },
-                    onMealPlanClick = { navController.navigate(Route.MealPlan) },
-                    onShoppingListsClick = { navController.navigate(Route.ShoppingLists) },
                     onCookbooksClick = { navController.navigate(Route.Cookbooks) },
                     onCookbookClick = { cookbookId ->
                         navController.navigate(Route.CookbookDetail(cookbookId))
@@ -177,6 +179,14 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
                         navController.navigate(Route.RecipeDetail(recipe.id, recipe.slug))
                     },
                     onCreateClick = { navController.navigate(Route.RecipeEditor()) },
+                    onSettingsClick = { navController.navigate(Route.Settings) },
+                )
+            }
+            composable<Route.Favorites> {
+                FavoritesScreen(
+                    onRecipeClick = { recipe ->
+                        navController.navigate(Route.RecipeDetail(recipe.id, recipe.slug))
+                    },
                     onSettingsClick = { navController.navigate(Route.Settings) },
                 )
             }

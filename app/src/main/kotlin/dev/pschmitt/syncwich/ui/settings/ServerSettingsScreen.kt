@@ -1,7 +1,6 @@
 package dev.pschmitt.syncwich.ui.settings
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,11 +10,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -63,33 +62,32 @@ fun ServerSettingsScreen(
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             item {
-                Column(modifier = Modifier.padding(bottom = 8.dp)) {
-                    Text("Connection details")
-                    Text(
-                        "These details are stored securely on this device. Cached recipes remain " +
-                            "available offline.",
+                SettingsGroupCard(title = "Connection", icon = Icons.Filled.Dns) {
+                    SettingsListItem(
+                        headlineContent = { Text("Connection details") },
+                        supportingContent = {
+                            Text(
+                                "Stored securely on this device. Cached recipes remain available offline."
+                            )
+                        },
+                    )
+                    ConnectionDetailRow(credentials)
+                    SettingsActionRow(
+                        title = "Change connection",
+                        subtitle = "Change the server URL or replace the API token",
+                        onClick = onChangeConnection,
+                    )
+                    SettingsActionRow(
+                        title = if (isSigningOut) "Signing out…" else "Sign out",
+                        subtitle = "Remove this connection and clear its offline cache",
+                        onClick = { showSignOutConfirmation = true },
+                        enabled = !isSigningOut,
+                        icon = { Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null) },
                     )
                 }
-            }
-            item { ConnectionDetailRow(credentials) }
-            item {
-                SettingsActionRow(
-                    title = "Change connection",
-                    subtitle = "Change the server URL or replace the API token",
-                    onClick = onChangeConnection,
-                )
-            }
-            item {
-                SettingsActionRow(
-                    title = if (isSigningOut) "Signing out…" else "Sign out",
-                    subtitle = "Remove this connection and clear its offline cache",
-                    onClick = { showSignOutConfirmation = true },
-                    enabled = !isSigningOut,
-                    icon = { Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null) },
-                )
             }
         }
     }
@@ -120,11 +118,11 @@ fun ServerSettingsScreen(
 
 @Composable
 private fun ConnectionDetailRow(credentials: MealieCredentials) {
-    ListItem(
+    SettingsListItem(
         headlineContent = { Text("Server URL") },
         supportingContent = { Text(credentials.serverUrl.ifBlank { "Not configured" }) },
     )
-    ListItem(
+    SettingsListItem(
         headlineContent = { Text("API token") },
         supportingContent = { Text(maskApiToken(credentials.apiToken)) },
     )
@@ -138,7 +136,7 @@ private fun SettingsActionRow(
     enabled: Boolean = true,
     icon: @Composable () -> Unit = {},
 ) {
-    ListItem(
+    SettingsListItem(
         modifier =
                 Modifier.clickable(enabled = enabled, role = Role.Button, onClick = onClick).semantics {
                     contentDescription = "$title: $subtitle"

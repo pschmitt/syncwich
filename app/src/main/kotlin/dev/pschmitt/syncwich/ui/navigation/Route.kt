@@ -13,6 +13,8 @@ sealed interface Route {
 
     @Serializable data object Recipes : Route
 
+    @Serializable data object Favorites : Route
+
     // slug is carried alongside recipeId because Mealie's full-detail endpoint is keyed by slug,
     // not id (see RecipesApi.getRecipeDetailRaw) - the tapped recipe card already has both, so no
     // extra Room lookup is needed to fetch/refresh detail after navigating here.
@@ -51,7 +53,9 @@ sealed interface Route {
 enum class TopLevelDestination(val key: String, val route: Route, val label: String) {
     HOME(NavigationBarItemKeys.HOME, Route.Home, "Home"),
     RECIPES(NavigationBarItemKeys.RECIPES, Route.Recipes, "Recipes"),
+    FAVORITES(NavigationBarItemKeys.FAVORITES, Route.Favorites, "Favorites"),
     MEAL_PLAN(NavigationBarItemKeys.MEAL_PLAN, Route.MealPlan, "Meal Plan"),
     SHOPPING_LISTS(NavigationBarItemKeys.SHOPPING_LISTS, Route.ShoppingLists, "Shopping"),
     COOKBOOKS(NavigationBarItemKeys.COOKBOOKS, Route.Cookbooks, "Cookbooks"),
+    SETTINGS(NavigationBarItemKeys.SETTINGS, Route.Settings, "Settings"),
 }
