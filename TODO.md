@@ -822,3 +822,17 @@ Status: not started.
 - [ ] Add focused coverage and verify configurable navbar behavior on the Zenfone 10
 
 Status: not started.
+
+## SW-37: Audit image caching and unnecessary API calls
+
+- [ ] Trace cookbook recipe-list image loading and confirm Coil disk/memory cache reuse for repeated
+      images and revisits
+- [ ] Ensure cached recipe summaries/details and cached image URLs render immediately offline while
+      network refreshes remain best-effort and non-blocking
+- [ ] Identify and remove redundant recipe, cookbook, detail, or image API requests, including
+      recompositions and repeated navigation
+- [ ] Add focused cache/request-count regression coverage and useful debug diagnostics without
+      logging credentials
+- [ ] Verify offline and slow-network behavior, especially cookbook recipe lists, on the Zenfone 10
+
+Status: not started.
