@@ -1,5 +1,7 @@
 package dev.pschmitt.syncwich.ui.recipes
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -21,6 +23,7 @@ import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -44,10 +47,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
@@ -66,21 +71,52 @@ fun RecipeEditorScreen(
     val saveState by viewModel.saveState.collectAsStateWithLifecycle()
     val isSaving = saveState is RecipeEditorSaveState.Saving
     val errorMessage = (saveState as? RecipeEditorSaveState.Error)?.message
+    val context = LocalContext.current
+    val cameraAvailable =
+        remember { context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) }
     var imageTarget by remember { mutableStateOf<RecipeEditorImageTarget?>(null) }
+    var cameraOutputUri by remember { mutableStateOf<Uri?>(null) }
+    val applyImageUri: (Uri) -> Unit = { uri ->
+        when (val target = imageTarget) {
+            RecipeEditorImageTarget.Cover -> viewModel.onCoverImage(uri.toString())
+            RecipeEditorImageTarget.Description -> viewModel.onDescriptionImage(uri.toString())
+            is RecipeEditorImageTarget.Instruction ->
+                viewModel.onInstructionImage(target.index, uri.toString())
+            null -> Unit
+        }
+        imageTarget = null
+    }
     val imagePicker =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-            if (uri != null) {
-                when (val target = imageTarget) {
-                    RecipeEditorImageTarget.Cover -> viewModel.onCoverImage(uri.toString())
-                    RecipeEditorImageTarget.Description ->
-                        viewModel.onDescriptionImage(uri.toString())
-                    is RecipeEditorImageTarget.Instruction ->
-                        viewModel.onInstructionImage(target.index, uri.toString())
-                    null -> Unit
-                }
-            }
+            uri?.let(applyImageUri)
             imageTarget = null
         }
+    val cameraCapture =
+        rememberLauncherForActivityResult(RecipeEditorTakePictureContract) { captured ->
+            val uri = cameraOutputUri
+            if (captured && uri != null) applyImageUri(uri) else imageTarget = null
+            cameraOutputUri = null
+        }
+    val startCameraCapture = {
+        val outputUri = createRecipeEditorCameraUri(context)
+        cameraOutputUri = outputUri
+        cameraCapture.launch(outputUri)
+    }
+    val cameraPermission =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted && imageTarget != null) startCameraCapture() else imageTarget = null
+        }
+    val requestCameraCapture: (RecipeEditorImageTarget) -> Unit = { target ->
+        imageTarget = target
+        if (
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
+                PackageManager.PERMISSION_GRANTED
+        ) {
+            startCameraCapture()
+        } else {
+            cameraPermission.launch(Manifest.permission.CAMERA)
+        }
+    }
 
     LaunchedEffect(saveState) { if (saveState is RecipeEditorSaveState.Saved) onSaved() }
 
@@ -139,22 +175,41 @@ fun RecipeEditorScreen(
                         imageTarget = RecipeEditorImageTarget.Description
                         imagePicker.launch("image/*")
                     },
+                    onCaptureImage =
+                        if (cameraAvailable) {
+                            { requestCameraCapture(RecipeEditorImageTarget.Description) }
+                        } else null,
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
                     OutlinedButton(
                         onClick = {
                             imageTarget = RecipeEditorImageTarget.Cover
                             imagePicker.launch("image/*")
                         },
                         enabled = !isSaving,
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
                         Icon(Icons.Filled.Image, contentDescription = null)
                         Text("Choose cover image", modifier = Modifier.padding(start = 8.dp))
+                    }
+                    if (cameraAvailable) {
+                        OutlinedButton(
+                            onClick = { requestCameraCapture(RecipeEditorImageTarget.Cover) },
+                            enabled = !isSaving,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Icon(Icons.Filled.PhotoCamera, contentDescription = null)
+                            Text("Take cover photo", modifier = Modifier.padding(start = 8.dp))
+                        }
                     }
                     if (viewModel.isEditing) {
                         OutlinedButton(
                             onClick = viewModel::onRemoveCoverImage,
                             enabled = !isSaving,
+                            modifier = Modifier.fillMaxWidth(),
                         ) {
                             Icon(Icons.Filled.Delete, contentDescription = null)
                             Text("Remove cover", modifier = Modifier.padding(start = 8.dp))
@@ -238,6 +293,12 @@ fun RecipeEditorScreen(
                         imageTarget = RecipeEditorImageTarget.Instruction(index)
                         imagePicker.launch("image/*")
                     },
+                    onCaptureImage =
+                        if (cameraAvailable) {
+                            { index ->
+                                requestCameraCapture(RecipeEditorImageTarget.Instruction(index))
+                            }
+                        } else null,
                 )
 
                 if (errorMessage != null && errorMessage != "Enter a recipe name") {
@@ -288,6 +349,7 @@ private fun EditableTextList(
     addLabel: String,
     singleLine: Boolean = true,
     onAddImage: ((Int) -> Unit)? = null,
+    onCaptureImage: ((Int) -> Unit)? = null,
     onMove: ((Int, Int) -> Unit)? = null,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -314,6 +376,7 @@ private fun EditableTextList(
                         enabled = enabled,
                         modifier = Modifier.weight(1f),
                         onAddImage = onAddImage?.let { add -> { add(index) } },
+                        onCaptureImage = onCaptureImage?.let { capture -> { capture(index) } },
                     )
                 }
                 if (onMove == null) {

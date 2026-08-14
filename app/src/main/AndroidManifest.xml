@@ -13,6 +13,9 @@
     <!-- API 33+ runtime permission for optional background sync result notifications. Sync never
          depends on it being granted. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Requested only when the recipe editor's Take photo action is used. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
         android:name=".SyncwichApp"
@@ -76,6 +79,18 @@
                 android:name="androidx.work.WorkManagerInitializer"
                 android:value="androidx.startup"
                 tools:node="remove" />
+        </provider>
+
+        <!-- Camera output is private and is copied into the editor's draft media cache after
+             capture, so failed/offline saves retain the selected image. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/recipe_editor_file_paths" />
         </provider>
     </application>
 

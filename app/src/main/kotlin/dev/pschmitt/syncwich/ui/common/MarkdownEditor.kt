@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.FormatListNumbered
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,6 +51,7 @@ fun MarkdownEditor(
     modifier: Modifier = Modifier,
     minLines: Int = 4,
     onAddImage: (() -> Unit)? = null,
+    onCaptureImage: (() -> Unit)? = null,
 ) {
     var preview by rememberSaveable { mutableStateOf(false) }
     var fieldValue by remember(value) { mutableStateOf(TextFieldValue(value)) }
@@ -131,6 +133,9 @@ fun MarkdownEditor(
                 }
                 if (onAddImage != null) {
                     FormatButton("Add image", Icons.Filled.Image, onClick = onAddImage)
+                }
+                if (onCaptureImage != null) {
+                    FormatButton("Take photo", Icons.Filled.PhotoCamera, onClick = onCaptureImage)
                 }
             }
             OutlinedTextField(
