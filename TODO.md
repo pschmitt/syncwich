@@ -469,3 +469,14 @@ Status: not started.
       fetch for every card on screen at once
 
 Status: not started.
+
+## SW-17: Audit and optimize main-thread performance
+
+- [ ] Profile startup, onboarding, sync-triggered UI updates, Room reads, and Compose recomposition
+      to identify work that is accidentally running on the main thread
+- [ ] Move blocking I/O, JSON parsing, image work, and other expensive computation onto appropriate
+      background dispatchers without weakening the cache-first/offline-first behavior
+- [ ] Add regression coverage or lightweight instrumentation for any main-thread issue found, and
+      verify the fix on a real device
+
+Status: not started.
