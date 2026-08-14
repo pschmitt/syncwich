@@ -314,7 +314,7 @@ Status: not started.
 
 ## SW-8: Configurable bottom nav bar
 
-- [ ] Persisted, ordered list of nav-bar item keys (Recipes/Meal Plan/Shopping Lists/Cookbooks,
+- [x] Persisted, ordered list of nav-bar item keys (Recipes/Meal Plan/Shopping Lists/Cookbooks,
       +Settings if desired) plus a hidden-set, stored via `SettingsRepository`/DataStore - mirror
       the pattern in the sibling nyetbox (`data/repository/SettingsRepository.kt`'s
       `NavBarItem`/`navBarItems`) and jollyfin (`NavigationBarOrder.kt` +
@@ -322,14 +322,17 @@ Status: not started.
       `resolveNavBarOrder(natural, persisted, hidden)`-style function merging the persisted
       order/hidden-set against the app's current natural item set at render time, so adding a new
       destination later doesn't require a migration.
-- [ ] Settings sub-screen to reorder (up/down buttons, same as both sibling apps - no true
+- [x] Settings sub-screen to reorder (up/down buttons, same as both sibling apps - no true
       drag-and-drop) and show/hide each item; keep at least one item pinned/always-visible
       (nyetbox pins nothing but caps at 5 items, jollyfin pins Home - decide which makes sense once
-      Settings/SW-2 exists)
-- [ ] Wire the resolved list into `SyncwichNavHost`'s `NavigationBar` (currently a hardcoded
+      Settings/SW-2 exists) - Recipes is pinned always-visible.
+- [x] Wire the resolved list into `SyncwichNavHost`'s `NavigationBar` (currently a hardcoded
       `topLevelNavItems` list)
 
-Status: not started.
+Status: **done**, 2026-08-14. Added DataStore-backed order/hidden preferences, robust natural-order
+resolution, accessible settings controls, focused resolver tests, and resolved NavigationBar
+wiring. `just check` ran remotely after a clean build; SW-8 sources passed compilation, while the
+existing worktree still has unrelated compilation failures in other SW items.
 
 ## SW-9: Rounded search bar / general look-and-feel polish
 

@@ -66,6 +66,15 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
     val lastSyncError: Flow<String?> =
         context.syncwichDataStore.data.map { it[KEY_LAST_SYNC_ERROR] }
 
+    /** The user's preferred order, with unknown or missing keys resolved by the caller. */
+    val navigationBarOrder: Flow<List<String>> =
+        context.syncwichDataStore.data.map { navigationBarOrderFromString(it[KEY_NAV_BAR_ORDER]) }
+
+    /** Destination keys hidden from the bottom navigation bar. */
+    val navigationBarHiddenItems: Flow<Set<String>> =
+        context.syncwichDataStore.data
+            .map { navigationBarOrderFromString(it[KEY_NAV_BAR_HIDDEN_ITEMS]).toSet() }
+
     /** Persists a validated connection. Callers should confirm it works before calling this. */
     fun save(serverUrl: String, apiToken: String) {
         val normalizedUrl = serverUrl.trim().trimEnd('/')
@@ -100,6 +109,20 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         }
     }
 
+    suspend fun saveNavigationBarOrder(order: List<String>) {
+        context.syncwichDataStore.edit { prefs ->
+            prefs[KEY_NAV_BAR_ORDER] = navigationBarOrderToString(order)
+        }
+    }
+
+    suspend fun setNavigationBarItemHidden(key: String, hidden: Boolean) {
+        context.syncwichDataStore.edit { prefs ->
+            val current = navigationBarOrderFromString(prefs[KEY_NAV_BAR_HIDDEN_ITEMS]).toMutableSet()
+            if (hidden) current += key else current -= key
+            prefs[KEY_NAV_BAR_HIDDEN_ITEMS] = navigationBarOrderToString(current.toList())
+        }
+    }
+
     private fun loadCredentials(): MealieCredentials =
         MealieCredentials(
             serverUrl = prefs.getString(KEY_SERVER_URL, "") ?: "",
@@ -110,6 +133,8 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         const val KEY_SERVER_URL = "server_url"
         const val KEY_API_TOKEN = "api_token"
         const val MAX_SYNC_ERROR_LENGTH = 500
+        val KEY_NAV_BAR_ORDER = stringPreferencesKey("navigation_bar_order")
+        val KEY_NAV_BAR_HIDDEN_ITEMS = stringPreferencesKey("navigation_bar_hidden_items")
         val KEY_LAST_SYNC_AT = longPreferencesKey("last_sync_at")
         val KEY_LAST_SYNC_ERROR = stringPreferencesKey("last_sync_error")
     }

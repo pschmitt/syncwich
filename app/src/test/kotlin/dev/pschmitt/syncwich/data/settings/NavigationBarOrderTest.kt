@@ -1,0 +1,76 @@
+package dev.pschmitt.syncwich.data.settings
+
+import org.junit.Assert.assertEquals
+import org.junit.Test
+
+class NavigationBarOrderTest {
+
+    @Test
+    fun `missing preferences preserve natural order`() {
+        assertEquals(
+            listOf("recipes", "meal_plan", "shopping_lists"),
+            resolveNavBarOrder(
+                natural = listOf("recipes", "meal_plan", "shopping_lists"),
+                persisted = emptyList(),
+                hidden = emptySet(),
+            ),
+        )
+    }
+
+    @Test
+    fun `persisted order drops stale keys and appends new destinations`() {
+        assertEquals(
+            listOf("shopping_lists", "recipes", "meal_plan", "cookbooks"),
+            resolveNavBarOrder(
+                natural = listOf("recipes", "meal_plan", "shopping_lists", "cookbooks"),
+                persisted = listOf("shopping_lists", "missing", "recipes", "shopping_lists"),
+                hidden = emptySet(),
+            ),
+        )
+    }
+
+    @Test
+    fun `hidden destinations are removed after order is resolved`() {
+        assertEquals(
+            listOf("recipes", "cookbooks"),
+            resolveNavBarOrder(
+                natural = listOf("recipes", "meal_plan", "shopping_lists", "cookbooks"),
+                persisted = listOf("cookbooks", "recipes", "meal_plan", "shopping_lists"),
+                hidden = setOf("meal_plan", "shopping_lists"),
+            ),
+        )
+    }
+
+    @Test
+    fun `pinned destination remains visible even when persisted as hidden`() {
+        assertEquals(
+            listOf("meal_plan", "recipes"),
+            resolveNavBarOrder(
+                natural = listOf("recipes", "meal_plan"),
+                persisted = listOf("meal_plan", "recipes"),
+                hidden = setOf("recipes", "meal_plan"),
+                pinned = setOf("recipes"),
+            ),
+        )
+    }
+
+    @Test
+    fun `all hidden destinations fall back to one natural item`() {
+        assertEquals(
+            listOf("recipes"),
+            resolveNavBarOrder(
+                natural = listOf("recipes", "meal_plan"),
+                persisted = emptyList(),
+                hidden = setOf("recipes", "meal_plan"),
+            ),
+        )
+    }
+
+    @Test
+    fun `preference encoding trims and deduplicates keys`() {
+        val encoded = navigationBarOrderToString(listOf(" recipes ", "", "meal_plan", "recipes"))
+
+        assertEquals("recipes,meal_plan", encoded)
+        assertEquals(listOf("recipes", "meal_plan"), navigationBarOrderFromString(encoded))
+    }
+}

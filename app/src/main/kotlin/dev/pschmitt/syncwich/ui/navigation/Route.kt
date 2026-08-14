@@ -1,5 +1,6 @@
 package dev.pschmitt.syncwich.ui.navigation
 
+import dev.pschmitt.syncwich.data.settings.NavigationBarItemKeys
 import kotlinx.serialization.Serializable
 
 /** Type-safe Navigation Compose destinations (see MainActivity/SyncwichNavHost). */
@@ -27,9 +28,9 @@ sealed interface Route {
 }
 
 /** The four bottom-navigation destinations, in display order. */
-enum class TopLevelDestination(val route: Route) {
-    RECIPES(Route.Recipes),
-    MEAL_PLAN(Route.MealPlan),
-    SHOPPING_LISTS(Route.ShoppingLists),
-    COOKBOOKS(Route.Cookbooks),
+enum class TopLevelDestination(val key: String, val route: Route, val label: String) {
+    RECIPES(NavigationBarItemKeys.RECIPES, Route.Recipes, "Recipes"),
+    MEAL_PLAN(NavigationBarItemKeys.MEAL_PLAN, Route.MealPlan, "Meal Plan"),
+    SHOPPING_LISTS(NavigationBarItemKeys.SHOPPING_LISTS, Route.ShoppingLists, "Shopping"),
+    COOKBOOKS(NavigationBarItemKeys.COOKBOOKS, Route.Cookbooks, "Cookbooks"),
 }
