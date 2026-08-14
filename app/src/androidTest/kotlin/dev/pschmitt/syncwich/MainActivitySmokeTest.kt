@@ -10,18 +10,24 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Confirms the app launches and its bottom navigation shell renders. */
+/**
+ * Confirms the app launches. A freshly installed app has no stored server URL/API token, so it
+ * lands on onboarding rather than the bottom-nav shell - see `MainActivity`'s `startDestination`
+ * gating (SW-2). The pre-onboarding-gate version of this test asserted the bottom nav shell
+ * directly; that now only applies once a connection is configured (exercised manually / by a later
+ * SW-N's end-to-end onboarding flow test, since it requires a real reachable Mealie server).
+ */
 @RunWith(AndroidJUnit4::class)
 class MainActivitySmokeTest {
 
     @get:Rule val activityRule = ActivityScenarioRule(MainActivity::class.java)
 
     @Test
-    fun launchesToRecipesTab() {
+    fun launchesToOnboardingWhenUnconfigured() {
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-        check(device.wait(Until.hasObject(By.text("Recipes")), 30_000))
-        check(device.hasObject(By.text("Meal Plan")))
-        check(device.hasObject(By.text("Shopping")))
-        check(device.hasObject(By.text("Cookbooks")))
+        check(device.wait(Until.hasObject(By.text("Connect to Mealie")), 30_000))
+        check(device.hasObject(By.text("Server URL")))
+        check(device.hasObject(By.text("API token")))
+        check(device.hasObject(By.text("Connect")))
     }
 }
