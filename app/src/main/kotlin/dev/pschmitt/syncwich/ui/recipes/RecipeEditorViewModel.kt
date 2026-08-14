@@ -35,6 +35,16 @@ sealed interface RecipeEditorSaveState {
     data object Saved : RecipeEditorSaveState
 }
 
+sealed interface RecipeEditorImportState {
+    data object Idle : RecipeEditorImportState
+
+    data object Importing : RecipeEditorImportState
+
+    data class Failed(val message: String) : RecipeEditorImportState
+
+    data object Loaded : RecipeEditorImportState
+}
+
 /**
  * Coordinates one explicit recipe mutation without replacing the user's draft on failure - mirrors
  * [dev.pschmitt.syncwich.ui.cookbooks.CookbookEditorViewModel]. An edit draft is seeded from the
@@ -55,6 +65,7 @@ constructor(
     private val route = savedStateHandle.toRoute<Route.RecipeEditor>()
     private val recipeId = route.recipeId
     private val sharedAssetUri = route.sharedAssetUri
+    private val importUrl = route.importUrl
     val isEditing: Boolean = recipeId.isNotBlank()
 
     private val _draft = MutableStateFlow(RecipeEditorDraft())
@@ -63,11 +74,16 @@ constructor(
     private val _saveState = MutableStateFlow<RecipeEditorSaveState>(RecipeEditorSaveState.Idle)
     val saveState: StateFlow<RecipeEditorSaveState> = _saveState.asStateFlow()
 
+    private val _importState = MutableStateFlow<RecipeEditorImportState>(RecipeEditorImportState.Idle)
+    val importState: StateFlow<RecipeEditorImportState> = _importState.asStateFlow()
+
     private var draftTouched = false
+    private var importedSlug: String? = null
 
     init {
         sharedAssetUri?.let { cacheSelectedImage(it) { cachedUri -> withCoverImage(cachedUri) } }
         if (isEditing) loadCachedDraft()
+        importUrl?.takeIf(String::isNotBlank)?.let(::importRecipe)
     }
 
     fun onNameChange(value: String) = updateDraft { copy(name = value) }
@@ -119,7 +135,7 @@ constructor(
             _saveState.value = RecipeEditorSaveState.Error(message)
             return
         }
-        if (isEditing && draftSnapshot.existingSlug.isNullOrBlank()) {
+        if ((isEditing || importedSlug != null) && draftSnapshot.existingSlug.isNullOrBlank()) {
             _saveState.value =
                 RecipeEditorSaveState.Error(
                     "This recipe is not cached on this device. Sync it before editing."
@@ -130,7 +146,7 @@ constructor(
         _saveState.value = RecipeEditorSaveState.Saving
         viewModelScope.launch {
             val result =
-                if (isEditing) {
+                if (isEditing || importedSlug != null) {
                     saveExistingRecipe(draftSnapshot)
                 } else {
                     saveNewRecipe(draftSnapshot)
@@ -143,6 +159,42 @@ constructor(
                             "Couldn't save recipe. Your draft is still here; check your " +
                                 "connection and try again."
                         )
+                    },
+                )
+        }
+    }
+
+    private fun importRecipe(url: String) {
+        _importState.value = RecipeEditorImportState.Importing
+        viewModelScope.launch {
+            runCatching {
+                val reference = recipeRepository.parseRecipeUrl(url).getOrThrow()
+                val slug =
+                    reference.trim().trim('"').takeIf(String::isNotBlank)
+                        ?: error("Mealie did not return the imported recipe slug")
+                recipeRepository.refreshRecipeDetail("", slug, forceRefresh = true).getOrThrow()
+                val cached =
+                    recipeRepository.observeRecipeDetailBySlug(slug).first()
+                        ?: error("The imported recipe was not returned by Mealie")
+                val input =
+                    decodeRecipeInput(json, cached.detailJson)
+                        ?: error("The imported recipe could not be decoded")
+                slug to input
+            }
+                .fold(
+                    onSuccess = { (slug, input) ->
+                        importedSlug = slug
+                        draftTouched = false
+                        _draft.value = RecipeEditorDraft.from(input, slug)
+                        _saveState.value = RecipeEditorSaveState.Idle
+                        _importState.value = RecipeEditorImportState.Loaded
+                    },
+                    onFailure = {
+                        _importState.value =
+                            RecipeEditorImportState.Failed(
+                                "Couldn't import this URL. You can still enter a recipe " +
+                                    "manually, or try again with another URL."
+                            )
                     },
                 )
         }

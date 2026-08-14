@@ -8,6 +8,7 @@ import dev.pschmitt.syncwich.data.api.dto.CreateRecipeDto
 import dev.pschmitt.syncwich.data.api.dto.PagedResponseDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeSummaryDto
+import dev.pschmitt.syncwich.data.api.dto.ScrapeRecipeDto
 import dev.pschmitt.syncwich.data.db.dao.CookbookDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeDao
 import dev.pschmitt.syncwich.data.db.entity.CookbookEntity
@@ -455,6 +456,9 @@ class CookbookRepositoryTest {
         fun requestCount(cookbookId: String): Int = cookbookRequestCounts[cookbookId] ?: 0
 
         override suspend fun createRecipe(request: CreateRecipeDto): ResponseBody =
+            error("not used by CookbookRepositoryTest")
+
+        override suspend fun parseRecipeUrl(request: ScrapeRecipeDto): ResponseBody =
             error("not used by CookbookRepositoryTest")
 
         override suspend fun updateRecipe(slug: String, request: RecipeInputDto): ResponseBody =

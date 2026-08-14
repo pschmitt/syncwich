@@ -36,6 +36,9 @@ internal fun parseMealieIntent(intent: Intent?): MealieLinkTarget? {
             else -> null
         }
     return text?.let(::parseMealieLink)
+        ?: if (intent?.action == Intent.ACTION_SEND) {
+            extractSharedWebUrl(text)?.let(::parseMealieLink)
+        } else null
 }
 
 internal fun parseSharedAssetUri(intent: Intent?): String? {
@@ -44,6 +47,27 @@ internal fun parseSharedAssetUri(intent: Intent?): String? {
     val streamUri: Uri? =
         intent.getParcelableExtra(Intent.EXTRA_STREAM) ?: intent.clipData?.getItemAt(0)?.uri
     return streamUri?.toString()?.takeIf(String::isNotBlank)
+}
+
+/** Returns a shared web URL that is not already a recognized Mealie deep link. */
+internal fun parseSharedRecipeUrl(intent: Intent?): String? {
+    if (intent?.action != Intent.ACTION_SEND) return null
+    return parseSharedRecipeText(intent.getStringExtra(Intent.EXTRA_TEXT))
+}
+
+internal fun parseSharedRecipeText(text: String?): String? {
+    val sharedUrl = extractSharedWebUrl(text) ?: return null
+    if (parseMealieLink(sharedUrl) != null) return null
+    val uri = runCatching { URI(sharedUrl) }.getOrNull() ?: return null
+    return sharedUrl.takeIf { uri.scheme?.lowercase() in setOf("http", "https") }
+}
+
+private fun extractSharedWebUrl(text: String?): String? {
+    val trimmedText = text?.trim()?.takeIf(String::isNotBlank) ?: return null
+    return Regex("https?://[^\\s<>\\\"']+")
+        .find(trimmedText)
+        ?.value
+        ?.trimEnd('.', ',', ';', ':', '!', '?', ')', ']', '}')
 }
 
 private fun parseLongFormLink(segments: List<String>): MealieLinkTarget? {

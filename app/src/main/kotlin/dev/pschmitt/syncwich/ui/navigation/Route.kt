@@ -32,9 +32,13 @@ sealed interface Route {
     // extra Room lookup is needed to fetch/refresh detail after navigating here.
     @Serializable data class RecipeDetail(val recipeId: String = "", val slug: String) : Route
 
-    /** Empty [recipeId] opens a create draft; a cached id opens an edit draft. */
+    /** Empty [recipeId] opens a create draft; [importUrl] starts Mealie URL parsing. */
     @Serializable
-    data class RecipeEditor(val recipeId: String = "", val sharedAssetUri: String? = null) : Route
+    data class RecipeEditor(
+        val recipeId: String = "",
+        val sharedAssetUri: String? = null,
+        val importUrl: String? = null,
+    ) : Route
 
     /** A single recipe's confirmed "I made this" cooking-event history - see SW-30. */
     @Serializable data class RecipeTimeline(val recipeId: String) : Route

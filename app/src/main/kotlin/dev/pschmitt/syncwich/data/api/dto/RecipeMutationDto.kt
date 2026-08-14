@@ -7,6 +7,14 @@ import kotlinx.serialization.json.JsonElement
 /** The minimal body accepted by Mealie's `POST /api/recipes` route. */
 @Serializable data class CreateRecipeDto(val name: String)
 
+/** Confirmed against Mealie's live OpenAPI `ScrapeRecipe` schema. */
+@Serializable
+data class ScrapeRecipeDto(
+    val includeTags: Boolean = true,
+    val includeCategories: Boolean = true,
+    val url: String,
+)
+
 /**
  * The editable recipe payload accepted by Mealie v3.22.0's single-recipe PUT/PATCH routes.
  *

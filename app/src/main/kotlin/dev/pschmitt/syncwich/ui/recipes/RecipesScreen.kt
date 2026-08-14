@@ -19,17 +19,22 @@ import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -65,12 +70,16 @@ fun RecipesScreen(
     onRecipeClick: (RecipeSummaryEntity) -> Unit,
     modifier: Modifier = Modifier,
     onCreateClick: () -> Unit = {},
+    onImportUrlClick: (String) -> Unit = {},
     onSettingsClick: () -> Unit = {},
     initialTagId: String? = null,
     viewModel: RecipesViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var tagsExpanded by rememberSaveable { mutableStateOf(false) }
+    var addMenuExpanded by rememberSaveable { mutableStateOf(false) }
+    var importDialogVisible by rememberSaveable { mutableStateOf(false) }
+    var importUrl by rememberSaveable { mutableStateOf("") }
 
     LaunchedEffect(initialTagId) {
         initialTagId?.let(viewModel::selectTag)
@@ -89,11 +98,34 @@ fun RecipesScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onCreateClick,
-                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                text = { Text("New recipe") },
-            )
+            Box {
+                ExtendedFloatingActionButton(
+                    onClick = { addMenuExpanded = true },
+                    icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                    text = { Text("Add recipe") },
+                )
+                DropdownMenu(
+                    expanded = addMenuExpanded,
+                    onDismissRequest = { addMenuExpanded = false },
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("New recipe") },
+                        leadingIcon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                        onClick = {
+                            addMenuExpanded = false
+                            onCreateClick()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Import from URL") },
+                        leadingIcon = { Icon(Icons.Filled.Link, contentDescription = null) },
+                        onClick = {
+                            addMenuExpanded = false
+                            importDialogVisible = true
+                        },
+                    )
+                }
+            }
         },
     ) { innerPadding ->
         PullToRefreshBox(
@@ -175,6 +207,37 @@ fun RecipesScreen(
                 }
             }
         }
+    }
+
+    if (importDialogVisible) {
+        AlertDialog(
+            onDismissRequest = { importDialogVisible = false },
+            title = { Text("Import recipe from URL") },
+            text = {
+                OutlinedTextField(
+                    value = importUrl,
+                    onValueChange = { importUrl = it },
+                    label = { Text("Recipe URL") },
+                    placeholder = { Text("https://example.com/recipe") },
+                    singleLine = true,
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = importUrl.trim().startsWith("http://") ||
+                        importUrl.trim().startsWith("https://"),
+                    onClick = {
+                        val url = importUrl.trim()
+                        importDialogVisible = false
+                        importUrl = ""
+                        onImportUrlClick(url)
+                    },
+                ) { Text("Import") }
+            },
+            dismissButton = {
+                TextButton(onClick = { importDialogVisible = false }) { Text("Cancel") }
+            },
+        )
     }
 }
 

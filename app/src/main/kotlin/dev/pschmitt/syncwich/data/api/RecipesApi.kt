@@ -4,6 +4,7 @@ import dev.pschmitt.syncwich.data.api.dto.CreateRecipeDto
 import dev.pschmitt.syncwich.data.api.dto.PagedResponseDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeSummaryDto
+import dev.pschmitt.syncwich.data.api.dto.ScrapeRecipeDto
 import okhttp3.ResponseBody
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -24,6 +25,10 @@ interface RecipesApi {
      * slug.
      */
     @POST("api/recipes") suspend fun createRecipe(@Body request: CreateRecipeDto): ResponseBody
+
+    /** Confirmed against Mealie's live OpenAPI: parses a public recipe URL into a saved recipe. */
+    @POST("api/recipes/create/url")
+    suspend fun parseRecipeUrl(@Body request: ScrapeRecipeDto): ResponseBody
 
     /** `PUT /api/recipes/{slug}` accepts the complete `Recipe-Input` object. */
     @PUT("api/recipes/{slug}")

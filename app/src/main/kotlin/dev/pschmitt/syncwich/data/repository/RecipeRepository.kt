@@ -10,6 +10,7 @@ import dev.pschmitt.syncwich.data.api.dto.RecipeAssetDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeDetailDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeSummaryDto
+import dev.pschmitt.syncwich.data.api.dto.ScrapeRecipeDto
 import dev.pschmitt.syncwich.data.db.AppDatabase
 import dev.pschmitt.syncwich.data.db.dao.RecipeActionDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeDao
@@ -110,6 +111,19 @@ constructor(
                 .onFailure {
                     Timber.w(it, "Recipe deletion failed for '$slug'; keeping cached data")
                 }
+        }
+
+    /** Parses a URL through Mealie; no local cache is changed until the returned recipe is refreshed. */
+    suspend fun parseRecipeUrl(url: String): Result<String> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                require(url.isNotBlank()) { "Recipe URL must not be blank" }
+                recipesApi
+                    .parseRecipeUrl(ScrapeRecipeDto(url = url.trim()))
+                    .use { it.string().trim().trim('"') }
+                    .also { require(it.isNotBlank()) { "Mealie returned no recipe reference" } }
+            }
+                .onFailure { Timber.w(it, "Recipe URL parsing failed; keeping cached data") }
         }
 
     suspend fun updateRecipeImage(

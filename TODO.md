@@ -1599,9 +1599,46 @@ on ZF10.
 
 ## SW-92: Add recipes from URLs through Mealie parsing
 
-- [ ] Add a recipe-import flow that accepts a URL and sends it through Mealie’s parser/AI endpoint
-- [ ] Route URLs shared to Syncwich into the same import flow
-- [ ] Keep import results and failures cache-safe and clearly surfaced to the user
-- [ ] Add focused parser/share coverage and verify the flow on the Zenfone 10
+- [x] Add a recipe-import flow that accepts a URL and sends it through Mealie’s parser/AI endpoint
+- [x] Route URLs shared to Syncwich into the same import flow
+- [x] Keep import results and failures cache-safe and clearly surfaced to the user
+- [x] Add focused parser/share coverage and verify the flow on the Zenfone 10
+
+Status: **done**, 2026-08-15. Manual URL imports and shared URLs use Mealie’s confirmed
+`POST /api/recipes/create/url` parser, refresh the returned recipe into Room before showing it in
+the editor, and preserve drafts on failures. Unit tests cover direct URLs, Syncwich-style shared
+text, Mealie deep-link exclusion, and non-URL text; remote check/lint passed.
+
+## SW-93: Link the build version to its GitHub commit
+
+- [ ] Make the displayed build version link to the corresponding commit on the GitHub repository
+- [ ] Keep the link correct for local/debug and CI builds
+- [ ] Add focused coverage for the commit URL/version presentation
+
+Status: not started.
+
+## SW-94: Enlarge the app icon on the About page
+
+- [ ] Increase the displayed Syncwich app icon size in About
+- [ ] Preserve the surrounding layout and accessibility description
+- [ ] Add focused UI coverage and verify the updated About layout
+
+Status: not started.
+
+## SW-95: Add a seven-tap developer easter egg to the About build row
+
+- [ ] Add a seven-tap “become a developer” interaction to the build/version row
+- [ ] Keep the GitHub commit link as a distinct, discoverable action
+- [ ] Persist and expose developer-mode state safely with accessible feedback
+- [ ] Add focused interaction coverage
+
+Status: not started.
+
+## SW-96: Link About-page libraries to their project homepages
+
+- [ ] Make each library item clickable
+- [ ] Open the library’s GitHub/project homepage externally
+- [ ] Preserve license text and accessible link semantics
+- [ ] Add focused interaction coverage
 
 Status: not started.

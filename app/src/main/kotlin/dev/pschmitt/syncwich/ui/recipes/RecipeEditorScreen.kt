@@ -69,8 +69,12 @@ fun RecipeEditorScreen(
 ) {
     val draft by viewModel.draft.collectAsStateWithLifecycle()
     val saveState by viewModel.saveState.collectAsStateWithLifecycle()
+    val importState by viewModel.importState.collectAsStateWithLifecycle()
     val isSaving = saveState is RecipeEditorSaveState.Saving
+    val isImporting = importState is RecipeEditorImportState.Importing
+    val isBusy = isSaving || isImporting
     val errorMessage = (saveState as? RecipeEditorSaveState.Error)?.message
+    val importErrorMessage = (importState as? RecipeEditorImportState.Failed)?.message
     val context = LocalContext.current
     val cameraAvailable =
         remember { context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) }
@@ -124,9 +128,17 @@ fun RecipeEditorScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(if (viewModel.isEditing) "Edit recipe" else "New recipe") },
+                title = {
+                    Text(
+                        when {
+                            isImporting -> "Import recipe"
+                            viewModel.isEditing -> "Edit recipe"
+                            else -> "New recipe"
+                        }
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = onBack, enabled = !isSaving) {
+                    IconButton(onClick = onBack, enabled = !isBusy) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
@@ -141,11 +153,15 @@ fun RecipeEditorScreen(
             ) {
                 Text(
                     text =
-                        if (viewModel.isEditing) {
-                            "Changes are saved to Mealie explicitly. Your cached recipe remains " +
-                                "available if saving is unavailable."
-                        } else {
-                            "Create a recipe in Mealie. Nothing is sent until you tap Save."
+                        when {
+                            isImporting -> "Mealie is parsing this URL and caching the recipe…"
+                            importState is RecipeEditorImportState.Loaded ->
+                                "Mealie imported this recipe. Review the details, then save any " +
+                                    "changes explicitly."
+                            viewModel.isEditing ->
+                                "Changes are saved to Mealie explicitly. Your cached recipe " +
+                                    "remains available if saving is unavailable."
+                            else -> "Create a recipe in Mealie. Nothing is sent until you tap Save."
                         },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -162,14 +178,14 @@ fun RecipeEditorScreen(
                     singleLine = true,
                     keyboardOptions =
                         KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                    enabled = !isSaving,
+                    enabled = !isBusy,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 MarkdownEditor(
                     value = draft.description,
                     onValueChange = viewModel::onDescriptionChange,
                     label = "Description",
-                    enabled = !isSaving,
+                    enabled = !isBusy,
                     modifier = Modifier.fillMaxWidth(),
                     onAddImage = {
                         imageTarget = RecipeEditorImageTarget.Description
@@ -189,7 +205,7 @@ fun RecipeEditorScreen(
                             imageTarget = RecipeEditorImageTarget.Cover
                             imagePicker.launch("image/*")
                         },
-                        enabled = !isSaving,
+                        enabled = !isBusy,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Icon(Icons.Filled.Image, contentDescription = null)
@@ -198,7 +214,7 @@ fun RecipeEditorScreen(
                     if (cameraAvailable) {
                         OutlinedButton(
                             onClick = { requestCameraCapture(RecipeEditorImageTarget.Cover) },
-                            enabled = !isSaving,
+                            enabled = !isBusy,
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Icon(Icons.Filled.PhotoCamera, contentDescription = null)
@@ -208,7 +224,7 @@ fun RecipeEditorScreen(
                     if (viewModel.isEditing) {
                         OutlinedButton(
                             onClick = viewModel::onRemoveCoverImage,
-                            enabled = !isSaving,
+                            enabled = !isBusy,
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Icon(Icons.Filled.Delete, contentDescription = null)
@@ -233,7 +249,7 @@ fun RecipeEditorScreen(
                         onValueChange = viewModel::onYieldChange,
                         label = { Text("Yield") },
                         singleLine = true,
-                        enabled = !isSaving,
+                        enabled = !isBusy,
                         modifier = Modifier.weight(1f),
                     )
                     OutlinedTextField(
@@ -241,7 +257,7 @@ fun RecipeEditorScreen(
                         onValueChange = viewModel::onPrepTimeChange,
                         label = { Text("Prep time") },
                         singleLine = true,
-                        enabled = !isSaving,
+                        enabled = !isBusy,
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -254,7 +270,7 @@ fun RecipeEditorScreen(
                         onValueChange = viewModel::onCookTimeChange,
                         label = { Text("Cook time") },
                         singleLine = true,
-                        enabled = !isSaving,
+                        enabled = !isBusy,
                         modifier = Modifier.weight(1f),
                     )
                     OutlinedTextField(
@@ -262,7 +278,7 @@ fun RecipeEditorScreen(
                         onValueChange = viewModel::onTotalTimeChange,
                         label = { Text("Total time") },
                         singleLine = true,
-                        enabled = !isSaving,
+                        enabled = !isBusy,
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -271,7 +287,7 @@ fun RecipeEditorScreen(
                     title = "Ingredients",
                     values = draft.ingredients,
                     itemLabel = "Ingredient",
-                    enabled = !isSaving,
+                    enabled = !isBusy,
                     onValueChange = viewModel::onIngredientChange,
                     onAdd = viewModel::onIngredientAdd,
                     onRemove = viewModel::onIngredientRemove,
@@ -282,7 +298,7 @@ fun RecipeEditorScreen(
                     title = "Steps",
                     values = draft.instructions,
                     itemLabel = "Step",
-                    enabled = !isSaving,
+                    enabled = !isBusy,
                     onValueChange = viewModel::onInstructionChange,
                     onAdd = viewModel::onInstructionAdd,
                     onRemove = viewModel::onInstructionRemove,
@@ -301,6 +317,21 @@ fun RecipeEditorScreen(
                         } else null,
                 )
 
+                if (importErrorMessage != null) {
+                    Card(
+                        colors =
+                            CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer
+                            ),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = importErrorMessage,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.padding(16.dp),
+                        )
+                    }
+                }
                 if (errorMessage != null && errorMessage != "Enter a recipe name") {
                     Card(
                         colors =
@@ -318,7 +349,7 @@ fun RecipeEditorScreen(
                 }
                 Button(
                     onClick = viewModel::save,
-                    enabled = !isSaving,
+                    enabled = !isBusy,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     if (isSaving) {

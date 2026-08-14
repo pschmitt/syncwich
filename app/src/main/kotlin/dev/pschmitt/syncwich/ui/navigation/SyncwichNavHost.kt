@@ -108,8 +108,13 @@ fun SyncwichNavHost(
                     launchSingleTop = true
                 }
             null -> {
+                val sharedRecipeUrl = parseSharedRecipeUrl(incomingIntent)
                 val sharedAssetUri = parseSharedAssetUri(incomingIntent)
-                if (sharedAssetUri != null) {
+                if (sharedRecipeUrl != null) {
+                    navController.navigate(Route.RecipeEditor(importUrl = sharedRecipeUrl)) {
+                        launchSingleTop = true
+                    }
+                } else if (sharedAssetUri != null) {
                     navController.navigate(Route.RecipeEditor(sharedAssetUri = sharedAssetUri)) {
                         launchSingleTop = true
                     }
@@ -235,6 +240,9 @@ fun SyncwichNavHost(
                 RecipesScreen(
                     onRecipeClick = { recipe -> openRecipe(recipe.id, recipe.slug) },
                     onCreateClick = { navController.navigate(Route.RecipeEditor()) },
+                    onImportUrlClick = { url ->
+                        navController.navigate(Route.RecipeEditor(importUrl = url))
+                    },
                     onSettingsClick = { navController.navigate(Route.Settings) },
                 )
             }
@@ -244,6 +252,9 @@ fun SyncwichNavHost(
                     initialTagId = route.tagId,
                     onRecipeClick = { recipe -> openRecipe(recipe.id, recipe.slug) },
                     onCreateClick = { navController.navigate(Route.RecipeEditor()) },
+                    onImportUrlClick = { url ->
+                        navController.navigate(Route.RecipeEditor(importUrl = url))
+                    },
                     onSettingsClick = { navController.navigate(Route.Settings) },
                 )
             }
