@@ -27,3 +27,6 @@ captures/
 
 # Claude Code session/worktree metadata
 /.claude/
+
+# Codex session/worktree metadata
+/.codex/
