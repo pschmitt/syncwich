@@ -1236,33 +1236,33 @@ ktfmt/unit-test/lint checks and minified release APK/AAB builds pass, and GitHub
 - [x] Add a dedicated About destination modeled after the nyetbox and jollyfin implementations
 - [x] Show app name, version/build information, licensing, and project/source links
 - [x] Keep the page accessible from Settings and usable offline
-- [ ] Add focused UI coverage and verify it on the Zenfone 10
+- [x] Add focused UI coverage and verify it on the Zenfone 10
 
-Status: in progress, 2026-08-14. Settings → About now shows version/build metadata, GPL-3.0,
-privacy, license, and source links without requiring network access. Device/UI verification is
-pending.
+Status: **done**, 2026-08-14. Settings → About now shows version/build metadata, GPL-3.0, privacy,
+license, and source links without requiring network access. The Compose UI test compiles and the
+complete screen was verified on the wired Zenfone 10.
 
 ## SW-60: Make the Home navbar action return to the Home page
 
 - [x] Make tapping the Home navbar item always navigate to the Home destination
 - [x] Reset or preserve the Home navigation stack intentionally instead of reopening stale content
 - [x] Keep the selected-tab state and back behavior consistent
-- [ ] Add focused navigation coverage and verify it on the Zenfone 10
+- [x] Add focused navigation coverage and verify it on the Zenfone 10
 
-Status: in progress, 2026-08-14. Selecting Home now clears child content above the start route,
-disables restoration of the stale child state, and keeps Home selected. Remote checks pass; device
-verification is pending.
+Status: **done**, 2026-08-14. Selecting Home now clears child content above the start route,
+disables restoration of the stale child state, and keeps Home selected. The navigation unit test
+passes and returning Home from a cached recipe was verified on the wired Zenfone 10.
 
 ## SW-61: Add a “sync on app start” setting
 
 - [x] Add a clearly named setting to enable or disable synchronization on app start
 - [x] Default the setting to enabled for existing and new installations
 - [x] Persist the preference and ensure disabling it does not block cached/offline content
-- [ ] Add focused settings/sync coverage and verify it on the Zenfone 10
+- [x] Add focused settings/sync coverage and verify it on the Zenfone 10
 
-Status: in progress, 2026-08-14. The preference is persisted with an enabled-by-default fallback;
-automatic startup work is gated while manual sync and periodic sync remain independent. Remote
-checks and device verification are pending.
+Status: **done**, 2026-08-14. The preference is persisted with an enabled-by-default fallback;
+automatic startup work is gated while manual sync and periodic sync remain independent. Settings
+coverage passes, and the setting was visible on the wired Zenfone 10.
 
 ## SW-62: Make synchronization change-aware
 
@@ -1270,7 +1270,8 @@ checks and device verification are pending.
   cookbooks, and other synced resources
 - [x] Avoid downloading unchanged collections and details while preserving cache-first reads
 - [x] Handle servers that do not expose usable validators or timestamps with a safe fallback
-- [x] Add sync-efficiency tests and verify request behavior on the Zenfone 10
+- [x] Add sync-efficiency tests
+- [ ] Verify request behavior on the Zenfone 10
 
 Status: in progress, 2026-08-14. GET requests now use a disk-backed OkHttp cache with forced
 revalidation, allowing ETag/Last-Modified 304 responses while falling back to normal 200 responses
@@ -1281,11 +1282,12 @@ for servers without validators. Remote checks and device verification are pendin
 - [x] Add an obvious action on the recipe view to open steps in a focused full-screen mode
 - [x] Keep step content, embedded images, and navigation accessible in the full-screen view
 - [x] Provide a clear way to exit and return to the same recipe position
-- [ ] Add focused UI coverage and verify it on the Zenfone 10
+- [x] Add focused UI coverage and verify it on the Zenfone 10
 
-Status: in progress, 2026-08-14. The Steps header opens a full-screen dialog with its own accessible
+Status: **done**, 2026-08-14. The Steps header opens a full-screen dialog with its own accessible
 close action; step thumbnails remain clickable and open the existing image viewer, while dismissing
-returns to the same recipe state. Remote tests pass; device verification is pending.
+returns to the same recipe state. Remote tests pass and the full-screen flow was verified on the
+wired Zenfone 10.
 
 ## SW-64: Add image metadata and pinch/double-tap zoom
 
