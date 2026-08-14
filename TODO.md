@@ -1239,3 +1239,12 @@ keystore decoding, and unit tests passed before that unrelated build failure.
 - [ ] Add focused UI coverage and verify it on the Zenfone 10
 
 Status: not started, 2026-08-14.
+
+## SW-60: Make the Home navbar action return to the Home page
+
+- [ ] Make tapping the Home navbar item always navigate to the Home destination
+- [ ] Reset or preserve the Home navigation stack intentionally instead of reopening stale content
+- [ ] Keep the selected-tab state and back behavior consistent
+- [ ] Add focused navigation coverage and verify it on the Zenfone 10
+
+Status: not started, 2026-08-14.
