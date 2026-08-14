@@ -602,12 +602,14 @@ passed with remote `just check`; Zenfone visual verification passed.
 
 ## SW-23: Hide empty feature destinations by default
 
-- [ ] Hide Meal Plan, Shopping, and Cookbooks navigation items by default when their corresponding
+- [x] Hide Meal Plan, Shopping, and Cookbooks navigation items by default when their corresponding
       data is absent
-- [ ] Keep the visibility choice user-configurable so users can show empty destinations explicitly
+- [x] Keep the visibility choice user-configurable so users can show empty destinations explicitly
 - [ ] Verify navigation behavior and defaults on the Zenfone 10
 
-Status: not started.
+Status: mostly done, 2026-08-14. Cache-aware bottom navigation and explicit show/hide overrides are
+implemented with focused resolver/ViewModel tests; remote `just check` passed, while Zenfone
+verification remains pending.
 
 ## SW-24: Add and update recipes and collections
 

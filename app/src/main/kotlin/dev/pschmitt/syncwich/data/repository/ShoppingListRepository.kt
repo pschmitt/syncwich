@@ -11,6 +11,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -30,6 +31,8 @@ constructor(
 ) {
 
     fun observeLists(): Flow<List<ShoppingListEntity>> = shoppingListDao.observeLists()
+
+    fun observeHasCachedLists(): Flow<Boolean> = observeLists().map { it.isNotEmpty() }
 
     fun observeList(listId: String): Flow<ShoppingListEntity?> = shoppingListDao.observeList(listId)
 

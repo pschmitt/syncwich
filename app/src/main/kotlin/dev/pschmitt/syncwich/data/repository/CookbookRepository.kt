@@ -14,6 +14,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -37,6 +38,8 @@ constructor(
 ) {
 
     fun observeCookbooks(): Flow<List<CookbookEntity>> = cookbookDao.observeAll()
+
+    fun observeHasCachedCookbooks(): Flow<Boolean> = observeCookbooks().map { it.isNotEmpty() }
 
     fun observeCookbook(cookbookId: String): Flow<CookbookEntity?> =
         cookbookDao.observeById(cookbookId)

@@ -114,6 +114,8 @@ class MealPlanRepositoryTest {
             return state.map { entries -> entries.filter { it.date in range } }
         }
 
+        override fun observeHasEntries(): Flow<Boolean> = state.map { it.isNotEmpty() }
+
         override suspend fun upsertAll(entries: List<MealPlanEntryEntity>) {
             val byId = state.value.associateBy { it.id }.toMutableMap()
             entries.forEach { byId[it.id] = it }

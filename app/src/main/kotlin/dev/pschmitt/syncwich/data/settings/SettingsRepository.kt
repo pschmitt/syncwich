@@ -40,7 +40,9 @@ data class MealieCredentials(val serverUrl: String, val apiToken: String) {
 // suppression makes this intentional compatibility boundary visible to the compiler.
 @Suppress("DEPRECATION")
 @Singleton
-class SettingsRepository @Inject constructor(@ApplicationContext private val context: Context) {
+class SettingsRepository
+@Inject
+constructor(@ApplicationContext private val context: Context) : NavigationBarPreferences {
 
     private val prefs =
         EncryptedSharedPreferences.create(
@@ -68,11 +70,11 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         context.syncwichDataStore.data.map { it[KEY_LAST_SYNC_ERROR] }
 
     /** The user's preferred order, with unknown or missing keys resolved by the caller. */
-    val navigationBarOrder: Flow<List<String>> =
+    override val navigationBarOrder: Flow<List<String>> =
         context.syncwichDataStore.data.map { navigationBarOrderFromString(it[KEY_NAV_BAR_ORDER]) }
 
     /** Destination keys hidden from the bottom navigation bar. */
-    val navigationBarHiddenItems: Flow<Set<String>> =
+    override val navigationBarHiddenItems: Flow<Set<String>> =
         context.syncwichDataStore.data
             .map { navigationBarOrderFromString(it[KEY_NAV_BAR_HIDDEN_ITEMS]).toSet() }
 
@@ -81,6 +83,11 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         context.syncwichDataStore.data.map {
             sanitizeFontScale(it[KEY_FONT_SCALE] ?: DEFAULT_FONT_SCALE)
         }
+
+    /** Destination keys explicitly shown by the user, even when their cache is empty. */
+    override val navigationBarShownItems: Flow<Set<String>> =
+        context.syncwichDataStore.data
+            .map { navigationBarOrderFromString(it[KEY_NAV_BAR_SHOWN_ITEMS]).toSet() }
 
     /** True after the first complete foreground sync has populated the offline cache. */
     val initialSyncCompleted: Flow<Boolean> =
@@ -129,8 +136,17 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
     suspend fun setNavigationBarItemHidden(key: String, hidden: Boolean) {
         context.syncwichDataStore.edit { prefs ->
             val current = navigationBarOrderFromString(prefs[KEY_NAV_BAR_HIDDEN_ITEMS]).toMutableSet()
-            if (hidden) current += key else current -= key
+            val explicitlyShown =
+                navigationBarOrderFromString(prefs[KEY_NAV_BAR_SHOWN_ITEMS]).toMutableSet()
+            if (hidden) {
+                current += key
+                explicitlyShown -= key
+            } else {
+                current -= key
+                explicitlyShown += key
+            }
             prefs[KEY_NAV_BAR_HIDDEN_ITEMS] = navigationBarOrderToString(current.toList())
+            prefs[KEY_NAV_BAR_SHOWN_ITEMS] = navigationBarOrderToString(explicitlyShown.toList())
         }
     }
 
@@ -171,6 +187,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         val KEY_NAV_BAR_ORDER = stringPreferencesKey("navigation_bar_order")
         val KEY_NAV_BAR_HIDDEN_ITEMS = stringPreferencesKey("navigation_bar_hidden_items")
         val KEY_FONT_SCALE = androidx.datastore.preferences.core.floatPreferencesKey("font_scale")
+        val KEY_NAV_BAR_SHOWN_ITEMS = stringPreferencesKey("navigation_bar_shown_items")
         val KEY_INITIAL_SYNC_COMPLETED = booleanPreferencesKey("initial_sync_completed")
         val KEY_LAST_SYNC_AT = longPreferencesKey("last_sync_at")
         val KEY_LAST_SYNC_ERROR = stringPreferencesKey("last_sync_error")

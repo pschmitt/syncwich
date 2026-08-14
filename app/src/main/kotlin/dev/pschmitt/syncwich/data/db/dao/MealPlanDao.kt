@@ -16,6 +16,9 @@ interface MealPlanDao {
     )
     fun observeByDateRange(startDate: String, endDate: String): Flow<List<MealPlanEntryEntity>>
 
+    @Query("SELECT EXISTS(SELECT 1 FROM meal_plan_entries)")
+    fun observeHasEntries(): Flow<Boolean>
+
     @Upsert suspend fun upsertAll(entries: List<MealPlanEntryEntity>)
 
     @Query("DELETE FROM meal_plan_entries WHERE date BETWEEN :startDate AND :endDate")

@@ -27,8 +27,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import dev.pschmitt.syncwich.data.settings.NavigationBarItemKeys
-import dev.pschmitt.syncwich.data.settings.resolveNavBarOrder
 import dev.pschmitt.syncwich.ui.cookbooks.CookbookDetailScreen
 import dev.pschmitt.syncwich.ui.cookbooks.CookbooksScreen
 import dev.pschmitt.syncwich.ui.initialsync.InitialSyncScreen
@@ -39,7 +37,6 @@ import dev.pschmitt.syncwich.ui.recipes.RecipesScreen
 import dev.pschmitt.syncwich.ui.settings.SettingsScreen
 import dev.pschmitt.syncwich.ui.settings.ConnectionSettingsScreen
 import dev.pschmitt.syncwich.ui.settings.SettingsCategoryScreen
-import dev.pschmitt.syncwich.ui.settings.SettingsViewModel
 import dev.pschmitt.syncwich.ui.shoppinglists.ShoppingListDetailScreen
 import dev.pschmitt.syncwich.ui.shoppinglists.ShoppingListsScreen
 
@@ -72,17 +69,13 @@ private val topLevelNavItems =
 @Composable
 fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Route.Recipes) {
     val navController = rememberNavController()
-    val settingsViewModel: SettingsViewModel = hiltViewModel()
-    val persistedNavBarOrder by settingsViewModel.navigationBarOrder.collectAsStateWithLifecycle()
-    val hiddenNavBarItems by settingsViewModel.navigationBarHiddenItems.collectAsStateWithLifecycle()
+    val navigationBarViewModel: NavigationBarViewModel = hiltViewModel()
+    val visibleNavBarItemKeys by
+        navigationBarViewModel.visibleItemKeys.collectAsStateWithLifecycle()
     val resolvedTopLevelNavItems =
-        resolveNavBarOrder(
-                natural = topLevelNavItems.map { it.destination.key },
-                persisted = persistedNavBarOrder,
-                hidden = hiddenNavBarItems,
-                pinned = setOf(NavigationBarItemKeys.RECIPES),
-            )
-            .mapNotNull { key -> topLevelNavItems.firstOrNull { it.destination.key == key } }
+        visibleNavBarItemKeys.mapNotNull { key ->
+            topLevelNavItems.firstOrNull { it.destination.key == key }
+        }
 
     Scaffold(
         modifier = modifier,

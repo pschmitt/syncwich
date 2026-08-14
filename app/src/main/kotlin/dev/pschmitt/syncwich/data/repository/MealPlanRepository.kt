@@ -27,6 +27,8 @@ constructor(private val mealPlanApi: MealPlanApi, private val mealPlanDao: MealP
     fun observeMealPlan(startDate: LocalDate, endDate: LocalDate): Flow<List<MealPlanEntryEntity>> =
         mealPlanDao.observeByDateRange(startDate.toString(), endDate.toString())
 
+    fun observeHasCachedEntries(): Flow<Boolean> = mealPlanDao.observeHasEntries()
+
     suspend fun refreshMealPlan(startDate: LocalDate, endDate: LocalDate): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {

@@ -41,6 +41,7 @@ import dev.pschmitt.syncwich.data.settings.MIN_FONT_SCALE
 import dev.pschmitt.syncwich.data.settings.NavigationBarItemKeys
 import dev.pschmitt.syncwich.data.settings.resolveNavBarOrder
 import dev.pschmitt.syncwich.ui.navigation.TopLevelDestination
+import dev.pschmitt.syncwich.ui.navigation.NavigationBarViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -135,10 +136,11 @@ private fun AppearanceSettingsScreen(
     onBack: () -> Unit,
     modifier: Modifier,
     viewModel: SettingsViewModel,
+    navigationBarViewModel: NavigationBarViewModel = hiltViewModel(),
 ) {
     val persistedOrder by viewModel.navigationBarOrder.collectAsStateWithLifecycle()
-    val hiddenItems by viewModel.navigationBarHiddenItems.collectAsStateWithLifecycle()
     val fontScale by viewModel.fontScale.collectAsStateWithLifecycle()
+    val visibleItems by navigationBarViewModel.visibleItemKeys.collectAsStateWithLifecycle()
     val naturalKeys = TopLevelDestination.entries.map { it.key }
     val orderedKeys = resolveNavBarOrder(naturalKeys, persistedOrder, emptySet())
     val orderedDestinations =
@@ -204,7 +206,13 @@ private fun AppearanceSettingsScreen(
                 ListItem(
                     headlineContent = { Text(destination.label) },
                     supportingContent = {
-                        Text(if (isPinned) "Always visible" else "Shown in the bottom bar")
+                        Text(
+                            when {
+                                isPinned -> "Always visible"
+                                destination.key in visibleItems -> "Shown in the bottom bar"
+                                else -> "Hidden by default because its cache is empty"
+                            }
+                        )
                     },
                     trailingContent = {
                         Row {
@@ -235,7 +243,7 @@ private fun AppearanceSettingsScreen(
                                 Icon(Icons.Filled.ArrowDownward, contentDescription = null)
                             }
                             Switch(
-                                checked = isPinned || destination.key !in hiddenItems,
+                                checked = isPinned || destination.key in visibleItems,
                                 onCheckedChange =
                                     if (isPinned) null
                                     else { checked ->

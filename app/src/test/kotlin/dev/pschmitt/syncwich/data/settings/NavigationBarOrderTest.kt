@@ -67,6 +67,35 @@ class NavigationBarOrderTest {
     }
 
     @Test
+    fun `cache-derived defaults hide empty destinations`() {
+        assertEquals(
+            listOf("recipes"),
+            resolveNavBarOrder(
+                natural = listOf("recipes", "meal_plan", "shopping_lists", "cookbooks"),
+                persisted = emptyList(),
+                hidden = emptySet(),
+                pinned = setOf("recipes"),
+                defaultHidden = setOf("meal_plan", "shopping_lists", "cookbooks"),
+            ),
+        )
+    }
+
+    @Test
+    fun `explicit show overrides an empty cache default`() {
+        assertEquals(
+            listOf("recipes", "meal_plan"),
+            resolveNavBarOrder(
+                natural = listOf("recipes", "meal_plan"),
+                persisted = emptyList(),
+                hidden = emptySet(),
+                pinned = setOf("recipes"),
+                defaultHidden = setOf("meal_plan"),
+                explicitlyShown = setOf("meal_plan"),
+            ),
+        )
+    }
+
+    @Test
     fun `preference encoding trims and deduplicates keys`() {
         val encoded = navigationBarOrderToString(listOf(" recipes ", "", "meal_plan", "recipes"))
 
