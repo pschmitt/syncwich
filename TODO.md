@@ -900,14 +900,12 @@ screens remain unverified. No uninstall, data wipe, or live Mealie write was mad
       allowing sync while roaming, and configurable sync frequency
 - [x] Persist the sync preferences and apply them to WorkManager constraints/scheduling without
       weakening offline-first behavior or manual refresh
-- [ ] Verify the loading behavior and sync settings on the Zenfone 10 (blocked by the existing Room
-      identity mismatch; no settings/detail screen was reachable)
+- [x] Verify the loading behavior and sync settings on the Zenfone 10
 
-Status: mostly done, 2026-08-14. Cached detail state and sync-policy tests plus remote `just check`
-(`ktfmtCheck`, `:app:testDebugUnitTest`, and `lintDebug`) passed on rofl-13. The safe Zenfone launch
-attempt reached the splash screen but crashed on the existing Room identity mismatch before cached
-recipe loading or sync settings could be inspected; no uninstall, data wipe, or live Mealie write
-was made.
+Status: **done**, 2026-08-14. Cached detail state and sync-policy tests plus remote `just check`
+passed on rofl-13. The repaired v9 database launched on the Zenfone 10; cached Home and recipe
+detail content remained available, and Settings exposed the Wi-Fi-only, roaming, and interval
+controls without crash-buffer entries.
 
 ## SW-35: Add Home sync status card and background notifications
 
@@ -937,14 +935,12 @@ uninstall, data wipe, or live Mealie write was made.
       preferences
 - [x] Preserve sensible defaults, ordering, visibility rules, and accessibility for both items
 - [x] Add focused coverage
-- [ ] Verify configurable navbar behavior on the Zenfone 10 (blocked by the existing Room identity
-      mismatch; navigation was not reachable)
+- [x] Verify configurable navbar behavior on the Zenfone 10
 
-Status: mostly done, 2026-08-14. Settings and Favorites are opt-in configurable destinations,
+Status: **done**, 2026-08-14. Settings and Favorites are opt-in configurable destinations,
 Favorites reads cached action state, and focused resolver/ViewModel/route tests pass in remote
-`just check`. The existing Zenfone install was left untouched; a safe launch attempt crashed on the
-Room identity mismatch before navbar behavior could be inspected. No uninstall, data wipe, or live
-Mealie write was made.
+`just check`. On the Zenfone 10, Favorites was enabled through Appearance and opened from the
+bottom navigation with the cached recipe list visible.
 
 ## SW-37: Audit image caching and unnecessary API calls
 
@@ -971,13 +967,11 @@ under slow network; no uninstall, data wipe, or live Mealie write was made.
 - [x] Remove the “Shortcuts” section from the Home view
 - [x] Preserve the remaining Home sections, spacing, cache-first behavior, and accessibility
 - [x] Keep focused Home ordering/cache coverage passing
-- [ ] Verify the simplified Home view on the Zenfone 10 (blocked by the existing Room identity
-      mismatch; Home was not reachable)
+- [x] Verify the simplified Home view on the Zenfone 10
 
-Status: mostly done, 2026-08-14. The shortcut carousel is removed while cached Home sections and
-accessible actions remain; remote `just check` passed. The existing Zenfone install was left
-untouched, but a safe launch attempt crashed on the Room identity mismatch before Home could be
-inspected. No uninstall, data wipe, or live Mealie write was made.
+Status: **done**, 2026-08-14. The shortcut carousel is removed while cached Home sections and
+accessible actions remain; remote `just check` passed. The Zenfone 10 Home accessibility tree
+showed sync status, Recently viewed, and Recently added sections with no Shortcuts section.
 
 ## SW-39: Redesign Settings menus to match nyetbox patterns
 
@@ -988,14 +982,12 @@ inspected. No uninstall, data wipe, or live Mealie write was made.
 - [x] Preserve the existing Server, Appearance, and navigation preferences behavior while improving
       labels, affordances, accessibility, and back navigation
 - [x] Add focused menu/navigation coverage for the redesigned menu structure
-- [ ] Verify the updated Settings experience visually and accessibly on the Zenfone 10 (blocked by
-      the existing Room identity mismatch; Settings was not reachable)
+- [x] Verify the updated Settings experience visually and accessibly on the Zenfone 10
 
-Status: mostly done, 2026-08-14. Landing, Server, Appearance, and navigation menus now use the
+Status: **done**, 2026-08-14. Landing, Server, Appearance, and Data & sync menus now use the
 nyetbox-style grouped Material 3 cards with preserved semantics and behavior; remote `just check`
-passed. The existing Zenfone install was left untouched, but a safe launch attempt crashed on the
-Room identity mismatch before Settings could be inspected visually or accessibly. No uninstall, data
-wipe, or live Mealie write was made.
+passed. The Zenfone 10 accessibility tree exposed the grouped Settings categories and the Sync
+screen's labeled Wi-Fi, roaming, and interval controls without crash-buffer entries.
 
 ## SW-40: Audit UI/UX against current Material 3 guidance
 
@@ -1006,12 +998,13 @@ wipe, or live Mealie write was made.
 - [x] Implement the prioritized UI/UX updates without regressing offline-first behavior or existing
       navigation preferences
 - [x] Add focused coverage for behavior/accessibility changes
-- [ ] Verify the refreshed experience on the Zenfone 10
+- [x] Verify the refreshed experience on the Zenfone 10
 
-Status: mostly done, 2026-08-14. Material 3 guidance was reviewed and the prioritized UI/common,
+Status: **done**, 2026-08-14. Material 3 guidance was reviewed and the prioritized UI/common,
 form, state-feedback, responsive-width, fallback-color, and component-consistency changes are
-implemented; remote `just check` and instrumentation-test compilation pass. Zenfone visual
-verification remains outstanding.
+implemented; remote `just check` and instrumentation-test compilation pass. The integrated build
+was smoke-tested across Home, recipe detail/actions, Favorites, Settings, Sync, and pull-to-refresh
+on the Zenfone 10 without crash-buffer entries.
 
 ## SW-41: Format displayed ratings to one decimal place
 
@@ -1068,3 +1061,15 @@ Status: **done**, 2026-08-14. Home pull-to-refresh queued the full SyncWorker pa
 recipe-detail refresh fetched only the current recipe, and cookbook-detail refresh fetched the
 selected cookbook's recipe membership. Remote `just check` passed and all three gestures completed
 on the wired Zenfone without crashes.
+
+## SW-45: Render and cache images embedded in recipe step HTML
+
+- [ ] Parse image elements embedded as `<img>` tags inside recipe step contents, including their
+      source URLs and useful alt text where available
+- [ ] Render those step images in the recipe detail view alongside existing Markdown images
+- [ ] Prefetch and persist them through the shared Coil disk cache for offline-first reuse
+- [ ] Handle relative/unsafe URLs without creating unnecessary API calls or unsafe requests
+- [ ] Add focused parsing/cache coverage and verify the Baek Jong-won tofu recipe offline on the
+      Zenfone 10
+
+Status: not started.

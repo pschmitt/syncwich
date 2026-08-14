@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Card
@@ -87,6 +88,11 @@ fun SettingsScreen(
             item {
                 SettingsGroupCard(title = "Account", icon = Icons.Filled.Dns) {
                     SettingsCategoryRow(SettingsCategory.Server, onCategoryClick)
+                }
+            }
+            item {
+                SettingsGroupCard(title = "Data & sync", icon = Icons.Filled.Sync) {
+                    SettingsCategoryRow(SettingsCategory.Sync, onCategoryClick)
                 }
             }
             item {
