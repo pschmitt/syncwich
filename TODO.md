@@ -228,3 +228,68 @@ Status: not started.
       `topLevelNavItems` list)
 
 Status: not started.
+
+## SW-9: Rounded search bar / general look-and-feel polish
+
+- [ ] Restyle the Recipes list's search field from the current sharp-edged `OutlinedTextField` to a
+      fully rounded, pill-shaped search bar - match the look of the sibling nyetbox app's search
+      bar (check its `ui/` search composable for the exact shape/elevation/token choices before
+      reinventing one)
+- [ ] Sweep for other "edge-y" Material defaults worth rounding/softening to match while in this
+      area (cards, chips, dialogs) if they stand out as inconsistent with the rounded search bar -
+      keep this scoped to what's actually jarring, not a full re-theme
+
+Status: not started.
+
+## SW-10: Redesign app icon around a sandwich motif
+
+- [ ] Replace SW-1's sync-ring + fork adaptive launcher icon with a modern, stylized *sandwich*
+      depiction (fitting given the app's name, "Syncwich") - keep the terracotta background/warm
+      palette established in `docs/branding/` unless a redesign makes a strong case otherwise
+- [ ] Regenerate the adaptive icon layers (foreground/background/monochrome for Android 13+ themed
+      icons) the same way SW-1's icon was produced - a dedicated design pass, not a quick sketch
+- [ ] Update `docs/branding/` with the new source art and any design notes
+
+Status: not started.
+
+## SW-11: Populate the top app bar
+
+- [ ] Each top-level screen (Recipes/Meal Plan/Shopping Lists/Cookbooks) currently renders with an
+      empty header - add a proper `TopAppBar` per screen with at minimum a title reflecting the
+      current destination
+- [ ] Add a settings cog icon action to the top app bar that navigates to `Route.Settings`
+      (`SettingsScreen` already exists but nothing currently links to it from the top-level screens)
+- [ ] Consider what else belongs in the header per-screen (e.g. Recipes' search bar - see SW-9 -
+      may want to live in/near this bar rather than inline in the list content)
+
+Status: not started.
+
+## SW-12: Fix onboarding server URL placeholder
+
+- [ ] `OnboardingScreen`'s server URL field placeholder currently reads `mealie.example.com` -
+      change it to `https://demo.mealie.io` (a real, well-known public Mealie demo instance, more
+      meaningful to a new user than a made-up example domain)
+
+Status: not started.
+
+## SW-13: Support username/password login alongside API token entry
+
+- [ ] Add a second onboarding path: username + password, which calls Mealie's password-login
+      endpoint (`/api/auth/token`) and then mints a real long-lived API token on the user's behalf
+      (Mealie's token-creation endpoint, under the freshly-obtained JWT) rather than storing the
+      short-lived JWT itself - preserves AGENTS.md's existing "Auth is a pasted long-lived API
+      token, not username/password" architecture decision (JWTs expire in ~48h, a bad fit for an
+      app that may go days offline) while removing the friction of the user having to go find
+      Mealie's own Profile -> API Tokens page first
+- [ ] Keep the existing direct-token-paste path as the other option - a toggle/tab between "Sign in
+      with username & password" and "Paste an API token" on the same onboarding screen
+- [ ] The generated token needs a clear, identifiable name (e.g. "Syncwich (<device model>)") so a
+      user auditing their Mealie account's API Tokens page can recognize and revoke it later
+      independently of Syncwich
+- [ ] Only the resulting long-lived token is ever persisted via `SettingsRepository` - the
+      password/JWT must never be written to encrypted storage, only held in memory for the single
+      token-minting request
+- [ ] Verify Mealie's token-creation endpoint's exact request/response shape against the real
+      server first (rbw "Mealie (AI Agent)"), same as every other endpoint in this app
+
+Status: not started.

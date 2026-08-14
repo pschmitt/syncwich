@@ -21,6 +21,10 @@ Single `:app` Gradle module - this app doesn't need a multi-module split.
   everything's finished. This keeps `TODO.md` an accurate record of what's done vs. still open,
   and lets another agent (or a future you) resume the work cold from just this file.
 - Trivial one-off asks (a typo, a single-line tweak) don't need their own entry.
+- Any user message that starts with `todo: ` (case-insensitive) is a direct instruction to add a
+  new `SW-N` entry to `TODO.md` for whatever follows the prefix, rather than acting on it
+  immediately - file the backlog entry (not started, with a checklist inferred from the ask) and
+  confirm back to the user, instead of implementing it in that turn.
 
 ## Dev environment
 
