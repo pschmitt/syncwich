@@ -979,3 +979,13 @@ Status: not started.
 - [ ] Verify rating formatting across recipe cards, Home, details, and Favorites on the Zenfone 10
 
 Status: not started.
+
+## SW-42: Add a Home Recently viewed section
+
+- [ ] Record recipe opens locally with a bounded, recency-ordered history
+- [ ] Add a cache-first Home section for recipes recently viewed inside Syncwich
+- [ ] Avoid duplicate entries, keep the list useful offline, and handle deleted/uncached recipes
+      gracefully
+- [ ] Add focused ordering/history coverage and verify the section on the Zenfone 10
+
+Status: not started.
