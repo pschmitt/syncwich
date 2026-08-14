@@ -37,15 +37,16 @@ class RecipeActionRepositoryTest {
 
     @Test
     fun `pending favorite is synchronized and cleared later`() = runTest {
-        val dao = FakeRecipeActionDao(
-            seed =
-                RecipeActionEntity(
-                    recipeId = "recipe-1",
-                    recipeSlug = "toast",
-                    isFavorite = true,
-                    favoritePending = true,
-                )
-        )
+        val dao =
+            FakeRecipeActionDao(
+                seed =
+                    RecipeActionEntity(
+                        recipeId = "recipe-1",
+                        recipeSlug = "toast",
+                        isFavorite = true,
+                        favoritePending = true,
+                    )
+            )
         val usersApi = FakeUsersApi()
         val repository = RecipeActionRepository(usersApi, dao)
 
@@ -64,8 +65,9 @@ class RecipeActionRepositoryTest {
     private class FakeRecipeActionDao(seed: RecipeActionEntity? = null) : RecipeActionDao {
         private val state = MutableStateFlow(seed?.let { mapOf(it.recipeId to it) } ?: emptyMap())
 
-        override fun observe(recipeId: String): Flow<RecipeActionEntity?> =
-            state.map { it[recipeId] }
+        override fun observe(recipeId: String): Flow<RecipeActionEntity?> = state.map {
+            it[recipeId]
+        }
 
         override suspend fun get(recipeId: String): RecipeActionEntity? = state.value[recipeId]
 

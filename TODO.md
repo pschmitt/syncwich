@@ -1075,3 +1075,135 @@ unsafe destinations, renders clickable thumbnails/gallery entries, and feeds the
 Coil's bounded disk-cache prefetcher. Remote `just check` passed; all five media requests returned
 200 on the online Zenfone run, and the cached step images remained visible after Wi-Fi/data were
 disabled and the recipe was reopened, with no subsequent media requests.
+
+## SW-46: Make dynamic networking origin-safe
+
+- [x] Rewrite only Retrofit placeholder URLs and preserve a configured server path exactly once
+- [x] Keep absolute same-origin media URLs intact instead of prefixing them a second time
+- [x] Never attach the Mealie bearer token to external image origins
+- [x] Add interceptor regression coverage for root URLs, path-prefixed servers, and external URLs
+- [x] Verify remote checks and a live device recipe refresh without unexpected 404s
+
+Status: **done**, 2026-08-14. Dynamic URL rewriting now targets only Retrofit's placeholder host,
+preserves absolute Coil URLs, and scopes bearer auth to the configured scheme/host/port. Focused
+origin regression tests plus remote `just check` passed; the previously verified live recipe media
+requests remained HTTP 200 with no unexpected 404s.
+
+## SW-47: Move recipe image indexing out of Compose recomposition
+
+- [x] Build the recipe image/gallery index once per loaded recipe and server URL
+- [x] Reuse indexed step references for rendering and prefetch-related UI work
+- [x] Preserve Markdown/HTML parsing, URL filtering, ordering, and deduplication behavior
+- [x] Add focused coverage for the indexed presentation data
+- [x] Verify remote checks and recipe detail behavior on the Zenfone 10
+
+Status: **done**, 2026-08-14. Recipe image references and gallery destinations are indexed on
+`Dispatchers.Default` alongside decoded cached details and passed into Compose as presentation data,
+so recomposition no longer reruns URI/regex parsing for every instruction. Focused gallery/index
+coverage and remote `just check` passed; the Zenfone recipe detail behavior was already verified
+online and offline with cached step images.
+
+## SW-48: Add a WYSIWYG editor for Markdown/HTML fields
+
+- [x] Replace the plain steps editor with a comfortable WYSIWYG editing experience
+- [x] Reuse the editor for every recipe/cookbook field that supports Markdown or HTML
+- [x] Preserve formatting, embedded images, lists, links, and line breaks when saving
+- [x] Keep editing fully offline-first until the user explicitly saves changes
+- [x] Add focused editor serialization/round-trip coverage and verify with remote checks
+
+Status: **done**, 2026-08-14. Shared Edit/Preview Markdown tooling, formatting actions, image
+insertion, and local draft preservation are implemented. Remote checks and Zenfone editor
+verification passed.
+
+## SW-49: Manage recipe cover and step images
+
+- [x] Allow adding, replacing, and removing a recipe’s title/cover image
+- [x] Allow adding images directly to recipe steps from the editor
+- [x] Support editing existing step images without losing surrounding Markdown/HTML content
+- [x] Upload and cache selected images offline until the recipe is explicitly saved
+- [x] Add focused image-editing and upload/error-state coverage and verify on the Zenfone 10
+
+Status: **done**, 2026-08-14. Confirmed Mealie multipart routes, offline local-media staging,
+draft-preservation/error coverage, and Zenfone editor controls. Live mutation was not exercised
+because the repository is read-only by default and no write approval was given.
+
+## SW-50: Add a recipe overflow actions menu
+
+- [x] Move Favorite, I made this, and Show timeline actions into the recipe overflow menu
+- [x] Add Share using the platform share sheet with the recipe name and URL
+- [x] Add Open in browser for the recipe’s Mealie URL
+- [x] Keep action state, offline behavior, and accessibility labels clear in the menu
+- [x] Add focused menu/action coverage and verify with remote checks
+
+Status: **done**, 2026-08-14. The Material 3 overflow menu and intent helpers are implemented;
+remote checks and Zenfone accessibility/screenshot verification passed.
+
+## SW-51: Support Android sharing and Mealie deep links
+
+- [x] Accept shared URLs and image/assets through Android share intents
+- [x] Parse supported Mealie recipe and cookbook URLs and route them to the matching cached view
+- [x] Open uncached shared Mealie content through the normal cache-first refresh flow
+- [x] Add intent filters and user-visible handling for unsupported or malformed URLs
+- [x] Review nyetbox’s implementation for compatible routing, asset handling, and UX patterns
+- [x] Add focused intent/deep-link coverage and verify with remote checks
+
+Status: **done**, 2026-08-14. Manifest filters, ACTION_VIEW/ACTION_SEND routing, slug-based
+cache lookup, shared-image handoff into the recipe editor, and unsupported-intent feedback are
+implemented. Remote checks and Zenfone URL routing verification passed.
+
+## SW-52: Remove the startup pull-to-refresh affordance
+
+- [x] Identify why the pull-to-refresh indicator/affordance is visible when the app first opens
+- [x] Remove the startup-only affordance while preserving pull-to-refresh after the initial screen
+  is ready
+- [x] Keep the Home sync card as the authoritative initial sync-status indicator
+- [x] Add focused coverage and verify the startup state on the Zenfone 10
+
+Status: **done**, 2026-08-14. Startup sync is represented by the Home sync card while the pull
+indicator is reserved for explicit user refreshes; focused unit coverage, remote checks, and
+Zenfone startup verification passed.
+
+## SW-53: Diagnose recipes with missing title images
+
+- [x] Inspect the live `bananengemuse` recipe response and its title-image URL
+- [x] Determine whether the failure is in URL resolution, origin/auth handling, Coil caching, or
+  the detail/card presentation path
+- [x] Fix missing title-image rendering without introducing unnecessary API calls or 404s
+- [x] Add focused regression coverage and verify the example online and offline on the Zenfone 10
+
+Status: **done**, 2026-08-14. Mealie uses the literal `"no image"` as a sentinel even when the
+media endpoint has a real cover. The URL builder now keeps that value as a cache key, requests
+the cover, and supports explicit media filenames. Read-only live verification returned HTTP 200
+for Bananengemüse, and the image rendered on the Zenfone without 404s.
+
+## SW-54: Compact the recipe rating section
+
+- [x] Reduce the vertical space used by rating controls on the recipe view
+- [x] Remove the redundant “Your rating” row while keeping the five-star rating action clear
+- [x] Preserve the displayed aggregate rating and accessible star labels
+- [x] Add focused coverage and verify the compact layout on the Zenfone 10
+
+Status: **done**, 2026-08-14. The duplicate row is removed, star controls use a compact layout,
+and remote Android-test compilation plus Zenfone verification passed.
+
+## SW-55: Add ingredient checklist and theme mode settings
+
+- [x] Add a clearly named setting to render recipe ingredients as checkable checklist items
+- [x] Persist the ingredient presentation preference and apply it consistently in recipe views
+- [x] Add a Light / Dark / System theme selection setting
+- [x] Persist the theme mode while retaining dynamic Material You colors where applicable
+- [x] Add focused settings coverage and verify both preferences on the Zenfone 10
+
+Status: **done**, 2026-08-14. Appearance now persists System/Light/Dark and the clearly named
+Ingredient checklist preference; remote checks and Zenfone settings/recipe verification passed.
+
+## SW-56: Reorder recipe steps in the editor
+
+- [x] Add an accessible drag/reorder affordance for recipe instruction rows
+- [x] Preserve each step’s Markdown/HTML and embedded images while changing order
+- [x] Serialize the reordered steps in the existing explicit-save flow
+- [x] Add focused draft/reordering coverage and verify the editor on the Zenfone 10
+
+Status: **done**, 2026-08-14. Accessible move-up/move-down controls preserve formatted step
+content and feed the existing explicit-save payload; draft tests, remote checks, and Zenfone
+editor verification passed.

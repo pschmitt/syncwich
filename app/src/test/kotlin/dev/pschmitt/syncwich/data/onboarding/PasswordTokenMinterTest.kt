@@ -33,15 +33,15 @@ class PasswordTokenMinterTest {
         server.enqueue(
             MockResponse()
                 .setResponseCode(200)
-                .setBody("{\"access_token\":\"short-lived-jwt\",\"token_type\":\"bearer\"}"),
+                .setBody("{\"access_token\":\"short-lived-jwt\",\"token_type\":\"bearer\"}")
         )
         server.enqueue(
             MockResponse()
                 .setResponseCode(200)
                 .setBody(
                     "{\"name\":\"Syncwich (test)\",\"id\":2," +
-                        "\"createdAt\":\"2026-08-14T00:00:00Z\",\"token\":\"long-lived-token\"}",
-                ),
+                        "\"createdAt\":\"2026-08-14T00:00:00Z\",\"token\":\"long-lived-token\"}"
+                )
         )
 
         val result =
@@ -58,7 +58,12 @@ class PasswordTokenMinterTest {
         val login = server.takeRequest()
         assertEquals("POST", login.method)
         assertEquals("/api/auth/token", login.path)
-        assertTrue(login.getHeader("Content-Type").orEmpty().startsWith("application/x-www-form-urlencoded"))
+        assertTrue(
+            login
+                .getHeader("Content-Type")
+                .orEmpty()
+                .startsWith("application/x-www-form-urlencoded")
+        )
         val loginBody = login.body.readUtf8()
         assertTrue(loginBody.contains("username=ai%40example.test"))
         assertTrue(loginBody.contains("password=not-persisted"))
@@ -95,14 +100,12 @@ class PasswordTokenMinterTest {
     @Test
     fun `server URL does not need a trailing slash`() = runTest {
         server.enqueue(
-            MockResponse()
-                .setResponseCode(200)
-                .setBody("{\"access_token\":\"short-lived-jwt\"}"),
+            MockResponse().setResponseCode(200).setBody("{\"access_token\":\"short-lived-jwt\"}")
         )
         server.enqueue(
             MockResponse()
                 .setResponseCode(200)
-                .setBody("{\"name\":\"Syncwich (test)\",\"id\":2,\"token\":\"long-lived-token\"}"),
+                .setBody("{\"name\":\"Syncwich (test)\",\"id\":2,\"token\":\"long-lived-token\"}")
         )
 
         val result =

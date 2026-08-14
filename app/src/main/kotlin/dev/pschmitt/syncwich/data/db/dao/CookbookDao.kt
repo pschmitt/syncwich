@@ -16,6 +16,9 @@ interface CookbookDao {
     @Query("SELECT * FROM cookbooks WHERE id = :id")
     fun observeById(id: String): Flow<CookbookEntity?>
 
+    @Query("SELECT * FROM cookbooks WHERE slug = :slug LIMIT 1")
+    fun observeBySlug(slug: String): Flow<CookbookEntity?>
+
     @Upsert suspend fun upsertAll(cookbooks: List<CookbookEntity>)
 
     @Query("DELETE FROM cookbooks") suspend fun deleteAll()

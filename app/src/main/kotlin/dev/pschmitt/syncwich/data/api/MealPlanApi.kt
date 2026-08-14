@@ -18,9 +18,9 @@ import retrofit2.http.Query
  * /api/households/mealplans` returns the same `{page,per_page,total,total_pages,items,next,
  * previous}` envelope as `/api/recipes`, `/api/organizers/categories`, and `/api/organizers/tags`
  * (`PlanEntryPagination` in the server's `/openapi.json`), filtered by the inclusive
- * `start_date`/`end_date` query params (`YYYY-MM-DD`, confirmed accepted by a live request).
- * Unlike the other paginated endpoints, `perPage` here defaults to a full week's worth of entries
- * rather than 50, since callers always query one week at a time.
+ * `start_date`/`end_date` query params (`YYYY-MM-DD`, confirmed accepted by a live request). Unlike
+ * the other paginated endpoints, `perPage` here defaults to a full week's worth of entries rather
+ * than 50, since callers always query one week at a time.
  *
  * The single-item mutation routes (SW-24/SW-33) were confirmed by reading the same live instance's
  * `/openapi.json` `paths`/`components.schemas` sections - no write request was made: `POST

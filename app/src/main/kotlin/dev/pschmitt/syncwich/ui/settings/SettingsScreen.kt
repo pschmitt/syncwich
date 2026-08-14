@@ -15,18 +15,20 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.ViewCarousel
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
@@ -41,17 +43,18 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.pschmitt.syncwich.data.settings.FONT_SCALE_STEPS
 import dev.pschmitt.syncwich.data.settings.MAX_FONT_SCALE
 import dev.pschmitt.syncwich.data.settings.MIN_FONT_SCALE
 import dev.pschmitt.syncwich.data.settings.NavigationBarItemKeys
+import dev.pschmitt.syncwich.data.settings.ThemeMode
 import dev.pschmitt.syncwich.data.settings.resolveNavBarOrder
-import dev.pschmitt.syncwich.ui.navigation.TopLevelDestination
 import dev.pschmitt.syncwich.ui.navigation.NavigationBarViewModel
+import dev.pschmitt.syncwich.ui.navigation.TopLevelDestination
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -118,7 +121,8 @@ internal fun SettingsListItem(
         headlineContent = headlineContent,
         supportingContent = supportingContent,
         trailingContent = trailingContent,
-        colors = androidx.compose.material3.ListItemDefaults.colors(containerColor = Color.Transparent),
+        colors =
+            androidx.compose.material3.ListItemDefaults.colors(containerColor = Color.Transparent),
     )
 }
 
@@ -131,7 +135,8 @@ internal fun SettingsGroupCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        colors =
+            CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Column(modifier = Modifier.padding(vertical = 4.dp)) {
@@ -160,10 +165,12 @@ private fun SettingsCategoryRow(
 ) {
     SettingsListItem(
         modifier =
-            Modifier.fillMaxWidth().clickable(role = Role.Button) { onClick(category) }.semantics {
-                contentDescription = "${category.title}: ${category.subtitle}"
-                role = Role.Button
-            },
+            Modifier.fillMaxWidth()
+                .clickable(role = Role.Button) { onClick(category) }
+                .semantics {
+                    contentDescription = "${category.title}: ${category.subtitle}"
+                    role = Role.Button
+                },
         leadingContent = { Icon(category.icon, contentDescription = null) },
         headlineContent = { Text(category.title) },
         supportingContent = { Text(category.subtitle) },
@@ -212,11 +219,15 @@ private fun AppearanceSettingsScreen(
 ) {
     val persistedOrder by viewModel.navigationBarOrder.collectAsStateWithLifecycle()
     val fontScale by viewModel.fontScale.collectAsStateWithLifecycle()
+    val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+    val ingredientChecklistEnabled by
+        viewModel.ingredientChecklistEnabled.collectAsStateWithLifecycle()
     val visibleItems by navigationBarViewModel.visibleItemKeys.collectAsStateWithLifecycle()
     val naturalKeys = TopLevelDestination.entries.map { it.key }
     val orderedKeys = resolveNavBarOrder(naturalKeys, persistedOrder, emptySet())
-    val orderedDestinations =
-        orderedKeys.mapNotNull { key -> TopLevelDestination.entries.firstOrNull { it.key == key } }
+    val orderedDestinations = orderedKeys.mapNotNull { key ->
+        TopLevelDestination.entries.firstOrNull { it.key == key }
+    }
 
     Scaffold(
         modifier = modifier,
@@ -262,6 +273,45 @@ private fun AppearanceSettingsScreen(
                                 },
                         )
                     }
+                }
+            }
+            item {
+                SettingsGroupCard(title = "Theme", icon = Icons.Filled.Palette) {
+                    ThemeMode.entries.forEach { mode ->
+                        SettingsListItem(
+                            modifier =
+                                Modifier.fillMaxWidth().clickable { viewModel.saveThemeMode(mode) },
+                            headlineContent = { Text(mode.label) },
+                            supportingContent = {
+                                if (mode == ThemeMode.SYSTEM) {
+                                    Text("Follow the device appearance setting")
+                                }
+                            },
+                            trailingContent = {
+                                RadioButton(
+                                    selected = themeMode == mode,
+                                    onClick = { viewModel.saveThemeMode(mode) },
+                                )
+                            },
+                        )
+                    }
+                }
+            }
+            item {
+                SettingsGroupCard(title = "Recipe display", icon = Icons.Filled.Checklist) {
+                    SettingsListItem(
+                        modifier = Modifier.fillMaxWidth(),
+                        headlineContent = { Text("Ingredient checklist") },
+                        supportingContent = {
+                            Text("Show ingredients as checkable items while cooking")
+                        },
+                        trailingContent = {
+                            Switch(
+                                checked = ingredientChecklistEnabled,
+                                onCheckedChange = viewModel::setIngredientChecklistEnabled,
+                            )
+                        },
+                    )
                 }
             }
             item {
@@ -311,8 +361,7 @@ private fun NavigationDestinationRow(
                     isPinned -> "Always visible"
                     destination.key in visibleItems -> "Shown in the bottom bar"
                     destination.key == NavigationBarItemKeys.SETTINGS -> "Hidden until you add it"
-                    destination.key == NavigationBarItemKeys.FAVORITES ->
-                        "Hidden until you add it"
+                    destination.key == NavigationBarItemKeys.FAVORITES -> "Hidden until you add it"
                     else -> "Hidden by default because its cache is empty"
                 }
             )
@@ -322,18 +371,18 @@ private fun NavigationDestinationRow(
                 IconButton(
                     onClick = { onMove(orderedKeys.move(index, index - 1)) },
                     enabled = index > 0,
-                    modifier = Modifier.semantics {
-                        contentDescription = "Move ${destination.label} up"
-                    },
+                    modifier =
+                        Modifier.semantics { contentDescription = "Move ${destination.label} up" },
                 ) {
                     Icon(Icons.Filled.ArrowUpward, contentDescription = null)
                 }
                 IconButton(
                     onClick = { onMove(orderedKeys.move(index, index + 1)) },
                     enabled = index < orderedDestinations.lastIndex,
-                    modifier = Modifier.semantics {
-                        contentDescription = "Move ${destination.label} down"
-                    },
+                    modifier =
+                        Modifier.semantics {
+                            contentDescription = "Move ${destination.label} down"
+                        },
                 ) {
                     Icon(Icons.Filled.ArrowDownward, contentDescription = null)
                 }
@@ -343,11 +392,12 @@ private fun NavigationDestinationRow(
                         if (isPinned) null
                         else { checked -> onSetHidden(destination.key, !checked) },
                     enabled = !isPinned,
-                    modifier = Modifier.semantics {
-                        contentDescription =
-                            if (isPinned) "${destination.label} is always visible"
-                            else "Show ${destination.label} in bottom navigation"
-                    },
+                    modifier =
+                        Modifier.semantics {
+                            contentDescription =
+                                if (isPinned) "${destination.label} is always visible"
+                                else "Show ${destination.label} in bottom navigation"
+                        },
                 )
             }
         },

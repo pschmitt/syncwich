@@ -24,7 +24,7 @@ class CookbookPreviewTest {
     }
 
     @Test
-    fun `filters recipes without usable cover images`() {
+    fun `filters recipes without a cover value while retaining imported sentinel covers`() {
         val recipes =
             listOf(
                 recipe("missing", image = null),
@@ -34,7 +34,7 @@ class CookbookPreviewTest {
             )
 
         assertEquals(
-            listOf("has-image"),
+            listOf("sentinel", "has-image"),
             filterRecipePreviewsWithImages(recipes, serverUrl = "https://mealie.example.com")
                 .map(RecipeSummaryEntity::id),
         )

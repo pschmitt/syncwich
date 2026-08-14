@@ -1,5 +1,6 @@
 package dev.pschmitt.syncwich.ui.navigation
 
+import android.content.Intent
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -14,9 +15,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -32,18 +37,18 @@ import androidx.navigation.toRoute
 import dev.pschmitt.syncwich.ui.cookbooks.CookbookDetailScreen
 import dev.pschmitt.syncwich.ui.cookbooks.CookbookEditorScreen
 import dev.pschmitt.syncwich.ui.cookbooks.CookbooksScreen
-import dev.pschmitt.syncwich.ui.initialsync.InitialSyncScreen
 import dev.pschmitt.syncwich.ui.home.HomeScreen
+import dev.pschmitt.syncwich.ui.initialsync.InitialSyncScreen
 import dev.pschmitt.syncwich.ui.mealplan.MealPlanScreen
 import dev.pschmitt.syncwich.ui.onboarding.OnboardingScreen
+import dev.pschmitt.syncwich.ui.recipes.FavoritesScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipeDetailScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipeEditorScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipeTimelineScreen
-import dev.pschmitt.syncwich.ui.recipes.FavoritesScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipesScreen
-import dev.pschmitt.syncwich.ui.settings.SettingsScreen
 import dev.pschmitt.syncwich.ui.settings.ConnectionSettingsScreen
 import dev.pschmitt.syncwich.ui.settings.SettingsCategoryScreen
+import dev.pschmitt.syncwich.ui.settings.SettingsScreen
 import dev.pschmitt.syncwich.ui.shoppinglists.ShoppingListDetailScreen
 import dev.pschmitt.syncwich.ui.shoppinglists.ShoppingListsScreen
 
@@ -70,15 +75,20 @@ private val topLevelNavItems =
 
 /**
  * The app's main scaffold: a Material 3 bottom navigation bar switching between the five v1
- * top-level destinations, plus a Settings entry point reachable from each screen's own top app
- * bar (see SW-11 - each top-level screen owns its `TopAppBar`, not this outer `Scaffold`).
+ * top-level destinations, plus a Settings entry point reachable from each screen's own top app bar
+ * (see SW-11 - each top-level screen owns its `TopAppBar`, not this outer `Scaffold`).
  *
  * @param startDestination [Route.Onboarding] until a server URL + API token are saved, otherwise
  *   [Route.Home] - see `MainActivity`, which reads `SettingsRepository.isConfigured` for this.
  */
 @Composable
-fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Route.Home) {
+fun SyncwichNavHost(
+    modifier: Modifier = Modifier,
+    startDestination: Route = Route.Home,
+    incomingIntent: Intent? = null,
+) {
     val navController = rememberNavController()
+    val snackbarHostState = remember { SnackbarHostState() }
     val navigationBarViewModel: NavigationBarViewModel = hiltViewModel()
     val recipeHistoryViewModel: RecipeHistoryViewModel = hiltViewModel()
     val openRecipe: (String, String) -> Unit = { recipeId, slug ->
@@ -87,10 +97,39 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
     }
     val visibleNavBarItemKeys by
         navigationBarViewModel.visibleItemKeys.collectAsStateWithLifecycle()
-    val resolvedTopLevelNavItems =
-        visibleNavBarItemKeys.mapNotNull { key ->
-            topLevelNavItems.firstOrNull { it.destination.key == key }
+    val resolvedTopLevelNavItems = visibleNavBarItemKeys.mapNotNull { key ->
+        topLevelNavItems.firstOrNull { it.destination.key == key }
+    }
+
+    LaunchedEffect(incomingIntent) {
+        if (startDestination is Route.Onboarding || startDestination is Route.InitialSync)
+            return@LaunchedEffect
+        when (val target = parseMealieIntent(incomingIntent)) {
+            is MealieLinkTarget.Recipe ->
+                navController.navigate(Route.RecipeDetail(slug = target.slug)) {
+                    launchSingleTop = true
+                }
+            is MealieLinkTarget.Cookbook ->
+                navController.navigate(Route.CookbookDetail(slug = target.slug)) {
+                    launchSingleTop = true
+                }
+            null -> {
+                val sharedAssetUri = parseSharedAssetUri(incomingIntent)
+                if (sharedAssetUri != null) {
+                    navController.navigate(Route.RecipeEditor(sharedAssetUri = sharedAssetUri)) {
+                        launchSingleTop = true
+                    }
+                } else if (
+                    incomingIntent?.action == Intent.ACTION_VIEW ||
+                        incomingIntent?.action == Intent.ACTION_SEND
+                ) {
+                    snackbarHostState.showSnackbar(
+                        "This isn't a supported Mealie recipe, cookbook, or image."
+                    )
+                }
+            }
         }
+    }
 
     Scaffold(
         modifier = modifier,
@@ -99,6 +138,7 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
         // offset that whole destination a second time; NavigationBar still contributes its full
         // height (including the navigation-bar inset) to the content padding below.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             val backStackEntry by navController.currentBackStackEntryAsState()
             val currentDestination = backStackEntry?.destination
@@ -167,9 +207,7 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
             }
             composable<Route.Home> {
                 HomeScreen(
-                    onRecipeClick = { recipe ->
-                        openRecipe(recipe.id, recipe.slug)
-                    },
+                    onRecipeClick = { recipe -> openRecipe(recipe.id, recipe.slug) },
                     onRecipesClick = { navController.navigate(Route.Recipes) },
                     onCookbooksClick = { navController.navigate(Route.Cookbooks) },
                     onCookbookClick = { cookbookId ->
@@ -180,26 +218,20 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
             }
             composable<Route.Recipes> {
                 RecipesScreen(
-                    onRecipeClick = { recipe ->
-                        openRecipe(recipe.id, recipe.slug)
-                    },
+                    onRecipeClick = { recipe -> openRecipe(recipe.id, recipe.slug) },
                     onCreateClick = { navController.navigate(Route.RecipeEditor()) },
                     onSettingsClick = { navController.navigate(Route.Settings) },
                 )
             }
             composable<Route.Favorites> {
                 FavoritesScreen(
-                    onRecipeClick = { recipe ->
-                        openRecipe(recipe.id, recipe.slug)
-                    },
+                    onRecipeClick = { recipe -> openRecipe(recipe.id, recipe.slug) },
                     onSettingsClick = { navController.navigate(Route.Settings) },
                 )
             }
             composable<Route.MealPlan> {
                 MealPlanScreen(
-                    onRecipeClick = { recipeId, slug ->
-                        openRecipe(recipeId, slug)
-                    },
+                    onRecipeClick = { recipeId, slug -> openRecipe(recipeId, slug) },
                     onSettingsClick = { navController.navigate(Route.Settings) },
                 )
             }
@@ -222,9 +254,7 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
             }
             composable<Route.CookbookDetail> {
                 CookbookDetailScreen(
-                    onRecipeClick = { recipeId, slug ->
-                        openRecipe(recipeId, slug)
-                    },
+                    onRecipeClick = { recipeId, slug -> openRecipe(recipeId, slug) },
                     onEditClick = { cookbookId ->
                         navController.navigate(Route.CookbookEditor(cookbookId))
                     },
@@ -252,9 +282,7 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
                     onBack = { navController.popBackStack() },
                     onChangeConnection = { navController.navigate(Route.SettingsConnection) },
                     onSignedOut = {
-                        navController.navigate(Route.Onboarding) {
-                            popUpTo(0) { inclusive = true }
-                        }
+                        navController.navigate(Route.Onboarding) { popUpTo(0) { inclusive = true } }
                     },
                 )
             }

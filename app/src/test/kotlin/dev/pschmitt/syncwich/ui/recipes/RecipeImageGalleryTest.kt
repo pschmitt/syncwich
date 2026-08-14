@@ -21,7 +21,7 @@ class RecipeImageGalleryTest {
                             text =
                                 "![Step one](https://images.example/one.webp) " +
                                     "![Duplicate](https://images.example/one.webp) " +
-                                    "<img src=\"/api/media/recipes/recipe-1/assets/step.jpg\" />",
+                                    "<img src=\"/api/media/recipes/recipe-1/assets/step.jpg\" />"
                         ),
                         RecipeInstructionDto(text = "![Unsafe](javascript:alert(1))"),
                     ),
@@ -35,5 +35,30 @@ class RecipeImageGalleryTest {
             ),
             recipeImageGalleryUrls("https://mealie.example", recipe),
         )
+    }
+
+    @Test
+    fun `image index shares parsed references with the gallery`() {
+        val recipe =
+            RecipeDetailDto(
+                id = "recipe-1",
+                slug = "recipe-one",
+                name = "Recipe One",
+                recipeInstructions =
+                    listOf(
+                        RecipeInstructionDto(
+                            text =
+                                "<img src=\"/api/media/recipes/recipe-1/assets/step.jpg\" alt=\"Step\" />"
+                        )
+                    ),
+            )
+
+        val index = recipeImageIndex("https://mealie.example", recipe)
+
+        assertEquals(
+            listOf("https://mealie.example/api/media/recipes/recipe-1/assets/step.jpg"),
+            index.galleryUrls,
+        )
+        assertEquals("Step", index.instructionReferences.single().single().altText)
     }
 }

@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.TextUnit
 import dev.pschmitt.syncwich.data.settings.DEFAULT_FONT_SCALE
+import dev.pschmitt.syncwich.data.settings.ThemeMode
 import dev.pschmitt.syncwich.data.settings.sanitizeFontScale
 
 internal val LightColors =
@@ -38,11 +39,17 @@ internal val DarkColors =
  */
 @Composable
 fun SyncwichTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themeMode: ThemeMode = ThemeMode.SYSTEM,
     fontScale: Float = DEFAULT_FONT_SCALE,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
+    val darkTheme =
+        when (themeMode) {
+            ThemeMode.SYSTEM -> isSystemInDarkTheme()
+            ThemeMode.LIGHT -> false
+            ThemeMode.DARK -> true
+        }
     val colorScheme =
         when {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->

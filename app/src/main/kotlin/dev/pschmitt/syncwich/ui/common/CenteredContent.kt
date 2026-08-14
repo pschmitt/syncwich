@@ -13,8 +13,8 @@ import androidx.compose.ui.unit.dp
 
 /**
  * Keeps long-form content readable on tablets and desktop-sized windows while retaining the full
- * available width on phones. The parent remains full-screen so edge-to-edge and scaffold insets
- * are handled by the caller.
+ * available width on phones. The parent remains full-screen so edge-to-edge and scaffold insets are
+ * handled by the caller.
  */
 @Composable
 fun CenteredContent(

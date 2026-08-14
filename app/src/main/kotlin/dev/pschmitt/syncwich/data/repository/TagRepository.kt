@@ -19,8 +19,9 @@ constructor(private val organizersApi: OrganizersApi, private val tagDao: TagDao
 
     fun observeTags(): Flow<List<TagEntity>> = tagDao.observeAll()
 
-    suspend fun refreshTags(): Result<Unit> = withContext(Dispatchers.IO) {
-        runCatching {
+    suspend fun refreshTags(): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            runCatching {
                 val allItems = mutableListOf<OrganizerDto>()
                 var page = 1
                 while (true) {
@@ -35,8 +36,8 @@ constructor(private val organizersApi: OrganizersApi, private val tagDao: TagDao
                 }
                 tagDao.replaceAll(allItems.map { it.toEntity() })
             }
-            .onFailure { Timber.w(it, "Tag refresh failed; keeping cached data") }
-    }
+                .onFailure { Timber.w(it, "Tag refresh failed; keeping cached data") }
+        }
 
     private fun OrganizerDto.toEntity() = TagEntity(id = id, name = name, slug = slug)
 }

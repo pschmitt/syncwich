@@ -1,18 +1,19 @@
 package dev.pschmitt.syncwich.ui.settings
 
+import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import android.os.Build
 import dev.pschmitt.syncwich.data.onboarding.OnboardingError
 import dev.pschmitt.syncwich.data.onboarding.OnboardingValidationException
 import dev.pschmitt.syncwich.data.onboarding.OnboardingValidator
 import dev.pschmitt.syncwich.data.onboarding.PasswordTokenMinter
 import dev.pschmitt.syncwich.data.repository.AccountRepository
-import dev.pschmitt.syncwich.data.settings.SettingsRepository
-import dev.pschmitt.syncwich.data.settings.MealieCredentials
 import dev.pschmitt.syncwich.data.settings.DEFAULT_FONT_SCALE
 import dev.pschmitt.syncwich.data.settings.DEFAULT_SYNC_INTERVAL_HOURS
+import dev.pschmitt.syncwich.data.settings.MealieCredentials
+import dev.pschmitt.syncwich.data.settings.SettingsRepository
+import dev.pschmitt.syncwich.data.settings.ThemeMode
 import dev.pschmitt.syncwich.sync.SyncScheduler
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -74,6 +75,20 @@ constructor(
             DEFAULT_FONT_SCALE,
         )
 
+    val themeMode: StateFlow<ThemeMode> =
+        settingsRepository.themeMode.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
+            ThemeMode.SYSTEM,
+        )
+
+    val ingredientChecklistEnabled: StateFlow<Boolean> =
+        settingsRepository.ingredientChecklistEnabled.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
+            false,
+        )
+
     val syncOnlyOnWifi: StateFlow<Boolean> =
         settingsRepository.syncOnlyOnWifi.stateIn(
             viewModelScope,
@@ -105,6 +120,14 @@ constructor(
 
     fun saveFontScale(scale: Float) {
         viewModelScope.launch { settingsRepository.saveFontScale(scale) }
+    }
+
+    fun saveThemeMode(mode: ThemeMode) {
+        viewModelScope.launch { settingsRepository.saveThemeMode(mode) }
+    }
+
+    fun setIngredientChecklistEnabled(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setIngredientChecklistEnabled(enabled) }
     }
 
     fun setSyncOnlyOnWifi(enabled: Boolean) {
@@ -200,7 +223,8 @@ constructor(
                         "Enter a valid server URL, e.g. https://demo.mealie.io"
                     OnboardingError.Unauthorized ->
                         if (passwordMode) "Incorrect username or password."
-                        else "That server rejected the API token. Generate a new token and try again."
+                        else
+                            "That server rejected the API token. Generate a new token and try again."
                     OnboardingError.Unreachable ->
                         "Couldn't reach that server. Check the URL and your network connection."
                     is OnboardingError.ServerError ->

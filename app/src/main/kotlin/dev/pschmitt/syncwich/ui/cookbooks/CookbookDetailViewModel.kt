@@ -13,12 +13,15 @@ import dev.pschmitt.syncwich.ui.common.RefreshState
 import dev.pschmitt.syncwich.ui.common.refreshErrorMessage
 import dev.pschmitt.syncwich.ui.navigation.Route
 import javax.inject.Inject
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -30,7 +33,8 @@ constructor(
     private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
-    private val cookbookId = savedStateHandle.toRoute<Route.CookbookDetail>().cookbookId
+    private val route = savedStateHandle.toRoute<Route.CookbookDetail>()
+    private val requestedCookbookId = route.cookbookId
     private val _refreshState = MutableStateFlow(RefreshState())
     val refreshState: StateFlow<RefreshState> = _refreshState.asStateFlow()
     private var refreshJob: Job? = null
@@ -40,16 +44,24 @@ constructor(
         get() = settingsRepository.credentials.value.serverUrl
 
     val cookbook: StateFlow<CookbookEntity?> =
-        cookbookRepository
-            .observeCookbook(cookbookId)
+        (if (requestedCookbookId.isBlank()) {
+                cookbookRepository.observeCookbookBySlug(route.slug)
+            } else {
+                cookbookRepository.observeCookbook(requestedCookbookId)
+            })
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
     val recipes: StateFlow<List<RecipeSummaryEntity>> =
-        cookbookRepository
-            .observeCookbookRecipes(cookbookId)
+        cookbook
+            .flatMapLatest { current ->
+                current?.let { cookbookRepository.observeCookbookRecipes(it.id) }
+                    ?: flowOf(emptyList())
+            }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), emptyList())
 
-    init { refresh(forceRefresh = false) }
+    init {
+        refresh(forceRefresh = false)
+    }
 
     fun refresh() = refresh(forceRefresh = true)
 
@@ -57,13 +69,28 @@ constructor(
         if (refreshJob?.isActive == true) return
         refreshJob = viewModelScope.launch {
             _refreshState.value = RefreshState(isRefreshing = true)
-            _refreshState.value =
-                RefreshState(
-                    errorMessage =
-                        refreshErrorMessage(
-                            cookbookRepository.refreshCookbookRecipes(cookbookId, forceRefresh)
+            val result =
+                if (requestedCookbookId.isBlank()) {
+                    cookbookRepository
+                        .refreshCookbooks(forceRefresh)
+                        .fold(
+                            onSuccess = {
+                                val discovered = cookbook.first()
+                                if (discovered == null) {
+                                    Result.failure(IllegalStateException("Cookbook not found"))
+                                } else {
+                                    cookbookRepository.refreshCookbookRecipes(
+                                        discovered.id,
+                                        forceRefresh,
+                                    )
+                                }
+                            },
+                            onFailure = { Result.failure(it) },
                         )
-                )
+                } else {
+                    cookbookRepository.refreshCookbookRecipes(requestedCookbookId, forceRefresh)
+                }
+            _refreshState.value = RefreshState(errorMessage = refreshErrorMessage(result))
         }
     }
 

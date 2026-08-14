@@ -24,8 +24,9 @@ constructor(private val organizersApi: OrganizersApi, private val categoryDao: C
 
     fun observeCategories(): Flow<List<CategoryEntity>> = categoryDao.observeAll()
 
-    suspend fun refreshCategories(): Result<Unit> = withContext(Dispatchers.IO) {
-        runCatching {
+    suspend fun refreshCategories(): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            runCatching {
                 val allItems = mutableListOf<OrganizerDto>()
                 var page = 1
                 while (true) {
@@ -40,8 +41,8 @@ constructor(private val organizersApi: OrganizersApi, private val categoryDao: C
                 }
                 categoryDao.replaceAll(allItems.map { it.toEntity() })
             }
-            .onFailure { Timber.w(it, "Category refresh failed; keeping cached data") }
-    }
+                .onFailure { Timber.w(it, "Category refresh failed; keeping cached data") }
+        }
 
     private fun OrganizerDto.toEntity() = CategoryEntity(id = id, name = name, slug = slug)
 }

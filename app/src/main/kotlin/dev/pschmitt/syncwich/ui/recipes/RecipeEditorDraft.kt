@@ -20,6 +20,8 @@ data class RecipeEditorDraft(
     val totalTime: String = "",
     val ingredients: List<String> = listOf(""),
     val instructions: List<String> = listOf(""),
+    val coverImageUri: String? = null,
+    val removeCoverImage: Boolean = false,
     val existingSlug: String? = null,
     // Every field this bounded editor doesn't expose (id, image, category/tags, nutrition,
     // settings, assets, notes, extras, comments, tools) is preserved from the cached recipe so
@@ -52,7 +54,8 @@ data class RecipeEditorDraft(
                 trimmedIngredients.map { text ->
                     RecipeIngredientInputDto(display = text, note = text, originalText = text)
                 },
-            recipeInstructions = trimmedInstructions.map { text -> RecipeStepInputDto(text = text) },
+            recipeInstructions =
+                trimmedInstructions.map { text -> RecipeStepInputDto(text = text) },
         )
     }
 
@@ -74,6 +77,25 @@ data class RecipeEditorDraft(
         if (instructions.size <= 1) copy(instructions = listOf(""))
         else copy(instructions = instructions.toMutableList().apply { removeAt(index) })
 
+    fun withInstructionMoved(from: Int, to: Int): RecipeEditorDraft {
+        if (from !in instructions.indices || to !in instructions.indices || from == to) return this
+        return copy(
+            instructions =
+                instructions.toMutableList().also { items -> items.add(to, items.removeAt(from)) }
+        )
+    }
+
+    fun withDescriptionImage(uri: String): RecipeEditorDraft =
+        copy(description = appendMarkdownImage(description, uri))
+
+    fun withInstructionImage(index: Int, uri: String): RecipeEditorDraft =
+        withInstructionChanged(index, appendMarkdownImage(instructions[index], uri))
+
+    fun withCoverImage(uri: String): RecipeEditorDraft =
+        copy(coverImageUri = uri, removeCoverImage = false)
+
+    fun withoutCoverImage(): RecipeEditorDraft = copy(coverImageUri = null, removeCoverImage = true)
+
     companion object {
         private const val MAX_NAME_LENGTH = 200
 
@@ -90,10 +112,12 @@ data class RecipeEditorDraft(
                     input.recipeIngredient
                         .map { it.display.takeIf(String::isNotBlank) ?: it.note.orEmpty() }
                         .ifEmpty { listOf("") },
-                instructions =
-                    input.recipeInstructions.map { it.text }.ifEmpty { listOf("") },
+                instructions = input.recipeInstructions.map { it.text }.ifEmpty { listOf("") },
                 existingSlug = slug,
                 baseInput = input,
             )
     }
 }
+
+internal fun appendMarkdownImage(content: String, uri: String): String =
+    listOf(content.trimEnd(), "![Image]($uri)").filter(String::isNotBlank).joinToString("\n\n")

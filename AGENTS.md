@@ -26,6 +26,13 @@ Single `:app` Gradle module - this app doesn't need a multi-module split.
   immediately - file the backlog entry (not started, with a checklist inferred from the ask) and
   confirm back to the user, instead of implementing it in that turn.
 
+## Git publishing
+
+- Do not open pull requests unless the user explicitly asks for one.
+- When the user asks to publish and merge work, commit it on the working branch, merge it into
+  `main`, and push `main` directly. Close any accidentally created pull request after the direct
+  merge.
+
 ## Dev environment
 
 - `nix develop` provides the full toolchain (JDK 21, Android SDK, `just`, `ktfmt`) and installs

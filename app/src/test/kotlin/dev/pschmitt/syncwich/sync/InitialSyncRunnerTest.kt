@@ -12,14 +12,18 @@ class InitialSyncRunnerTest {
 
     @Test
     fun `reports each stage before and after its count is cached`() = runTest {
-        val dataSource = FakeDataSource(counts = InitialSyncStage.entries.mapIndexed { i, _ -> i + 1 })
+        val dataSource =
+            FakeDataSource(counts = InitialSyncStage.entries.mapIndexed { i, _ -> i + 1 })
         val progress = mutableListOf<InitialSyncProgress>()
 
         val result = InitialSyncRunner(dataSource).run { progress += it }
 
         assertTrue(result.isSuccess)
         assertEquals(InitialSyncStage.entries, progress.filter { !it.completed }.map { it.stage })
-        assertEquals(listOf(1, 2, 3, 4, 5, 6), progress.filter { it.completed }.map { it.itemCount })
+        assertEquals(
+            listOf(1, 2, 3, 4, 5, 6),
+            progress.filter { it.completed }.map { it.itemCount },
+        )
         assertEquals(
             listOf(1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6),
             progress.map { it.stageNumber },
@@ -35,7 +39,10 @@ class InitialSyncRunnerTest {
         val result = InitialSyncRunner(dataSource).run { progress += it }
 
         assertTrue(result.isFailure)
-        assertEquals(InitialSyncStage.Tags, (result.exceptionOrNull() as InitialSyncException).stage)
+        assertEquals(
+            InitialSyncStage.Tags,
+            (result.exceptionOrNull() as InitialSyncException).stage,
+        )
         assertEquals(
             listOf(InitialSyncStage.Recipes, InitialSyncStage.Categories, InitialSyncStage.Tags),
             dataSource.refreshed,

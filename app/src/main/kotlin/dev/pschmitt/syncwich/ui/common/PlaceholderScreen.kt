@@ -40,9 +40,7 @@ fun PlaceholderScreen(
         if (isLoading) {
             CircularProgressIndicator(
                 modifier =
-                    Modifier.padding(bottom = 16.dp).semantics {
-                        contentDescription = "Loading"
-                    },
+                    Modifier.padding(bottom = 16.dp).semantics { contentDescription = "Loading" }
             )
         } else {
             Icon(
@@ -52,7 +50,11 @@ fun PlaceholderScreen(
                 modifier = Modifier.padding(bottom = 16.dp),
             )
         }
-        Text(text = title, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            textAlign = TextAlign.Center,
+        )
         Text(
             text = subtitle,
             style = MaterialTheme.typography.bodyMedium,

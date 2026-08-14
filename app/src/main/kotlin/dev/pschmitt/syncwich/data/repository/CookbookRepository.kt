@@ -25,12 +25,12 @@ import timber.log.Timber
  * Cache-first, offline-first cookbook access - mirrors [RecipeRepository]/[CategoryRepository]'s
  * shape. A cookbook is a saved recipe filter, not an embedded recipe list (see [CookbookDto]'s
  * kdoc), so [refreshCookbooks] fetches the cookbook dictionary and then, per cookbook, the recipes
- * that currently match it - both cached so [observeCookbookRecipes] works fully offline. All network
- * calls happen before any Room write, so a failure partway through (a bad cookbook filter, a
- * dropped connection) leaves whatever was cached before completely untouched, same contract as
- * [RecipeRepository.refreshRecipes]. Automatic refreshes are coalesced for a short freshness
- * window because Home, the cookbook list, and a restored navigation destination can all become
- * active around the same time.
+ * that currently match it - both cached so [observeCookbookRecipes] works fully offline. All
+ * network calls happen before any Room write, so a failure partway through (a bad cookbook filter,
+ * a dropped connection) leaves whatever was cached before completely untouched, same contract as
+ * [RecipeRepository.refreshRecipes]. Automatic refreshes are coalesced for a short freshness window
+ * because Home, the cookbook list, and a restored navigation destination can all become active
+ * around the same time.
  */
 @Singleton
 class CookbookRepository
@@ -53,15 +53,19 @@ constructor(
     fun observeCookbook(cookbookId: String): Flow<CookbookEntity?> =
         cookbookDao.observeById(cookbookId)
 
+    fun observeCookbookBySlug(slug: String): Flow<CookbookEntity?> = cookbookDao.observeBySlug(slug)
+
     fun observeCookbookRecipes(cookbookId: String): Flow<List<RecipeSummaryEntity>> =
         recipeDao.observeByCookbook(cookbookId)
 
     /**
-     * Creates a cookbook and immediately caches the returned server object. A failed request
-     * leaves the existing cookbook cache untouched, including when the device is offline.
+     * Creates a cookbook and immediately caches the returned server object. A failed request leaves
+     * the existing cookbook cache untouched, including when the device is offline.
      */
     suspend fun createCookbook(request: CreateCookbookDto): Result<CookbookEntity> =
-        mutateCookbook { cookbooksApi.createCookbook(request) }
+        mutateCookbook {
+            cookbooksApi.createCookbook(request)
+        }
 
     /** Updates one cookbook using the v3.22.0 single-item PUT route and refreshes its Room row. */
     suspend fun updateCookbook(
@@ -82,10 +86,9 @@ constructor(
                     val recipeSummaries = mutableMapOf<String, RecipeSummaryEntity>()
                     val cookbookRefs = mutableListOf<RecipeCookbookCrossRef>()
                     cookbooks.forEach { cookbook ->
-                        val recipes =
-                            fetchAllPages { page ->
-                                recipesApi.getRecipesByCookbook(cookbookId = cookbook.id, page = page)
-                            }
+                        val recipes = fetchAllPages { page ->
+                            recipesApi.getRecipesByCookbook(cookbookId = cookbook.id, page = page)
+                        }
                         recipes.forEach { recipe ->
                             recipeSummaries[recipe.id] = recipe.toEntity()
                             cookbookRefs +=
@@ -97,7 +100,8 @@ constructor(
                     }
 
                     // Non-destructive: recipes seen here are opportunistically kept fresh, but
-                    // RecipeRepository.refreshRecipes remains the sole authoritative full-list replace -
+                    // RecipeRepository.refreshRecipes remains the sole authoritative full-list
+                    // replace -
                     // see its kdoc for the equivalent category/tag rationale.
                     if (recipeSummaries.isNotEmpty())
                         recipeDao.upsertAll(recipeSummaries.values.toList())
@@ -128,10 +132,9 @@ constructor(
                     return@withLock Result.success(Unit)
                 }
                 runCatching {
-                    val recipes =
-                        fetchAllPages { page ->
-                            recipesApi.getRecipesByCookbook(cookbookId = cookbookId, page = page)
-                        }
+                    val recipes = fetchAllPages { page ->
+                        recipesApi.getRecipesByCookbook(cookbookId = cookbookId, page = page)
+                    }
                     val entities = recipes.map { it.toEntity() }
                     recipeDao.replaceCookbookRecipeCache(
                         cookbookId = cookbookId,
@@ -144,7 +147,10 @@ constructor(
                     )
                 }
                     .onFailure {
-                        Timber.w(it, "Cookbook recipe refresh failed for $cookbookId; keeping cache")
+                        Timber.w(
+                            it,
+                            "Cookbook recipe refresh failed for $cookbookId; keeping cache",
+                        )
                     }
             }
         }
@@ -178,15 +184,13 @@ constructor(
             queryFilterString = queryFilterString.orEmpty(),
         )
 
-    private suspend fun mutateCookbook(
-        request: suspend () -> CookbookDto,
-    ): Result<CookbookEntity> =
+    private suspend fun mutateCookbook(request: suspend () -> CookbookDto): Result<CookbookEntity> =
         withContext(Dispatchers.IO) {
             runCatching {
-                    val entity = request().toEntity()
-                    cookbookDao.upsertAll(listOf(entity))
-                    entity
-                }
+                val entity = request().toEntity()
+                cookbookDao.upsertAll(listOf(entity))
+                entity
+            }
                 .onFailure { Timber.w(it, "Cookbook mutation failed; keeping cached data") }
         }
 

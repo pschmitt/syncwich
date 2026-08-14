@@ -41,6 +41,27 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- Mealie's public recipe/cookbook links are portable across self-hosted domains. -->
+            <intent-filter tools:ignore="AppLinkWarning,IntentFilterUniqueDataAttributes">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="*" android:pathPattern="/g/home/r/.*" />
+                <data android:scheme="https" android:host="*" android:pathPattern="/g/home/c/.*" />
+                <data android:scheme="http" android:host="*" android:pathPattern="/g/home/r/.*" />
+                <data android:scheme="http" android:host="*" android:pathPattern="/g/home/c/.*" />
+            </intent-filter>
+
+            <!-- Receive shared text/assets; URL text is routed immediately and image handling is
+                 consumed by the editor workflow. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
         </activity>
 
         <!-- WorkManager is initialized manually in SyncwichApp (Configuration.Provider) so Hilt

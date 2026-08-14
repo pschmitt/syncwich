@@ -39,7 +39,11 @@ class MainActivitySmokeTest {
                         .getIdentifier("status_bar_height", "dimen", "android")
                 )
         val density =
-            InstrumentationRegistry.getInstrumentation().targetContext.resources.displayMetrics.density
+            InstrumentationRegistry.getInstrumentation()
+                .targetContext
+                .resources
+                .displayMetrics
+                .density
 
         // MainActivity uses edge-to-edge, so onboarding's scaffold should apply one status-bar
         // inset. A second inset from the outer navigation scaffold would push this title beyond

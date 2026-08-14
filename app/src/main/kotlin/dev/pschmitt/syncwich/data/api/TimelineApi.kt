@@ -25,7 +25,8 @@ interface TimelineApi {
     ): PagedResponseDto<RecipeTimelineEventDto>
 
     /**
-     * Confirmed by the public Mealie v3.22.0 schema (`RecipeTimelineEventIn`/`RecipeTimelineEventOut`)
+     * Confirmed by the public Mealie v3.22.0 schema
+     * (`RecipeTimelineEventIn`/`RecipeTimelineEventOut`)
      * - never exercised with a live write, see `RecipeTimelineRepository`'s kdoc.
      */
     @POST("api/recipes/timeline/events")

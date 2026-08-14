@@ -135,7 +135,8 @@ fun MealPlanScreen(
                     )
                 } else {
                     val entriesByDate = uiState.entries.groupBy { it.date }
-                    val days = generateSequence(uiState.weekStart) { it.plusDays(1) }.take(7).toList()
+                    val days =
+                        generateSequence(uiState.weekStart) { it.plusDays(1) }.take(7).toList()
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(16.dp),
@@ -244,9 +245,7 @@ private fun DayCard(
                     modifier = Modifier.padding(top = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    entries.forEach { entry ->
-                        MealPlanEntryRow(entry, onRecipeClick, onEditEntry)
-                    }
+                    entries.forEach { entry -> MealPlanEntryRow(entry, onRecipeClick, onEditEntry) }
                 }
             }
         }
@@ -344,7 +343,8 @@ private fun MealPlanEntryEditorDialog(
         title = {
             Text(
                 if (state.isEditing) "Edit meal plan entry"
-                else "Add meal plan entry for ${state.date.format(DateTimeFormatter.ofPattern("MMM d"))}"
+                else
+                    "Add meal plan entry for ${state.date.format(DateTimeFormatter.ofPattern("MMM d"))}"
             )
         },
         text = {

@@ -6,5 +6,4 @@ const val MAX_FONT_SCALE = 1.30f
 const val FONT_SCALE_STEPS = 8
 
 fun sanitizeFontScale(scale: Float): Float =
-    if (scale.isFinite()) scale.coerceIn(MIN_FONT_SCALE, MAX_FONT_SCALE)
-    else DEFAULT_FONT_SCALE
+    if (scale.isFinite()) scale.coerceIn(MIN_FONT_SCALE, MAX_FONT_SCALE) else DEFAULT_FONT_SCALE

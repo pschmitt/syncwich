@@ -7,14 +7,14 @@ import kotlinx.serialization.Serializable
  * confirmed against a live v3.22.0 instance's `/openapi.json` - the verification household had no
  * meal-plan entries at the time, so the paginated envelope/query params were confirmed against a
  * live (empty) response while individual item fields are pinned from the schema, not a populated
- * live payload; see `MealPlanApiDtoTest`. `entryType` is one of `breakfast`/`lunch`/`dinner`/`side`/
- * `snack`/`drink`/`dessert` per the schema's enum, kept as a raw string here rather than a
- * `@Serializable` enum so an unrecognized future value degrades to "unknown" in the UI instead of
- * failing to decode. `recipe` reuses [RecipeSummaryDto] - the server's embedded `RecipeSummary`
- * schema has the same fields. `groupId`/`userId` are required by `ReadPlanEntry` (re-confirmed for
- * SW-24/SW-33's meal-plan mutation work) and are kept - defaulted to `""` only so any code
- * constructing this DTO without them still compiles - so an edit can round-trip them into
- * `UpdatePlanEntryDto` without a separate lookup.
+ * live payload; see `MealPlanApiDtoTest`. `entryType` is one of
+ * `breakfast`/`lunch`/`dinner`/`side`/ `snack`/`drink`/`dessert` per the schema's enum, kept as a
+ * raw string here rather than a `@Serializable` enum so an unrecognized future value degrades to
+ * "unknown" in the UI instead of failing to decode. `recipe` reuses [RecipeSummaryDto] - the
+ * server's embedded `RecipeSummary` schema has the same fields. `groupId`/`userId` are required by
+ * `ReadPlanEntry` (re-confirmed for SW-24/SW-33's meal-plan mutation work) and are kept - defaulted
+ * to `""` only so any code constructing this DTO without them still compiles - so an edit can
+ * round-trip them into `UpdatePlanEntryDto` without a separate lookup.
  */
 @Serializable
 data class MealPlanEntryDto(

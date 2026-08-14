@@ -11,8 +11,8 @@ import kotlinx.serialization.json.JsonElement
  * The editable recipe payload accepted by Mealie v3.22.0's single-recipe PUT/PATCH routes.
  *
  * This intentionally models the complete top-level `Recipe-Input` envelope while leaving the
- * server-owned and less common nested values as JSON elements. An editor can grow the nested
- * models without making the repository silently discard fields from an existing recipe.
+ * server-owned and less common nested values as JSON elements. An editor can grow the nested models
+ * without making the repository silently discard fields from an existing recipe.
  */
 @Serializable
 data class RecipeInputDto(

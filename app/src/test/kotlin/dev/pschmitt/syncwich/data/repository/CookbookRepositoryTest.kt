@@ -99,7 +99,9 @@ class CookbookRepositoryTest {
                 FakeCookbookDao(seed = listOf(CookbookEntity("old-1", "Old", "old", "", 0)))
             val recipeDao = FakeRecipeDao()
             val cookbooksApi =
-                FakeCookbooksApi(cookbooks = listOf(CookbookDto("new-1", "New", "new", "", 0, false)))
+                FakeCookbooksApi(
+                    cookbooks = listOf(CookbookDto("new-1", "New", "new", "", 0, false))
+                )
             val recipesApi =
                 FakeRecipesApi(
                     byCookbook =
@@ -230,8 +232,13 @@ class CookbookRepositoryTest {
 
         override fun observeAll(): Flow<List<CookbookEntity>> = state
 
-        override fun observeById(id: String): Flow<CookbookEntity?> =
-            state.map { list -> list.find { it.id == id } }
+        override fun observeById(id: String): Flow<CookbookEntity?> = state.map { list ->
+            list.find { it.id == id }
+        }
+
+        override fun observeBySlug(slug: String): Flow<CookbookEntity?> = state.map { list ->
+            list.find { it.slug == slug }
+        }
 
         override suspend fun upsertAll(cookbooks: List<CookbookEntity>) {
             val byId = state.value.associateBy { it.id }.toMutableMap()
@@ -251,8 +258,9 @@ class CookbookRepositoryTest {
         private val recipes = MutableStateFlow(seedRecipes.associateBy { it.id })
         private val cookbookRefs = MutableStateFlow(seedCookbookRefs)
 
-        override fun observeAll(): Flow<List<RecipeSummaryEntity>> =
-            recipes.map { it.values.toList() }
+        override fun observeAll(): Flow<List<RecipeSummaryEntity>> = recipes.map {
+            it.values.toList()
+        }
 
         override fun observeByCategory(categoryId: String): Flow<List<RecipeSummaryEntity>> =
             error("not used by CookbookRepository")
@@ -261,6 +269,9 @@ class CookbookRepositoryTest {
             error("not used by CookbookRepository")
 
         override fun observeDetail(id: String): Flow<RecipeDetailEntity?> =
+            error("not used by CookbookRepository")
+
+        override fun observeDetailBySlug(slug: String): Flow<RecipeDetailEntity?> =
             error("not used by CookbookRepository")
 
         override suspend fun getAll(): List<RecipeSummaryEntity> = recipes.value.values.toList()
@@ -371,8 +382,28 @@ class CookbookRepositoryTest {
         override suspend fun patchRecipe(slug: String, request: RecipeInputDto): ResponseBody =
             error("not used by CookbookRepositoryTest")
 
-        override suspend fun getRecipes(page: Int, perPage: Int): PagedResponseDto<RecipeSummaryDto> =
-            error("not used by CookbookRepository")
+        override suspend fun updateRecipeImage(
+            slug: String,
+            image: okhttp3.MultipartBody.Part,
+            extension: okhttp3.RequestBody,
+        ): ResponseBody = error("not used by CookbookRepositoryTest")
+
+        override suspend fun deleteRecipeImage(slug: String): ResponseBody =
+            error("not used by CookbookRepositoryTest")
+
+        override suspend fun uploadRecipeAsset(
+            slug: String,
+            name: okhttp3.RequestBody,
+            icon: okhttp3.RequestBody,
+            extension: okhttp3.RequestBody,
+            file: okhttp3.MultipartBody.Part,
+        ): dev.pschmitt.syncwich.data.api.dto.RecipeAssetDto =
+            error("not used by CookbookRepositoryTest")
+
+        override suspend fun getRecipes(
+            page: Int,
+            perPage: Int,
+        ): PagedResponseDto<RecipeSummaryDto> = error("not used by CookbookRepository")
 
         override suspend fun getRecipeDetailRaw(slug: String): ResponseBody =
             error("not used by CookbookRepository")

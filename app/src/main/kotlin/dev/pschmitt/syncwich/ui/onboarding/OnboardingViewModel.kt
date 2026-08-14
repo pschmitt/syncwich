@@ -56,16 +56,17 @@ constructor(
                 .validate(serverUrl, apiToken)
                 .onSuccess { persistAndSucceed(serverUrl, apiToken) }
                 .onFailure { error ->
-                    _uiState.value = OnboardingUiState.Error(error.toUserMessage(OnboardingMode.Token))
+                    _uiState.value =
+                        OnboardingUiState.Error(error.toUserMessage(OnboardingMode.Token))
                 }
         }
     }
 
     /**
      * The username/password path: never persists the password or the short-lived JWT it exchanges
-     * it for - only the long-lived API token minted on the user's behalf via
-     * [PasswordTokenMinter], named after this device so it's identifiable/revocable independently
-     * of Syncwich from Mealie's own Profile -> API Tokens page.
+     * it for - only the long-lived API token minted on the user's behalf via [PasswordTokenMinter],
+     * named after this device so it's identifiable/revocable independently of Syncwich from
+     * Mealie's own Profile -> API Tokens page.
      */
     fun connectWithPassword(serverUrl: String, username: String, password: String) {
         if (serverUrl.isBlank() || username.isBlank() || password.isBlank()) {

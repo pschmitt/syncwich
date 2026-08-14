@@ -33,13 +33,14 @@ constructor(
                     persisted = persisted,
                     hidden = hidden,
                     pinned = setOf(NavigationBarItemKeys.RECIPES),
-                    defaultHidden = buildSet {
-                        add(NavigationBarItemKeys.FAVORITES)
-                        add(NavigationBarItemKeys.SETTINGS)
-                        if (!cache.hasMealPlanData) add(NavigationBarItemKeys.MEAL_PLAN)
-                        if (!cache.hasShoppingLists) add(NavigationBarItemKeys.SHOPPING_LISTS)
-                        if (!cache.hasCookbooks) add(NavigationBarItemKeys.COOKBOOKS)
-                    },
+                    defaultHidden =
+                        buildSet {
+                            add(NavigationBarItemKeys.FAVORITES)
+                            add(NavigationBarItemKeys.SETTINGS)
+                            if (!cache.hasMealPlanData) add(NavigationBarItemKeys.MEAL_PLAN)
+                            if (!cache.hasShoppingLists) add(NavigationBarItemKeys.SHOPPING_LISTS)
+                            if (!cache.hasCookbooks) add(NavigationBarItemKeys.COOKBOOKS)
+                        },
                     explicitlyShown = explicitlyShown,
                 )
             }
