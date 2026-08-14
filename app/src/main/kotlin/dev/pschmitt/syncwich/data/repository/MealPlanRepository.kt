@@ -7,7 +7,9 @@ import dev.pschmitt.syncwich.data.db.entity.MealPlanEntryEntity
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /**
@@ -26,7 +28,8 @@ constructor(private val mealPlanApi: MealPlanApi, private val mealPlanDao: MealP
         mealPlanDao.observeByDateRange(startDate.toString(), endDate.toString())
 
     suspend fun refreshMealPlan(startDate: LocalDate, endDate: LocalDate): Result<Unit> =
-        runCatching {
+        withContext(Dispatchers.IO) {
+            runCatching {
                 val start = startDate.toString()
                 val end = endDate.toString()
                 val allItems = mutableListOf<MealPlanEntryDto>()
@@ -45,7 +48,8 @@ constructor(private val mealPlanApi: MealPlanApi, private val mealPlanDao: MealP
                 }
                 mealPlanDao.replaceRange(start, end, allItems.map { it.toEntity() })
             }
-            .onFailure { Timber.w(it, "Meal plan refresh failed; keeping cached data") }
+                .onFailure { Timber.w(it, "Meal plan refresh failed; keeping cached data") }
+        }
 
     private fun MealPlanEntryDto.toEntity() =
         MealPlanEntryEntity(

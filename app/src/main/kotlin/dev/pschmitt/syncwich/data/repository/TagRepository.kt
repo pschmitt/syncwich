@@ -6,7 +6,9 @@ import dev.pschmitt.syncwich.data.db.dao.TagDao
 import dev.pschmitt.syncwich.data.db.entity.TagEntity
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /** Cache-first, offline-first tag access - mirrors [CategoryRepository]'s shape exactly. */
@@ -17,7 +19,7 @@ constructor(private val organizersApi: OrganizersApi, private val tagDao: TagDao
 
     fun observeTags(): Flow<List<TagEntity>> = tagDao.observeAll()
 
-    suspend fun refreshTags(): Result<Unit> =
+    suspend fun refreshTags(): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
                 val allItems = mutableListOf<OrganizerDto>()
                 var page = 1
@@ -34,6 +36,7 @@ constructor(private val organizersApi: OrganizersApi, private val tagDao: TagDao
                 tagDao.replaceAll(allItems.map { it.toEntity() })
             }
             .onFailure { Timber.w(it, "Tag refresh failed; keeping cached data") }
+    }
 
     private fun OrganizerDto.toEntity() = TagEntity(id = id, name = name, slug = slug)
 }

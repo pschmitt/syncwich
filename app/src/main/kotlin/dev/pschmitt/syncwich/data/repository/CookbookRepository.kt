@@ -12,7 +12,9 @@ import dev.pschmitt.syncwich.data.db.entity.RecipeCookbookCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /**
@@ -42,7 +44,7 @@ constructor(
     fun observeCookbookRecipes(cookbookId: String): Flow<List<RecipeSummaryEntity>> =
         recipeDao.observeByCookbook(cookbookId)
 
-    suspend fun refreshCookbooks(): Result<Unit> =
+    suspend fun refreshCookbooks(): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
                 val cookbooks = fetchAllPages { page -> cookbooksApi.getCookbooks(page = page) }
 
@@ -68,6 +70,7 @@ constructor(
                 cookbookDao.replaceAll(cookbooks.map { it.toEntity() })
             }
             .onFailure { Timber.w(it, "Cookbook refresh failed; keeping cached data") }
+    }
 
     private suspend fun <T> fetchAllPages(
         loadPage: suspend (page: Int) -> PagedResponseDto<T>

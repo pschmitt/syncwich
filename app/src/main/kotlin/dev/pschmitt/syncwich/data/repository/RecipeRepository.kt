@@ -15,7 +15,9 @@ import dev.pschmitt.syncwich.data.db.entity.TagEntity
 import dev.pschmitt.syncwich.data.image.selectRecipeImagePrefetchUrls
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /**
@@ -62,7 +64,7 @@ constructor(
      * in one transaction. A failure leaves whatever was cached before completely untouched -
      * callers should treat this as "refresh attempted", not "recipes are now guaranteed fresh".
      */
-    suspend fun refreshRecipes(): Result<Unit> =
+    suspend fun refreshRecipes(): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
                 val allItems = mutableListOf<RecipeSummaryDto>()
                 var page = 1
@@ -113,10 +115,12 @@ constructor(
                 }
             }
             .onFailure { Timber.w(it, "Recipe list refresh failed; keeping cached data") }
+    }
 
     /** Fetches one recipe's full detail and caches its raw JSON - see [RecipeDetailEntity]. */
     suspend fun refreshRecipeDetail(recipeId: String, slug: String): Result<Unit> =
-        runCatching {
+        withContext(Dispatchers.IO) {
+            runCatching {
                 val body = recipesApi.getRecipeDetailRaw(slug).string()
                 recipeDao.upsertDetail(
                     RecipeDetailEntity(
@@ -130,6 +134,7 @@ constructor(
             .onFailure {
                 Timber.w(it, "Recipe detail refresh failed for '$slug'; keeping cached data")
             }
+        }
 
     private fun OrganizerDto.toCategoryEntity() = CategoryEntity(id = id, name = name, slug = slug)
 

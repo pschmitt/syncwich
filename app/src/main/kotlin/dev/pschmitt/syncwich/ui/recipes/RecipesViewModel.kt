@@ -13,12 +13,15 @@ import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import dev.pschmitt.syncwich.ui.common.RefreshState
 import dev.pschmitt.syncwich.ui.common.refreshErrorMessage
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.async
@@ -35,6 +38,12 @@ data class RecipesUiState(
     val selectedTagId: String? = null,
     val serverUrl: String = "",
     val refreshState: RefreshState = RefreshState(),
+)
+
+private data class RecipeSelection(
+    val searchQuery: String = "",
+    val categoryId: String? = null,
+    val tagId: String? = null,
 )
 
 /**
@@ -62,26 +71,36 @@ constructor(
     // Category and tag chips are mutually exclusive single-select filters (see onCategorySelected/
     // onTagSelected) - the repository only exposes "all"/"by one category"/"by one tag" Room
     // queries, and that's the shape a small self-hosted recipe box actually needs.
-    private val selection = combine(searchQuery, selectedCategoryId, selectedTagId, ::Triple)
+    // Keeping the three values in one StateFlow means selecting a category while a tag is
+    // selected causes one Room query switch rather than two intermediate emissions.
+    private val selection = MutableStateFlow(RecipeSelection())
 
-    private val filteredRecipes = selection.flatMapLatest { (query, categoryId, tagId) ->
-        val recipes =
-            when {
-                categoryId != null -> recipeRepository.observeRecipesByCategory(categoryId)
-                tagId != null -> recipeRepository.observeRecipesByTag(tagId)
-                else -> recipeRepository.observeRecipes()
+    private val filteredRecipes =
+        selection
+            .flatMapLatest { (query, categoryId, tagId) ->
+                val recipes =
+                    when {
+                        categoryId != null -> recipeRepository.observeRecipesByCategory(categoryId)
+                        tagId != null -> recipeRepository.observeRecipesByTag(tagId)
+                        else -> recipeRepository.observeRecipes()
+                    }
+                recipes.map { filterRecipesByQuery(it, query) }
             }
-        recipes.map { filterRecipesByQuery(it, query) }
-    }
+            .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
+
+    private val categoriesAndTags =
+        combine(
+                categoryRepository.observeCategories(),
+                tagRepository.observeTags(),
+                ::Pair,
+            )
+            .distinctUntilChanged()
 
     val uiState: StateFlow<RecipesUiState> =
         combine(
                 filteredRecipes,
-                combine(
-                    categoryRepository.observeCategories(),
-                    tagRepository.observeTags(),
-                    ::Pair,
-                ),
+                categoriesAndTags,
                 selection,
                 settingsRepository.credentials,
                 refreshState,
@@ -120,16 +139,22 @@ constructor(
     }
 
     fun onSearchQueryChange(query: String) {
-        searchQuery.value = query
+        selection.value = selection.value.copy(searchQuery = query)
     }
 
     fun onCategorySelected(categoryId: String) {
-        selectedCategoryId.value = if (selectedCategoryId.value == categoryId) null else categoryId
-        selectedTagId.value = null
+        selection.value =
+            selection.value.copy(
+                categoryId = if (selection.value.categoryId == categoryId) null else categoryId,
+                tagId = null,
+            )
     }
 
     fun onTagSelected(tagId: String) {
-        selectedTagId.value = if (selectedTagId.value == tagId) null else tagId
-        selectedCategoryId.value = null
+        selection.value =
+            selection.value.copy(
+                categoryId = null,
+                tagId = if (selection.value.tagId == tagId) null else tagId,
+            )
     }
 }

@@ -9,7 +9,9 @@ import dev.pschmitt.syncwich.data.db.entity.ShoppingListEntity
 import dev.pschmitt.syncwich.data.db.entity.ShoppingListItemEntity
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /**
@@ -39,7 +41,7 @@ constructor(
      * Deliberately does *not* touch any list's cached items - see
      * `ShoppingListDao.replaceAllLists`'s kdoc.
      */
-    suspend fun refreshLists(): Result<Unit> =
+    suspend fun refreshLists(): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
                 val allItems = mutableListOf<ShoppingListSummaryDto>()
                 var page = 1
@@ -56,9 +58,10 @@ constructor(
                 shoppingListDao.replaceAllLists(allItems.map { it.toEntity() })
             }
             .onFailure { Timber.w(it, "Shopping list refresh failed; keeping cached data") }
+    }
 
     /** Fetches one list's detail (including items) and caches it. */
-    suspend fun refreshListDetail(listId: String): Result<Unit> =
+    suspend fun refreshListDetail(listId: String): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
                 val detail = shoppingListsApi.getShoppingListDetail(listId)
                 shoppingListDao.upsertLists(listOf(detail.toEntity()))
@@ -70,6 +73,7 @@ constructor(
                     "Shopping list detail refresh failed for '$listId'; keeping cached data",
                 )
             }
+    }
 
     private fun ShoppingListSummaryDto.toEntity() =
         ShoppingListEntity(id = id, name = name, updatedAt = updatedAt)

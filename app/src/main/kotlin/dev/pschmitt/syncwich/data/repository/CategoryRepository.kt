@@ -6,7 +6,9 @@ import dev.pschmitt.syncwich.data.db.dao.CategoryDao
 import dev.pschmitt.syncwich.data.db.entity.CategoryEntity
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /**
@@ -22,7 +24,7 @@ constructor(private val organizersApi: OrganizersApi, private val categoryDao: C
 
     fun observeCategories(): Flow<List<CategoryEntity>> = categoryDao.observeAll()
 
-    suspend fun refreshCategories(): Result<Unit> =
+    suspend fun refreshCategories(): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
                 val allItems = mutableListOf<OrganizerDto>()
                 var page = 1
@@ -39,6 +41,7 @@ constructor(private val organizersApi: OrganizersApi, private val categoryDao: C
                 categoryDao.replaceAll(allItems.map { it.toEntity() })
             }
             .onFailure { Timber.w(it, "Category refresh failed; keeping cached data") }
+    }
 
     private fun OrganizerDto.toEntity() = CategoryEntity(id = id, name = name, slug = slug)
 }

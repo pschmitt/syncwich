@@ -12,11 +12,16 @@ import dev.pschmitt.syncwich.ui.common.RefreshState
 import dev.pschmitt.syncwich.ui.common.refreshErrorMessage
 import dev.pschmitt.syncwich.ui.navigation.Route
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
@@ -53,18 +58,24 @@ constructor(
     private val _refreshState = MutableStateFlow(RefreshState())
     val refreshState: StateFlow<RefreshState> = _refreshState.asStateFlow()
 
+    private val detailJson: Flow<String?> =
+        recipeRepository
+            .observeRecipeDetail(route.recipeId)
+            .map { it?.detailJson }
+            .distinctUntilChanged()
+
+    private val decodedRecipe: Flow<RecipeDetailDto?> =
+        detailJson
+            .map { rawJson -> rawJson?.let { decodeRecipeDetail(json, it) } }
+            .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
+
     val uiState: StateFlow<RecipeDetailUiState> =
         combine(
-                recipeRepository.observeRecipeDetail(route.recipeId),
+                decodedRecipe,
                 settingsRepository.credentials,
                 refreshState,
-            ) { entity, credentials, refresh ->
-                val recipe =
-                    entity
-                        ?.let {
-                            runCatching { json.decodeFromString<RecipeDetailDto>(it.detailJson) }
-                        }
-                        ?.getOrNull()
+            ) { recipe, credentials, refresh ->
                 when {
                     recipe != null ->
                         RecipeDetailUiState.Loaded(
@@ -75,6 +86,11 @@ constructor(
                     refresh.isRefreshing -> RecipeDetailUiState.Loading
                     else -> RecipeDetailUiState.Unavailable(refresh.errorMessage)
                 }
+=======
+            ) { recipe, credentials ->
+                if (recipe != null) RecipeDetailUiState.Loaded(recipe, credentials.serverUrl)
+                else RecipeDetailUiState.Loading
+>>>>>>> ead399e (perf: move refresh and cache transforms off main)
             }
             .stateIn(
                 viewModelScope,
@@ -97,3 +113,6 @@ constructor(
         }
     }
 }
+
+internal fun decodeRecipeDetail(json: Json, rawJson: String): RecipeDetailDto? =
+    runCatching { json.decodeFromString<RecipeDetailDto>(rawJson) }.getOrNull()

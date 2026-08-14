@@ -492,11 +492,27 @@ concurrent changes in other screens and sync/image code.
 
 ## SW-17: Audit and optimize main-thread performance
 
-- [ ] Profile startup, onboarding, sync-triggered UI updates, Room reads, and Compose recomposition
-      to identify work that is accidentally running on the main thread
-- [ ] Move blocking I/O, JSON parsing, image work, and other expensive computation onto appropriate
-      background dispatchers without weakening the cache-first/offline-first behavior
-- [ ] Add regression coverage or lightweight instrumentation for any main-thread issue found, and
-      verify the fix on a real device
+- [x] Audited startup, onboarding, sync-triggered UI updates, Room reads, and Compose collection
+      paths. `MainActivity` only performs the synchronous configured/not-configured decision needed
+      for its existing start destination; encrypted credential initialization remains a small
+      synchronous startup cost and was left unchanged because navigation configuration is out of
+      scope. Onboarding's blocking validation/token exchange already uses `Dispatchers.IO`.
+- [x] Moved every foreground-capable repository refresh (including raw recipe-detail
+      `ResponseBody.string()` and DTO-to-entity mapping) into `Dispatchers.IO`; Room remains the
+      source of truth and failed refreshes still leave cached data untouched. Room DAO queries were
+      already executor-backed. Coil `AsyncImage` already owns fetch/decode off the UI thread, so no
+      image-prefetch or image-loader redesign was needed.
+- [x] Moved recipe search filtering and cached recipe-detail JSON decoding to `Dispatchers.Default`,
+      deduplicated equal Room-derived results, avoided detail re-decode when only credentials or
+      the fetched timestamp changes, and made cookbook/meal-plan collectors lifecycle-aware. Recipe
+      filter selection is now one state update, avoiding a transient second Room query.
+- [x] Added cached-detail decode regression coverage; existing recipe-search tests continue to
+      cover case-insensitive filtering and empty-result behavior.
+- [ ] Verify the resulting frame/startup profile on a physical device (deliberately not deployed in
+      this task per request).
 
-Status: not started.
+Findings and verification: the targeted changes preserve cache-first reads, transactional Room
+replacements, and best-effort refresh semantics. Remote `just check` passed on a clean SW-17
+checkout; the actual shared worktree still contains unrelated pre-existing SW-15/SW-16 changes.
+
+Status: mostly done, 2026-08-14.
