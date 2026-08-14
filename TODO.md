@@ -970,3 +970,12 @@ Status: not started.
       the Zenfone 10
 
 Status: not started.
+
+## SW-41: Format displayed ratings to one decimal place
+
+- [ ] Format visible recipe ratings to at most one decimal place using normal rounding
+- [ ] Preserve numeric precision for calculations and server synchronization
+- [ ] Add focused coverage for values such as `4.6666667 → 4.7`, whole numbers, and missing ratings
+- [ ] Verify rating formatting across recipe cards, Home, details, and Favorites on the Zenfone 10
+
+Status: not started.
