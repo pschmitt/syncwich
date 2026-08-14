@@ -248,9 +248,61 @@ may also rely on.
 
 ## SW-6: Cookbooks UI
 
-- [ ] Grid → cookbook detail (its recipes)
+- [x] Cookbook data layer built from scratch: `CookbooksApi`/`CookbookDto`, `CookbookEntity` +
+      `RecipeCookbookCrossRef`, `CookbookDao`, `CookbookRepository` (cache-first, mirrors
+      `RecipeRepository`/`CategoryRepository`), wired into `SyncWorker` and DI (`NetworkModule`,
+      `DatabaseModule`)
+- [x] Room schema bumped to version 2 (`fallbackToDestructiveMigration` - see `AppDatabase`'s kdoc
+      for why a hand-written `Migration` isn't warranted for a fully rebuildable server cache)
+- [x] Grid of cookbooks (`CookbooksScreen`) → cookbook detail (`CookbookDetailScreen`, its live
+      recipes) → recipe tap navigates to `Route.RecipeDetail` (falls back to `RecipesScreen`'s
+      placeholder until SW-3 lands, as expected)
+- [x] `Route.CookbookDetail`/`SyncwichNavHost` wired up (minimal, additive changes only)
+- [x] Unit tests: `CookbookApiDtoTest` (live-shape-pinned DTO parsing), `CookbookRepositoryTest`
+      (cache-survives-failed-refresh, mirroring `CategoryRepositoryTest`)
+- [x] Small unrelated fix while in the area: onboarding screen now shows the actual app logo
+      (`ic_launcher_monochrome`, tinted) instead of a generic fork/knife Material icon, with the
+      icon and title centered
 
-Status: not started.
+Status: **done**, 2026-08-14. `just check` (ktfmtCheck, all unit tests incl. the two new ones,
+Android Lint) green on rofl-13. Confirmed the live cookbook API shape against the real Mealie
+v3.22.0 verification instance before writing any DTO/parsing code: `GET /api/households/cookbooks`
+returns the standard `{page,per_page,total,total_pages,items,next,previous}` envelope, each item
+`{id,name,slug,description,position,public,queryFilterString,groupId,householdId,queryFilter,
+household}` - a cookbook is a saved recipe-category/tag filter, **not** an embedded recipe list.
+Also confirmed `GET /api/households/cookbooks/{id}` (single-item, same shape) and, importantly,
+that a cookbook's matching recipes are fetched via `GET /api/recipes?cookbook={id}`, returning the
+same `PagedResponseDto<RecipeSummaryDto>` envelope as the plain recipe list - this is what
+`RecipeRepository`'s existing `RecipesApi` gained a `getRecipesByCookbook` method for. Recipe cover
+images (`GET /api/media/recipes/{id}/images/min-original.webp`) are public/unauthenticated, so
+`CookbookDetailScreen` uses a plain Coil `AsyncImage` with no custom auth-aware `ImageLoader`.
+End-to-end verified on a real Zenfone 10 against the verification instance: cookbook grid shows all
+5 real cookbooks (Chinese Nom Nom, Backbuch, Desserts und Getränke, Korean Nom Nom, Schmittisches
+Kochbuch); tapping into two different cookbooks showed their correct live recipe sets (5 and 6
+recipes respectively, matching the server); tapping a recipe within a cookbook navigated cleanly
+with no crash. A stray Mealie API token was created on the verification account for this
+("Syncwich SW-6 cookbook e2e test (agent, revoke after review)") - already revoked after
+verification.
+
+Gotchas for future agents:
+- **Kotlin nested block comments will silently eat your declaration.** A KDoc string containing the
+  literal two-character sequence `/*` (e.g. writing `/api/organizers/*` as wildcard-style prose)
+  opens a *nested* comment - Kotlin, unlike Java/C, nests `/* */` - so the outer `/**...*/` never
+  closes where you think it does and swallows the following declaration whole. The exact symptom is
+  brutal to diagnose: KSP/Hilt reports `'<YourType>' could not be resolved` with **no line number
+  and no compiler diagnostic pointing at the real file** (a plain `./gradlew compileDebugKotlin`
+  doesn't even get far enough to show a normal syntax error, since KSP's own analysis pass fails
+  first). If a brand-new type mysteriously "can't be resolved" only in Dagger/Hilt processing, grep
+  every KDoc you just touched for a stray `/*` before suspecting DI wiring.
+- The 3 physical test devices are genuinely shared with the other concurrent SW-3/4/5 agents (and,
+  it turned out, with a live human occasionally using the Zenfone) - expect the foreground app to
+  get overwritten mid-verification by another agent's `adb install`, expect `screencap` to
+  intermittently return solid black frames for no app-related reason (fall back to
+  `uiautomator dump` + `logcat` for verification when this happens, they stayed reliable), and
+  expect a **same-signing-key, different-DB-version-2-schema** crash
+  (`Room cannot verify the data integrity ... Expected identity hash: X, found: Y`) if another
+  agent's branch also bumped `AppDatabase`'s version to 2 with a different table set - `just
+  <device>-uninstall <app-id-with-.debug-suffix>` then a fresh `deploy-*` clears it.
 
 ## SW-7: Polish pass
 

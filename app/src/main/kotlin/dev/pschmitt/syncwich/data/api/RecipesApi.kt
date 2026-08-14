@@ -23,6 +23,18 @@ interface RecipesApi {
     @GET("api/recipes/{slug}")
     suspend fun getRecipeDetailRaw(@Path("slug") slug: String): ResponseBody
 
+    /**
+     * Recipes currently matching one cookbook's saved filter - confirmed live as `GET
+     * /api/recipes?cookbook={id}`, same paginated envelope as the plain recipe list. See
+     * `CookbookDto`'s kdoc for why a cookbook's recipes aren't embedded in its own response.
+     */
+    @GET("api/recipes")
+    suspend fun getRecipesByCookbook(
+        @Query("cookbook") cookbookId: String,
+        @Query("page") page: Int = 1,
+        @Query("perPage") perPage: Int = DEFAULT_PAGE_SIZE,
+    ): PagedResponseDto<RecipeSummaryDto>
+
     companion object {
         const val DEFAULT_PAGE_SIZE = 50
     }

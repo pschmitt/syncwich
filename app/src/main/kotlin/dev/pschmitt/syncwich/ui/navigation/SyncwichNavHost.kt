@@ -23,6 +23,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import dev.pschmitt.syncwich.ui.cookbooks.CookbookDetailScreen
 import dev.pschmitt.syncwich.ui.cookbooks.CookbooksScreen
 import dev.pschmitt.syncwich.ui.mealplan.MealPlanScreen
 import dev.pschmitt.syncwich.ui.onboarding.OnboardingScreen
@@ -133,7 +134,21 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
                     }
                 )
             }
-            composable<Route.Cookbooks> { CookbooksScreen() }
+            composable<Route.Cookbooks> {
+                CookbooksScreen(
+                    onCookbookClick = { cookbookId ->
+                        navController.navigate(Route.CookbookDetail(cookbookId))
+                    }
+                )
+            }
+            composable<Route.CookbookDetail> {
+                CookbookDetailScreen(
+                    onRecipeClick = { recipeId, slug ->
+                        navController.navigate(Route.RecipeDetail(recipeId, slug))
+                    },
+                    onBack = { navController.popBackStack() },
+                )
+            }
             composable<Route.Settings> { SettingsScreen() }
             composable<Route.RecipeDetail> {
                 RecipeDetailScreen(onBack = { navController.popBackStack() })

@@ -9,6 +9,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dev.pschmitt.syncwich.data.db.AppDatabase
 import dev.pschmitt.syncwich.data.db.dao.CategoryDao
+import dev.pschmitt.syncwich.data.db.dao.CookbookDao
 import dev.pschmitt.syncwich.data.db.dao.MealPlanDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeDao
 import dev.pschmitt.syncwich.data.db.dao.ShoppingListDao
@@ -23,9 +24,9 @@ object DatabaseModule {
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase =
         Room.databaseBuilder(context, AppDatabase::class.java, "syncwich.db")
-            // No user base pre-1.0 and no migration path has been written yet (see AppDatabase's
-            // version changelog comment) - destructive fallback is the intended behavior until
-            // schema churn settles down, not a shortcut around writing real Migrations.
+            // Every table here is a fully rebuildable server-side cache, not user data - see
+            // AppDatabase's version changelog comment - so a schema bump just wipes and resyncs
+            // rather than needing a hand-written Migration.
             .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
 
@@ -39,4 +40,6 @@ object DatabaseModule {
     fun provideShoppingListDao(database: AppDatabase): ShoppingListDao = database.shoppingListDao()
 
     @Provides fun provideMealPlanDao(database: AppDatabase): MealPlanDao = database.mealPlanDao()
+
+    @Provides fun provideCookbookDao(database: AppDatabase): CookbookDao = database.cookbookDao()
 }
