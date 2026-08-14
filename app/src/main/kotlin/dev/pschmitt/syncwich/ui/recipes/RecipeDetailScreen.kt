@@ -1,5 +1,7 @@
 package dev.pschmitt.syncwich.ui.recipes
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,14 +12,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.automirrored.filled.StickyNote2
 import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
@@ -34,14 +42,22 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
@@ -54,6 +70,7 @@ import dev.pschmitt.syncwich.data.api.dto.RecipeIngredientDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeInstructionDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeNutritionDto
 import dev.pschmitt.syncwich.data.api.recipeImageUrl
+import dev.pschmitt.syncwich.data.image.extractMarkdownImageUrls
 import dev.pschmitt.syncwich.data.image.isSafeRecipeImageUrl
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
 import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
@@ -132,6 +149,8 @@ private fun RecipeDetailContent(
     modifier: Modifier = Modifier,
 ) {
     val imageUrl = recipeImageUrl(serverUrl, recipe.id, recipe.image)
+    val galleryImages = recipeImageGalleryUrls(serverUrl, recipe)
+    var viewerPage by rememberSaveable { mutableStateOf<Int?>(null) }
 
     LazyColumn(modifier = modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
         if (imageUrl != null) {
@@ -140,7 +159,13 @@ private fun RecipeDetailContent(
                     model = imageUrl,
                     contentDescription = recipe.name,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxWidth().height(220.dp),
+                    modifier =
+                        Modifier.fillMaxWidth()
+                            .height(220.dp)
+                            .clickable {
+                                viewerPage = galleryImages.indexOf(imageUrl).coerceAtLeast(0)
+                            }
+                            .semantics { contentDescription = "Open recipe images" },
                 )
             }
         }
@@ -186,7 +211,12 @@ private fun RecipeDetailContent(
         if (recipe.recipeInstructions.isNotEmpty()) {
             item { SectionHeader(icon = Icons.AutoMirrored.Filled.ListAlt, title = "Steps") }
             itemsIndexed(recipe.recipeInstructions) { index, instruction ->
-                InstructionRow(index + 1, instruction)
+                InstructionRow(
+                    number = index + 1,
+                    instruction = instruction,
+                    galleryImages = galleryImages,
+                    onImageClick = { viewerPage = galleryImages.indexOf(it).coerceAtLeast(0) },
+                )
             }
         }
 
@@ -211,7 +241,24 @@ private fun RecipeDetailContent(
             }
         }
     }
+
+    viewerPage?.let { page ->
+        RecipeImageViewer(
+            images = galleryImages,
+            initialPage = page,
+            onDismiss = { viewerPage = null },
+        )
+    }
 }
+
+fun recipeImageGalleryUrls(serverUrl: String, recipe: RecipeDetailDto): List<String> =
+    buildList {
+        recipeImageUrl(serverUrl, recipe.id, recipe.image)?.let(::add)
+        recipe.recipeInstructions
+            .flatMap { extractMarkdownImageUrls(it.text) }
+            .filter(::isSafeRecipeImageUrl)
+            .forEach { if (it !in this) add(it) }
+    }
 
 @Composable
 private fun SectionHeader(icon: ImageVector, title: String) {
@@ -263,7 +310,12 @@ private fun IngredientRow(ingredient: RecipeIngredientDto) {
 }
 
 @Composable
-private fun InstructionRow(number: Int, instruction: RecipeInstructionDto) {
+private fun InstructionRow(
+    number: Int,
+    instruction: RecipeInstructionDto,
+    galleryImages: List<String>,
+    onImageClick: (String) -> Unit,
+) {
     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
         Text(
             text = "$number.",
@@ -276,9 +328,80 @@ private fun InstructionRow(number: Int, instruction: RecipeInstructionDto) {
                 Text(text = instruction.title, style = MaterialTheme.typography.titleSmall)
             }
             Markdown(
-                content = instruction.text,
+                content = stripMarkdownImageSyntax(instruction.text),
                 imageTransformer = SafeRecipeImageTransformer,
                 modifier = Modifier.fillMaxWidth(),
+            )
+            val imageUrls = extractMarkdownImageUrls(instruction.text)
+            if (imageUrls.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    imageUrls.forEachIndexed { index, url ->
+                        AsyncImage(
+                            model = url,
+                            contentDescription = "Open step image ${index + 1}",
+                            contentScale = ContentScale.Crop,
+                            modifier =
+                                Modifier.width(160.dp)
+                                    .height(100.dp)
+                                    .clickable { onImageClick(url) }
+                                    .semantics {
+                                        contentDescription =
+                                            "Open step image ${index + 1} of ${imageUrls.size}"
+                                    },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+private val MARKDOWN_IMAGE_SYNTAX =
+    Regex(
+        """!\[[^\]\r\n]*\]\(\s*(?:<[^>\r\n]+>|[^\s)\"']+)(?:\s+(?:\"[^\"\r\n]*\"|'[^'\r\n]*'|\([^\)\r\n]*\)))?\s*\)"""
+    )
+
+private fun stripMarkdownImageSyntax(markdown: String): String =
+    MARKDOWN_IMAGE_SYNTAX.replace(markdown, "")
+
+@Composable
+private fun RecipeImageViewer(
+    images: List<String>,
+    initialPage: Int,
+    onDismiss: () -> Unit,
+) {
+    if (images.isEmpty()) return
+    val pagerState = rememberPagerState(initialPage = initialPage.coerceIn(images.indices)) {
+        images.size
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+            HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
+                AsyncImage(
+                    model = images[page],
+                    contentDescription = "Recipe image ${page + 1} of ${images.size}",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize().padding(16.dp),
+                )
+            }
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
+            ) {
+                Icon(Icons.Filled.Close, contentDescription = "Close image viewer", tint = Color.White)
+            }
+            Text(
+                text = "${pagerState.currentPage + 1} / ${images.size}",
+                color = Color.White,
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
             )
         }
     }
