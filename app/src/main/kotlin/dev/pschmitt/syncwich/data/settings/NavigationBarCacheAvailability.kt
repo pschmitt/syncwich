@@ -1,12 +1,12 @@
 package dev.pschmitt.syncwich.data.settings
 
+import dev.pschmitt.syncwich.data.repository.CookbookRepository
+import dev.pschmitt.syncwich.data.repository.MealPlanRepository
+import dev.pschmitt.syncwich.data.repository.ShoppingListRepository
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import dev.pschmitt.syncwich.data.repository.CookbookRepository
-import dev.pschmitt.syncwich.data.repository.MealPlanRepository
-import dev.pschmitt.syncwich.data.repository.ShoppingListRepository
 
 data class NavigationBarCacheState(
     val hasMealPlanData: Boolean = false,

@@ -51,8 +51,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
-import dev.pschmitt.syncwich.ui.common.MarkdownEditor
 import dev.pschmitt.syncwich.ui.common.CenteredContent
+import dev.pschmitt.syncwich.ui.common.MarkdownEditor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,7 +72,8 @@ fun RecipeEditorScreen(
             if (uri != null) {
                 when (val target = imageTarget) {
                     RecipeEditorImageTarget.Cover -> viewModel.onCoverImage(uri.toString())
-                    RecipeEditorImageTarget.Description -> viewModel.onDescriptionImage(uri.toString())
+                    RecipeEditorImageTarget.Description ->
+                        viewModel.onDescriptionImage(uri.toString())
                     is RecipeEditorImageTarget.Instruction ->
                         viewModel.onInstructionImage(target.index, uri.toString())
                     null -> Unit
@@ -81,9 +82,7 @@ fun RecipeEditorScreen(
             imageTarget = null
         }
 
-    LaunchedEffect(saveState) {
-        if (saveState is RecipeEditorSaveState.Saved) onSaved()
-    }
+    LaunchedEffect(saveState) { if (saveState is RecipeEditorSaveState.Saved) onSaved() }
 
     Scaffold(
         modifier = modifier,
@@ -100,173 +99,178 @@ fun RecipeEditorScreen(
     ) { innerPadding ->
         CenteredContent(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
             Column(
-                modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+                modifier =
+                    Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-            Text(
-                text =
-                    if (viewModel.isEditing) {
-                        "Changes are saved to Mealie explicitly. Your cached recipe remains " +
-                            "available if saving is unavailable."
-                    } else {
-                        "Create a recipe in Mealie. Nothing is sent until you tap Save."
-                    },
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            OutlinedTextField(
-                value = draft.name,
-                onValueChange = viewModel::onNameChange,
-                label = { Text("Name") },
-                isError = errorMessage == "Enter a recipe name",
-                supportingText =
-                    if (errorMessage == "Enter a recipe name") {
-                        { Text(errorMessage) }
-                    } else null,
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                enabled = !isSaving,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            MarkdownEditor(
-                value = draft.description,
-                onValueChange = viewModel::onDescriptionChange,
-                label = "Description",
-                enabled = !isSaving,
-                modifier = Modifier.fillMaxWidth(),
-                onAddImage = {
-                    imageTarget = RecipeEditorImageTarget.Description
-                    imagePicker.launch("image/*")
-                },
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(
-                    onClick = {
-                        imageTarget = RecipeEditorImageTarget.Cover
+                Text(
+                    text =
+                        if (viewModel.isEditing) {
+                            "Changes are saved to Mealie explicitly. Your cached recipe remains " +
+                                "available if saving is unavailable."
+                        } else {
+                            "Create a recipe in Mealie. Nothing is sent until you tap Save."
+                        },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                OutlinedTextField(
+                    value = draft.name,
+                    onValueChange = viewModel::onNameChange,
+                    label = { Text("Name") },
+                    isError = errorMessage == "Enter a recipe name",
+                    supportingText =
+                        if (errorMessage == "Enter a recipe name") {
+                            { Text(errorMessage) }
+                        } else null,
+                    singleLine = true,
+                    keyboardOptions =
+                        KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                    enabled = !isSaving,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                MarkdownEditor(
+                    value = draft.description,
+                    onValueChange = viewModel::onDescriptionChange,
+                    label = "Description",
+                    enabled = !isSaving,
+                    modifier = Modifier.fillMaxWidth(),
+                    onAddImage = {
+                        imageTarget = RecipeEditorImageTarget.Description
                         imagePicker.launch("image/*")
                     },
-                    enabled = !isSaving,
-                ) {
-                    Icon(Icons.Filled.Image, contentDescription = null)
-                    Text("Choose cover image", modifier = Modifier.padding(start = 8.dp))
-                }
-                if (viewModel.isEditing) {
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(
-                        onClick = viewModel::onRemoveCoverImage,
+                        onClick = {
+                            imageTarget = RecipeEditorImageTarget.Cover
+                            imagePicker.launch("image/*")
+                        },
                         enabled = !isSaving,
                     ) {
-                        Icon(Icons.Filled.Delete, contentDescription = null)
-                        Text("Remove cover", modifier = Modifier.padding(start = 8.dp))
+                        Icon(Icons.Filled.Image, contentDescription = null)
+                        Text("Choose cover image", modifier = Modifier.padding(start = 8.dp))
+                    }
+                    if (viewModel.isEditing) {
+                        OutlinedButton(
+                            onClick = viewModel::onRemoveCoverImage,
+                            enabled = !isSaving,
+                        ) {
+                            Icon(Icons.Filled.Delete, contentDescription = null)
+                            Text("Remove cover", modifier = Modifier.padding(start = 8.dp))
+                        }
                     }
                 }
-            }
-            draft.coverImageUri?.let { uri ->
-                AsyncImage(
-                    model = Uri.parse(uri),
-                    contentDescription = "Selected cover image",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxWidth().height(180.dp),
-                )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                OutlinedTextField(
-                    value = draft.recipeYield,
-                    onValueChange = viewModel::onYieldChange,
-                    label = { Text("Yield") },
-                    singleLine = true,
-                    enabled = !isSaving,
-                    modifier = Modifier.weight(1f),
-                )
-                OutlinedTextField(
-                    value = draft.prepTime,
-                    onValueChange = viewModel::onPrepTimeChange,
-                    label = { Text("Prep time") },
-                    singleLine = true,
-                    enabled = !isSaving,
-                    modifier = Modifier.weight(1f),
-                )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                OutlinedTextField(
-                    value = draft.cookTime,
-                    onValueChange = viewModel::onCookTimeChange,
-                    label = { Text("Cook time") },
-                    singleLine = true,
-                    enabled = !isSaving,
-                    modifier = Modifier.weight(1f),
-                )
-                OutlinedTextField(
-                    value = draft.totalTime,
-                    onValueChange = viewModel::onTotalTimeChange,
-                    label = { Text("Total time") },
-                    singleLine = true,
-                    enabled = !isSaving,
-                    modifier = Modifier.weight(1f),
-                )
-            }
-
-            EditableTextList(
-                title = "Ingredients",
-                values = draft.ingredients,
-                itemLabel = "Ingredient",
-                enabled = !isSaving,
-                onValueChange = viewModel::onIngredientChange,
-                onAdd = viewModel::onIngredientAdd,
-                onRemove = viewModel::onIngredientRemove,
-                addLabel = "Add ingredient",
-            )
-
-            EditableTextList(
-                title = "Steps",
-                values = draft.instructions,
-                itemLabel = "Step",
-                enabled = !isSaving,
-                onValueChange = viewModel::onInstructionChange,
-                onAdd = viewModel::onInstructionAdd,
-                onRemove = viewModel::onInstructionRemove,
-                onMove = viewModel::onInstructionMove,
-                addLabel = "Add step",
-                singleLine = false,
-                onAddImage = { index ->
-                    imageTarget = RecipeEditorImageTarget.Instruction(index)
-                    imagePicker.launch("image/*")
-                },
-            )
-
-            if (errorMessage != null && errorMessage != "Enter a recipe name") {
-                Card(
-                    colors =
-                        CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        ),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(
-                        text = errorMessage,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        modifier = Modifier.padding(16.dp),
+                draft.coverImageUri?.let { uri ->
+                    AsyncImage(
+                        model = Uri.parse(uri),
+                        contentDescription = "Selected cover image",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxWidth().height(180.dp),
                     )
                 }
-            }
-            Button(
-                onClick = viewModel::save,
-                enabled = !isSaving,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                if (isSaving) {
-                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                    Text("Saving recipe…", modifier = Modifier.padding(start = 8.dp))
-                } else {
-                    Icon(Icons.Filled.Save, contentDescription = null)
-                    Text("Save recipe", modifier = Modifier.padding(start = 8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    OutlinedTextField(
+                        value = draft.recipeYield,
+                        onValueChange = viewModel::onYieldChange,
+                        label = { Text("Yield") },
+                        singleLine = true,
+                        enabled = !isSaving,
+                        modifier = Modifier.weight(1f),
+                    )
+                    OutlinedTextField(
+                        value = draft.prepTime,
+                        onValueChange = viewModel::onPrepTimeChange,
+                        label = { Text("Prep time") },
+                        singleLine = true,
+                        enabled = !isSaving,
+                        modifier = Modifier.weight(1f),
+                    )
                 }
-            }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    OutlinedTextField(
+                        value = draft.cookTime,
+                        onValueChange = viewModel::onCookTimeChange,
+                        label = { Text("Cook time") },
+                        singleLine = true,
+                        enabled = !isSaving,
+                        modifier = Modifier.weight(1f),
+                    )
+                    OutlinedTextField(
+                        value = draft.totalTime,
+                        onValueChange = viewModel::onTotalTimeChange,
+                        label = { Text("Total time") },
+                        singleLine = true,
+                        enabled = !isSaving,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+
+                EditableTextList(
+                    title = "Ingredients",
+                    values = draft.ingredients,
+                    itemLabel = "Ingredient",
+                    enabled = !isSaving,
+                    onValueChange = viewModel::onIngredientChange,
+                    onAdd = viewModel::onIngredientAdd,
+                    onRemove = viewModel::onIngredientRemove,
+                    addLabel = "Add ingredient",
+                )
+
+                EditableTextList(
+                    title = "Steps",
+                    values = draft.instructions,
+                    itemLabel = "Step",
+                    enabled = !isSaving,
+                    onValueChange = viewModel::onInstructionChange,
+                    onAdd = viewModel::onInstructionAdd,
+                    onRemove = viewModel::onInstructionRemove,
+                    onMove = viewModel::onInstructionMove,
+                    addLabel = "Add step",
+                    singleLine = false,
+                    onAddImage = { index ->
+                        imageTarget = RecipeEditorImageTarget.Instruction(index)
+                        imagePicker.launch("image/*")
+                    },
+                )
+
+                if (errorMessage != null && errorMessage != "Enter a recipe name") {
+                    Card(
+                        colors =
+                            CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer
+                            ),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = errorMessage,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.padding(16.dp),
+                        )
+                    }
+                }
+                Button(
+                    onClick = viewModel::save,
+                    enabled = !isSaving,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    if (isSaving) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                        )
+                        Text("Saving recipe…", modifier = Modifier.padding(start = 8.dp))
+                    } else {
+                        Icon(Icons.Filled.Save, contentDescription = null)
+                        Text("Save recipe", modifier = Modifier.padding(start = 8.dp))
+                    }
+                }
             }
         }
     }
@@ -316,9 +320,10 @@ private fun EditableTextList(
                     IconButton(
                         onClick = { onRemove(index) },
                         enabled = enabled,
-                        modifier = Modifier.semantics {
-                            contentDescription = "Remove $itemLabel ${index + 1}"
-                        },
+                        modifier =
+                            Modifier.semantics {
+                                contentDescription = "Remove $itemLabel ${index + 1}"
+                            },
                     ) {
                         Icon(Icons.Filled.Delete, contentDescription = null)
                     }
@@ -327,27 +332,30 @@ private fun EditableTextList(
                         IconButton(
                             onClick = { onMove(index, index - 1) },
                             enabled = enabled && index > 0,
-                            modifier = Modifier.semantics {
-                                contentDescription = "Move $itemLabel ${index + 1} up"
-                            },
+                            modifier =
+                                Modifier.semantics {
+                                    contentDescription = "Move $itemLabel ${index + 1} up"
+                                },
                         ) {
                             Icon(Icons.Filled.ArrowUpward, contentDescription = null)
                         }
                         IconButton(
                             onClick = { onMove(index, index + 1) },
                             enabled = enabled && index < values.lastIndex,
-                            modifier = Modifier.semantics {
-                                contentDescription = "Move $itemLabel ${index + 1} down"
-                            },
+                            modifier =
+                                Modifier.semantics {
+                                    contentDescription = "Move $itemLabel ${index + 1} down"
+                                },
                         ) {
                             Icon(Icons.Filled.ArrowDownward, contentDescription = null)
                         }
                         IconButton(
                             onClick = { onRemove(index) },
                             enabled = enabled,
-                            modifier = Modifier.semantics {
-                                contentDescription = "Remove $itemLabel ${index + 1}"
-                            },
+                            modifier =
+                                Modifier.semantics {
+                                    contentDescription = "Remove $itemLabel ${index + 1}"
+                                },
                         ) {
                             Icon(Icons.Filled.Delete, contentDescription = null)
                         }

@@ -54,7 +54,8 @@ data class RecipeEditorDraft(
                 trimmedIngredients.map { text ->
                     RecipeIngredientInputDto(display = text, note = text, originalText = text)
                 },
-            recipeInstructions = trimmedInstructions.map { text -> RecipeStepInputDto(text = text) },
+            recipeInstructions =
+                trimmedInstructions.map { text -> RecipeStepInputDto(text = text) },
         )
     }
 
@@ -80,9 +81,7 @@ data class RecipeEditorDraft(
         if (from !in instructions.indices || to !in instructions.indices || from == to) return this
         return copy(
             instructions =
-                instructions.toMutableList().also { items ->
-                    items.add(to, items.removeAt(from))
-                }
+                instructions.toMutableList().also { items -> items.add(to, items.removeAt(from)) }
         )
     }
 
@@ -95,8 +94,7 @@ data class RecipeEditorDraft(
     fun withCoverImage(uri: String): RecipeEditorDraft =
         copy(coverImageUri = uri, removeCoverImage = false)
 
-    fun withoutCoverImage(): RecipeEditorDraft =
-        copy(coverImageUri = null, removeCoverImage = true)
+    fun withoutCoverImage(): RecipeEditorDraft = copy(coverImageUri = null, removeCoverImage = true)
 
     companion object {
         private const val MAX_NAME_LENGTH = 200
@@ -114,8 +112,7 @@ data class RecipeEditorDraft(
                     input.recipeIngredient
                         .map { it.display.takeIf(String::isNotBlank) ?: it.note.orEmpty() }
                         .ifEmpty { listOf("") },
-                instructions =
-                    input.recipeInstructions.map { it.text }.ifEmpty { listOf("") },
+                instructions = input.recipeInstructions.map { it.text }.ifEmpty { listOf("") },
                 existingSlug = slug,
                 baseInput = input,
             )

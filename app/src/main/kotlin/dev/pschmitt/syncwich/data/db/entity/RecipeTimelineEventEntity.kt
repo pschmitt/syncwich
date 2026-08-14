@@ -5,8 +5,8 @@ import androidx.room.PrimaryKey
 
 /**
  * Local cache of one recipe's cooking-event ("I made this") timeline. Keyed by [localId] - a
- * client-generated id for a not-yet-synced entry (so an offline "I made this" tap is durable
- * before the create POST ever succeeds), or the server's own event id once known. Mirrors
+ * client-generated id for a not-yet-synced entry (so an offline "I made this" tap is durable before
+ * the create POST ever succeeds), or the server's own event id once known. Mirrors
  * [RecipeActionEntity]'s pending-sync pattern: [pending] keeps a row queued for
  * [dev.pschmitt.syncwich.data.repository.RecipeTimelineRepository.syncPendingEvents], and is only
  * cleared once the create request actually succeeds.

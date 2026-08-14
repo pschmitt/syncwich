@@ -35,7 +35,8 @@ sealed interface Route {
 
     @Serializable data object Cookbooks : Route
 
-    @Serializable data class CookbookDetail(val cookbookId: String = "", val slug: String = "") : Route
+    @Serializable
+    data class CookbookDetail(val cookbookId: String = "", val slug: String = "") : Route
 
     /** Empty [cookbookId] opens a create draft; a cached id opens an edit draft. */
     @Serializable data class CookbookEditor(val cookbookId: String = "") : Route
@@ -43,9 +44,8 @@ sealed interface Route {
     @Serializable data object Settings : Route
 
     @Serializable
-    data class SettingsCategory(
-        val category: dev.pschmitt.syncwich.ui.settings.SettingsCategory
-    ) : Route
+    data class SettingsCategory(val category: dev.pschmitt.syncwich.ui.settings.SettingsCategory) :
+        Route
 
     @Serializable data object SettingsConnection : Route
 }

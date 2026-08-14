@@ -18,11 +18,11 @@ import timber.log.Timber
 /**
  * Offline-first "I made this" cooking-event timeline for a recipe.
  *
- * Confirmed live against a real v3.22.0 Mealie instance: `GET /api/recipes/timeline/events` with
- * a `queryFilter=recipeId="<uuid>"` query returned that recipe's real history, mixing Mealie's own
- * `system`-type "Recipe Created" entries with `comment`-type "<user's full name> made this"
- * entries recorded by Mealie's official clients (empty `eventMessage`, not null). [recordMadeThis]
- * mirrors that exact shape.
+ * Confirmed live against a real v3.22.0 Mealie instance: `GET /api/recipes/timeline/events` with a
+ * `queryFilter=recipeId="<uuid>"` query returned that recipe's real history, mixing Mealie's own
+ * `system`-type "Recipe Created" entries with `comment`-type "<user's full name> made this" entries
+ * recorded by Mealie's official clients (empty `eventMessage`, not null). [recordMadeThis] mirrors
+ * that exact shape.
  *
  * The create endpoint (`POST /api/recipes/timeline/events`) was **not** exercised with a live
  * write - per this task's hard rule against unapproved live writes against the verification
@@ -51,29 +51,29 @@ constructor(
     /**
      * Records a durable "I made this" event, retried later by [syncPendingEvents] on failure.
      *
-     * The local row is written with a generic [PENDING_SUBJECT] placeholder rather than the
-     * user's real display name - resolving that name is itself a network call
-     * (`GET /api/users/self`), and the whole point of this being offline-safe is that the local
-     * save must never depend on connectivity. The real "<name> made this" subject is only
-     * resolved inside [syncEvent], once a network call is already required anyway; the local
-     * placeholder is replaced by the server's own event (with its real subject) as soon as that
-     * sync succeeds.
+     * The local row is written with a generic [PENDING_SUBJECT] placeholder rather than the user's
+     * real display name - resolving that name is itself a network call (`GET /api/users/self`), and
+     * the whole point of this being offline-safe is that the local save must never depend on
+     * connectivity. The real "<name> made this" subject is only resolved inside [syncEvent], once a
+     * network call is already required anyway; the local placeholder is replaced by the server's
+     * own event (with its real subject) as soon as that sync succeeds.
      */
-    suspend fun recordMadeThis(recipeId: String): Result<Unit> = withContext(Dispatchers.IO) {
-        val event =
-            RecipeTimelineEventEntity(
-                localId = UUID.randomUUID().toString(),
-                recipeId = recipeId,
-                subject = PENDING_SUBJECT,
-                eventType = "comment",
-                eventMessage = "",
-                timestamp = System.currentTimeMillis(),
-                pending = true,
-                updatedAt = System.currentTimeMillis(),
-            )
-        recipeTimelineEventDao.upsert(event)
-        syncEvent(event)
-    }
+    suspend fun recordMadeThis(recipeId: String): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            val event =
+                RecipeTimelineEventEntity(
+                    localId = UUID.randomUUID().toString(),
+                    recipeId = recipeId,
+                    subject = PENDING_SUBJECT,
+                    eventType = "comment",
+                    eventMessage = "",
+                    timestamp = System.currentTimeMillis(),
+                    pending = true,
+                    updatedAt = System.currentTimeMillis(),
+                )
+            recipeTimelineEventDao.upsert(event)
+            syncEvent(event)
+        }
 
     /**
      * Cache-first read for the timeline screen: replaces previously-synced rows for this recipe
@@ -81,45 +81,47 @@ constructor(
      * (they have their own client-generated [RecipeTimelineEventEntity.localId] and so can never
      * collide with a server-assigned one).
      */
-    suspend fun refreshFromServer(recipeId: String): Result<Unit> = withContext(Dispatchers.IO) {
-        runCatching {
+    suspend fun refreshFromServer(recipeId: String): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            runCatching {
                 val response = timelineApi.getEvents(queryFilter = recipeIdFilter(recipeId))
                 recipeTimelineEventDao.upsertAll(response.items.map { it.toEntity() })
             }
-            .onFailure { Timber.w(it, "Timeline refresh failed; keeping cached events") }
-    }
+                .onFailure { Timber.w(it, "Timeline refresh failed; keeping cached events") }
+        }
 
     /** Retries durable offline "I made this" taps that haven't reached the server yet. */
-    suspend fun syncPendingEvents(): Result<Unit> = withContext(Dispatchers.IO) {
-        runCatching {
+    suspend fun syncPendingEvents(): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            runCatching {
                 recipeTimelineEventDao.getPending().forEach { event ->
                     syncEvent(event).getOrThrow()
                 }
             }
-            .onFailure { Timber.w(it, "Pending timeline event sync failed; keeping pending events") }
-    }
+                .onFailure {
+                    Timber.w(it, "Pending timeline event sync failed; keeping pending events")
+                }
+        }
 
-    private suspend fun syncEvent(event: RecipeTimelineEventEntity): Result<Unit> =
-        runCatching {
-                val subject =
-                    if (event.subject == PENDING_SUBJECT) "${displayName()} made this"
-                    else event.subject
-                val created =
-                    timelineApi.createEvent(
-                        RecipeTimelineEventInDto(
-                            recipeId = event.recipeId,
-                            subject = subject,
-                            eventType = event.eventType,
-                            eventMessage = event.eventMessage,
-                            timestamp = Instant.ofEpochMilli(event.timestamp).toString(),
-                        )
-                    )
-                // Swap the client-generated placeholder for the server's own id so a later
-                // refreshFromServer upserts onto the same row instead of duplicating it.
-                recipeTimelineEventDao.delete(event.localId)
-                recipeTimelineEventDao.upsert(created.toEntity())
-            }
-            .onFailure { Timber.w(it, "Timeline event create failed; keeping it pending") }
+    private suspend fun syncEvent(event: RecipeTimelineEventEntity): Result<Unit> = runCatching {
+        val subject =
+            if (event.subject == PENDING_SUBJECT) "${displayName()} made this" else event.subject
+        val created =
+            timelineApi.createEvent(
+                RecipeTimelineEventInDto(
+                    recipeId = event.recipeId,
+                    subject = subject,
+                    eventType = event.eventType,
+                    eventMessage = event.eventMessage,
+                    timestamp = Instant.ofEpochMilli(event.timestamp).toString(),
+                )
+            )
+        // Swap the client-generated placeholder for the server's own id so a later
+        // refreshFromServer upserts onto the same row instead of duplicating it.
+        recipeTimelineEventDao.delete(event.localId)
+        recipeTimelineEventDao.upsert(created.toEntity())
+    }
+        .onFailure { Timber.w(it, "Timeline event create failed; keeping it pending") }
 
     private suspend fun displayName(): String {
         val self = usersApi.getSelf()

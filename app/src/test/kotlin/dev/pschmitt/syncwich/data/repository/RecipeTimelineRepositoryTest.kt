@@ -28,7 +28,11 @@ class RecipeTimelineRepositoryTest {
     fun `made-this event is durable and pending when the network is unavailable`() = runTest {
         val dao = FakeRecipeTimelineEventDao()
         val repository =
-            RecipeTimelineRepository(FakeTimelineApi(failure = IOException("offline")), FakeUsersApi(), dao)
+            RecipeTimelineRepository(
+                FakeTimelineApi(failure = IOException("offline")),
+                FakeUsersApi(),
+                dao,
+            )
 
         assertTrue(repository.recordMadeThis("recipe-1").isFailure)
 
@@ -40,22 +44,23 @@ class RecipeTimelineRepositoryTest {
     }
 
     @Test
-    fun `made-this event resolves the real display name and clears pending once synced`() = runTest {
-        val dao = FakeRecipeTimelineEventDao()
-        val usersApi = FakeUsersApi(fullName = "Ada Lovelace")
-        val timelineApi = FakeTimelineApi()
-        val repository = RecipeTimelineRepository(timelineApi, usersApi, dao)
+    fun `made-this event resolves the real display name and clears pending once synced`() =
+        runTest {
+            val dao = FakeRecipeTimelineEventDao()
+            val usersApi = FakeUsersApi(fullName = "Ada Lovelace")
+            val timelineApi = FakeTimelineApi()
+            val repository = RecipeTimelineRepository(timelineApi, usersApi, dao)
 
-        assertTrue(repository.recordMadeThis("recipe-1").isSuccess)
+            assertTrue(repository.recordMadeThis("recipe-1").isSuccess)
 
-        val events = dao.getForRecipe("recipe-1")
-        assertEquals(1, events.size)
-        val event = events.single()
-        assertFalse(event.pending)
-        assertEquals("Ada Lovelace made this", event.subject)
-        assertEquals("server-1", event.localId)
-        assertEquals(1, timelineApi.createEventCalls)
-    }
+            val events = dao.getForRecipe("recipe-1")
+            assertEquals(1, events.size)
+            val event = events.single()
+            assertFalse(event.pending)
+            assertEquals("Ada Lovelace made this", event.subject)
+            assertEquals("server-1", event.localId)
+            assertEquals(1, timelineApi.createEventCalls)
+        }
 
     @Test
     fun `pending events are retried and cleared by syncPendingEvents`() = runTest {
@@ -80,11 +85,12 @@ class RecipeTimelineRepositoryTest {
 
     private class FakeRecipeTimelineEventDao(seed: RecipeTimelineEventEntity? = null) :
         RecipeTimelineEventDao {
-        private val state =
-            MutableStateFlow(seed?.let { mapOf(it.localId to it) } ?: emptyMap())
+        private val state = MutableStateFlow(seed?.let { mapOf(it.localId to it) } ?: emptyMap())
 
         override fun observeForRecipe(recipeId: String): Flow<List<RecipeTimelineEventEntity>> =
-            state.map { events -> events.values.filter { it.recipeId == recipeId } }
+            state.map { events ->
+                events.values.filter { it.recipeId == recipeId }
+            }
 
         override suspend fun getForRecipe(recipeId: String): List<RecipeTimelineEventEntity> =
             state.value.values.filter { it.recipeId == recipeId }
@@ -115,10 +121,18 @@ class RecipeTimelineRepositoryTest {
             perPage: Int,
         ): PagedResponseDto<RecipeTimelineEventDto> {
             failure?.let { throw it }
-            return PagedResponseDto(page = 1, perPage = perPage, total = 0, totalPages = 0, items = emptyList())
+            return PagedResponseDto(
+                page = 1,
+                perPage = perPage,
+                total = 0,
+                totalPages = 0,
+                items = emptyList(),
+            )
         }
 
-        override suspend fun createEvent(request: RecipeTimelineEventInDto): RecipeTimelineEventDto {
+        override suspend fun createEvent(
+            request: RecipeTimelineEventInDto
+        ): RecipeTimelineEventDto {
             failure?.let { throw it }
             createEventCalls++
             return RecipeTimelineEventDto(

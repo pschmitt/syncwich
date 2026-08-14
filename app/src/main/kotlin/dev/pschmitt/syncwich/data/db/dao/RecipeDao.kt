@@ -3,8 +3,8 @@ package dev.pschmitt.syncwich.data.db.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import androidx.room.Upsert
 import androidx.room.Transaction
+import androidx.room.Upsert
 import dev.pschmitt.syncwich.data.db.entity.RecipeCategoryCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeCookbookCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeDetailEntity
@@ -90,7 +90,9 @@ interface RecipeDao {
         if (refs.isNotEmpty()) insertCookbookCrossRefs(refs)
     }
 
-    /** Atomically refreshes one cookbook's summaries and membership without touching other books. */
+    /**
+     * Atomically refreshes one cookbook's summaries and membership without touching other books.
+     */
     @Transaction
     suspend fun replaceCookbookRecipeCache(
         cookbookId: String,

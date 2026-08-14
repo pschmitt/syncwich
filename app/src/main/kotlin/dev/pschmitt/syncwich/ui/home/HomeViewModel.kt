@@ -39,8 +39,8 @@ data class HomeUiState(
 
 /**
  * Reads every dashboard section from Room first. Home refresh queues the existing full background
- * worker and is deliberately independent from the state flow, so a disconnected server never
- * hides recipes that are already cached.
+ * worker and is deliberately independent from the state flow, so a disconnected server never hides
+ * recipes that are already cached.
  */
 @HiltViewModel
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -58,22 +58,16 @@ constructor(
     private val userRefreshRequested = MutableStateFlow(false)
 
     private val favoriteCookbook =
-        cookbookRepository
-            .observeCookbooks()
-            .map(::findFavoriteCookbook)
-            .distinctUntilChanged()
+        cookbookRepository.observeCookbooks().map(::findFavoriteCookbook).distinctUntilChanged()
 
-    private val favoriteRecipes =
-        favoriteCookbook.flatMapLatest { cookbook ->
-            cookbook?.let { cookbookRepository.observeCookbookRecipes(it.id) }
-                ?: flowOf(emptyList())
-        }
+    private val favoriteRecipes = favoriteCookbook.flatMapLatest { cookbook ->
+        cookbook?.let { cookbookRepository.observeCookbookRecipes(it.id) } ?: flowOf(emptyList())
+    }
 
     private val recipeSections =
         combine(recipeRepository.observeRecipes(), recipeHistoryRepository.recipeIds) {
-                recipes,
-                historyIds,
-            ->
+            recipes,
+            historyIds ->
             recipes to recipesForHistory(historyIds, recipes)
         }
 
@@ -94,8 +88,7 @@ constructor(
                 favoritesCookbook,
                 favorites,
                 credentials,
-                (syncStatus, userRefresh),
-                ->
+                (syncStatus, userRefresh) ->
                 HomeUiState(
                     recentlyViewedRecipes = recentlyViewed,
                     recentlyAddedRecipes =

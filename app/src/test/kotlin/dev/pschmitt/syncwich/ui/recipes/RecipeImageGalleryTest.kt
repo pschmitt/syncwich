@@ -21,7 +21,7 @@ class RecipeImageGalleryTest {
                             text =
                                 "![Step one](https://images.example/one.webp) " +
                                     "![Duplicate](https://images.example/one.webp) " +
-                                    "<img src=\"/api/media/recipes/recipe-1/assets/step.jpg\" />",
+                                    "<img src=\"/api/media/recipes/recipe-1/assets/step.jpg\" />"
                         ),
                         RecipeInstructionDto(text = "![Unsafe](javascript:alert(1))"),
                     ),
@@ -47,7 +47,8 @@ class RecipeImageGalleryTest {
                 recipeInstructions =
                     listOf(
                         RecipeInstructionDto(
-                            text = "<img src=\"/api/media/recipes/recipe-1/assets/step.jpg\" alt=\"Step\" />"
+                            text =
+                                "<img src=\"/api/media/recipes/recipe-1/assets/step.jpg\" alt=\"Step\" />"
                         )
                     ),
             )

@@ -91,14 +91,17 @@ fun SyncSettingsScreen(
             item {
                 ListItem(
                     modifier =
-                        Modifier.clickable { intervalMenuExpanded = true }.semantics {
-                            contentDescription =
-                                "Background sync interval: every $syncIntervalHours hours"
-                            role = Role.Button
-                        },
+                        Modifier.clickable { intervalMenuExpanded = true }
+                            .semantics {
+                                contentDescription =
+                                    "Background sync interval: every $syncIntervalHours hours"
+                                role = Role.Button
+                            },
                     leadingContent = { Icon(Icons.Filled.Schedule, contentDescription = null) },
                     headlineContent = { Text("Background sync interval") },
-                    supportingContent = { Text("Check for changes every $syncIntervalHours hours") },
+                    supportingContent = {
+                        Text("Check for changes every $syncIntervalHours hours")
+                    },
                     trailingContent = {
                         DropdownMenu(
                             expanded = intervalMenuExpanded,

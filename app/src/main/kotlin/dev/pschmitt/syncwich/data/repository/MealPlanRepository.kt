@@ -26,8 +26,8 @@ import timber.log.Timber
  * pending-retry pattern: a meal-plan entry is a structural create/update/delete made through an
  * explicit save action in the UI (like the cookbook editor), not a simple per-item toggle a user
  * flips repeatedly offline, so there is no local-first optimistic write to make durable - the
- * network call runs first and only a confirmed server response is cached, leaving prior cached
- * data completely untouched on failure.
+ * network call runs first and only a confirmed server response is cached, leaving prior cached data
+ * completely untouched on failure.
  */
 @Singleton
 class MealPlanRepository
@@ -74,8 +74,9 @@ constructor(private val mealPlanApi: MealPlanApi, private val mealPlanDao: MealP
         title: String,
         text: String,
         recipeId: String?,
-    ): Result<MealPlanEntryEntity> = withContext(Dispatchers.IO) {
-        runCatching {
+    ): Result<MealPlanEntryEntity> =
+        withContext(Dispatchers.IO) {
+            runCatching {
                 val response =
                     mealPlanApi.createMealPlanEntry(
                         CreatePlanEntryDto(
@@ -90,8 +91,8 @@ constructor(private val mealPlanApi: MealPlanApi, private val mealPlanDao: MealP
                 mealPlanDao.upsertAll(listOf(entity))
                 entity
             }
-            .onFailure { Timber.w(it, "Meal plan entry create failed; keeping cached data") }
-    }
+                .onFailure { Timber.w(it, "Meal plan entry create failed; keeping cached data") }
+        }
 
     /**
      * Updates one cached entry using the v3.22.0 single-item PUT route. `groupId`/`userId` are read
@@ -104,8 +105,9 @@ constructor(private val mealPlanApi: MealPlanApi, private val mealPlanDao: MealP
         title: String,
         text: String,
         recipeId: String?,
-    ): Result<MealPlanEntryEntity> = withContext(Dispatchers.IO) {
-        runCatching {
+    ): Result<MealPlanEntryEntity> =
+        withContext(Dispatchers.IO) {
+            runCatching {
                 val existing =
                     mealPlanDao.getById(id)
                         ?: error("This meal plan entry is not cached on this device")
@@ -128,17 +130,18 @@ constructor(private val mealPlanApi: MealPlanApi, private val mealPlanDao: MealP
                 mealPlanDao.upsertAll(listOf(entity))
                 entity
             }
-            .onFailure { Timber.w(it, "Meal plan entry update failed; keeping cached data") }
-    }
+                .onFailure { Timber.w(it, "Meal plan entry update failed; keeping cached data") }
+        }
 
     /** Deletes one entry from Mealie and, only on success, removes its cached row. */
-    suspend fun deleteEntry(id: Long): Result<Unit> = withContext(Dispatchers.IO) {
-        runCatching {
+    suspend fun deleteEntry(id: Long): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            runCatching {
                 mealPlanApi.deleteMealPlanEntry(id.toInt()).close()
                 mealPlanDao.deleteById(id)
             }
-            .onFailure { Timber.w(it, "Meal plan entry delete failed; keeping cached data") }
-    }
+                .onFailure { Timber.w(it, "Meal plan entry delete failed; keeping cached data") }
+        }
 
     private fun MealPlanEntryDto.toEntity() =
         MealPlanEntryEntity(

@@ -15,6 +15,10 @@ import dev.pschmitt.syncwich.ui.common.refreshErrorMessage
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -24,10 +28,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 data class RecipesUiState(
@@ -121,7 +121,9 @@ constructor(
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), RecipesUiState())
 
-    init { refresh(forceRefresh = false) }
+    init {
+        refresh(forceRefresh = false)
+    }
 
     fun refresh() = refresh(forceRefresh = true)
 
@@ -129,15 +131,14 @@ constructor(
         if (refreshJob?.isActive == true) return
         refreshJob = viewModelScope.launch {
             refreshState.value = RefreshState(isRefreshing = true)
-            val results =
-                coroutineScope {
-                    listOf(
-                            async { recipeRepository.refreshRecipes(forceRefresh) },
-                            async { categoryRepository.refreshCategories() },
-                            async { tagRepository.refreshTags() },
-                        )
-                        .awaitAll()
-                }
+            val results = coroutineScope {
+                listOf(
+                        async { recipeRepository.refreshRecipes(forceRefresh) },
+                        async { categoryRepository.refreshCategories() },
+                        async { tagRepository.refreshTags() },
+                    )
+                    .awaitAll()
+            }
             refreshState.value =
                 RefreshState(errorMessage = results.firstNotNullOfOrNull(::refreshErrorMessage))
         }

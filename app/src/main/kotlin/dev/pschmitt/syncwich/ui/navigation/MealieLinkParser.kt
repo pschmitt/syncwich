@@ -48,17 +48,22 @@ internal fun parseSharedAssetUri(intent: Intent?): String? {
 
 private fun parseLongFormLink(segments: List<String>): MealieLinkTarget? {
     val markerIndex = segments.indexOfLast {
-        it.equals("recipe", true) || it.equals("recipes", true) ||
-            it.equals("cookbook", true) || it.equals("cookbooks", true)
+        it.equals("recipe", true) ||
+            it.equals("recipes", true) ||
+            it.equals("cookbook", true) ||
+            it.equals("cookbooks", true)
     }
     val marker = segments.getOrNull(markerIndex)?.lowercase()
     val slug = segments.getOrNull(markerIndex + 1)?.takeIf(String::isNotBlank) ?: return null
     return when (marker) {
-        "recipe", "recipes" -> MealieLinkTarget.Recipe(slug)
-        "cookbook", "cookbooks" -> MealieLinkTarget.Cookbook(slug)
+        "recipe",
+        "recipes" -> MealieLinkTarget.Recipe(slug)
+        "cookbook",
+        "cookbooks" -> MealieLinkTarget.Cookbook(slug)
         else -> null
     }
 }
 
-private fun decodeSegment(segment: String): String =
-    runCatching { URLDecoder.decode(segment, StandardCharsets.UTF_8.name()) }.getOrDefault(segment)
+private fun decodeSegment(segment: String): String = runCatching {
+    URLDecoder.decode(segment, StandardCharsets.UTF_8.name())
+}.getOrDefault(segment)

@@ -129,5 +129,6 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideTimelineApi(retrofit: Retrofit): TimelineApi = retrofit.create(TimelineApi::class.java)
+    fun provideTimelineApi(retrofit: Retrofit): TimelineApi =
+        retrofit.create(TimelineApi::class.java)
 }

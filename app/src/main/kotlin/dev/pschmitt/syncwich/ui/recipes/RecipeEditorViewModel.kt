@@ -11,6 +11,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.pschmitt.syncwich.data.api.dto.RecipeInputDto
 import dev.pschmitt.syncwich.data.repository.RecipeRepository
 import dev.pschmitt.syncwich.ui.navigation.Route
+import java.io.File
+import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,11 +22,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import java.io.File
-import java.util.UUID
 
-private val LOCAL_MARKDOWN_IMAGE =
-    Regex("""(!\[[^]]*]\()\s*((?:content|file)://[^)\s]+)(\s*\))""")
+private val LOCAL_MARKDOWN_IMAGE = Regex("""(!\[[^]]*]\()\s*((?:content|file)://[^)\s]+)(\s*\))""")
 
 sealed interface RecipeEditorSaveState {
     data object Idle : RecipeEditorSaveState
@@ -83,22 +82,23 @@ constructor(
 
     fun onTotalTimeChange(value: String) = updateDraft { copy(totalTime = value) }
 
-    fun onIngredientChange(index: Int, value: String) =
-        updateDraft { withIngredientChanged(index, value) }
+    fun onIngredientChange(index: Int, value: String) = updateDraft {
+        withIngredientChanged(index, value)
+    }
 
     fun onIngredientAdd() = updateDraft { withIngredientAdded() }
 
     fun onIngredientRemove(index: Int) = updateDraft { withIngredientRemoved(index) }
 
-    fun onInstructionChange(index: Int, value: String) =
-        updateDraft { withInstructionChanged(index, value) }
+    fun onInstructionChange(index: Int, value: String) = updateDraft {
+        withInstructionChanged(index, value)
+    }
 
     fun onInstructionAdd() = updateDraft { withInstructionAdded() }
 
     fun onInstructionRemove(index: Int) = updateDraft { withInstructionRemoved(index) }
 
-    fun onInstructionMove(from: Int, to: Int) =
-        updateDraft { withInstructionMoved(from, to) }
+    fun onInstructionMove(from: Int, to: Int) = updateDraft { withInstructionMoved(from, to) }
 
     fun onDescriptionImage(uri: String) =
         cacheSelectedImage(uri) { cachedUri -> withDescriptionImage(cachedUri) }
@@ -148,62 +148,58 @@ constructor(
         }
     }
 
-    private suspend fun saveNewRecipe(draft: RecipeEditorDraft): Result<Unit> =
-        runCatching {
-            val returnedReference =
-                recipeRepository.createRecipe(draft.toCreateRequest()).getOrThrow()
-            val slug =
-                returnedReference.trim().trim('"').takeIf(String::isNotBlank)
-                    ?: error("Mealie did not return the created recipe slug")
-            recipeRepository.refreshRecipeDetail("", slug, forceRefresh = true).getOrThrow()
-            val cached =
-                recipeRepository.observeRecipeDetailBySlug(slug).first()
-                    ?: error("The created recipe was not returned by Mealie")
-            val input =
-                decodeRecipeInput(json, cached.detailJson)
-                    ?: error("The created recipe could not be decoded")
-            val enrichedDraft = draft.copy(existingSlug = slug, baseInput = input)
-            val request = prepareRequest(enrichedDraft, slug).getOrThrow()
-            syncCoverImage(enrichedDraft, slug).getOrThrow()
-            recipeRepository.updateRecipe(slug, request).getOrThrow()
-        }
+    private suspend fun saveNewRecipe(draft: RecipeEditorDraft): Result<Unit> = runCatching {
+        val returnedReference = recipeRepository.createRecipe(draft.toCreateRequest()).getOrThrow()
+        val slug =
+            returnedReference.trim().trim('"').takeIf(String::isNotBlank)
+                ?: error("Mealie did not return the created recipe slug")
+        recipeRepository.refreshRecipeDetail("", slug, forceRefresh = true).getOrThrow()
+        val cached =
+            recipeRepository.observeRecipeDetailBySlug(slug).first()
+                ?: error("The created recipe was not returned by Mealie")
+        val input =
+            decodeRecipeInput(json, cached.detailJson)
+                ?: error("The created recipe could not be decoded")
+        val enrichedDraft = draft.copy(existingSlug = slug, baseInput = input)
+        val request = prepareRequest(enrichedDraft, slug).getOrThrow()
+        syncCoverImage(enrichedDraft, slug).getOrThrow()
+        recipeRepository.updateRecipe(slug, request).getOrThrow()
+    }
 
-    private suspend fun saveExistingRecipe(draft: RecipeEditorDraft): Result<Unit> =
-        runCatching {
-            val slug = draft.existingSlug ?: error("Recipe slug is missing")
-            val request = prepareRequest(draft, slug).getOrThrow()
-            syncCoverImage(draft, slug).getOrThrow()
-            recipeRepository.updateRecipe(slug, request).getOrThrow()
-        }
+    private suspend fun saveExistingRecipe(draft: RecipeEditorDraft): Result<Unit> = runCatching {
+        val slug = draft.existingSlug ?: error("Recipe slug is missing")
+        val request = prepareRequest(draft, slug).getOrThrow()
+        syncCoverImage(draft, slug).getOrThrow()
+        recipeRepository.updateRecipe(slug, request).getOrThrow()
+    }
 
     private suspend fun prepareRequest(
         draft: RecipeEditorDraft,
         slug: String,
-    ): Result<RecipeInputDto> =
-        runCatching {
-            val request = draft.toUpdateRequest()
-            request.copy(
-                description =
-                    replaceLocalImages(
-                        request.description,
-                        slug,
-                        "Description image",
-                        draft.baseInput?.id ?: recipeId,
-                    ),
-                recipeInstructions =
-                    request.recipeInstructions.map { step ->
-                        step.copy(
-                            text =
-                                replaceLocalImages(
-                                    step.text,
-                                    slug,
-                                    "Step image",
-                                    draft.baseInput?.id ?: recipeId,
-                                )
-                        )
-                    },
-            )
-        }
+    ): Result<RecipeInputDto> = runCatching {
+        val request = draft.toUpdateRequest()
+        request.copy(
+            description =
+                replaceLocalImages(
+                    request.description,
+                    slug,
+                    "Description image",
+                    draft.baseInput?.id ?: recipeId,
+                ),
+            recipeInstructions =
+                request.recipeInstructions.map { step ->
+                    step.copy(
+                        text =
+                            replaceLocalImages(
+                                step.text,
+                                slug,
+                                "Step image",
+                                draft.baseInput?.id ?: recipeId,
+                            )
+                    )
+                },
+        )
+    }
 
     private suspend fun replaceLocalImages(
         text: String,
@@ -278,9 +274,9 @@ constructor(
                         val mimeType = resolver.getType(source) ?: "image/jpeg"
                         val extension =
                             mimeType.substringAfter('/', "jpg").lowercase().replace("jpeg", "jpg")
-                        val directory = File(context.cacheDir, "recipe-editor-media").apply { mkdirs() }
-                        val destination =
-                            File(directory, "${UUID.randomUUID()}.$extension")
+                        val directory =
+                            File(context.cacheDir, "recipe-editor-media").apply { mkdirs() }
+                        val destination = File(directory, "${UUID.randomUUID()}.$extension")
                         resolver.openInputStream(source)?.use { input ->
                             destination.outputStream().use { output -> input.copyTo(output) }
                         } ?: error("Couldn't read the selected image")
@@ -308,5 +304,6 @@ constructor(
  * `NetworkModule`), so fields this editor doesn't model are simply carried through unread rather
  * than failing the decode.
  */
-internal fun decodeRecipeInput(json: Json, rawJson: String): RecipeInputDto? =
-    runCatching { json.decodeFromString<RecipeInputDto>(rawJson) }.getOrNull()
+internal fun decodeRecipeInput(json: Json, rawJson: String): RecipeInputDto? = runCatching {
+    json.decodeFromString<RecipeInputDto>(rawJson)
+}.getOrNull()

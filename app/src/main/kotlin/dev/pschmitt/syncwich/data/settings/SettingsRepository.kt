@@ -1,8 +1,8 @@
 package dev.pschmitt.syncwich.data.settings
 
 import android.content.Context
-import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -41,9 +41,8 @@ data class MealieCredentials(val serverUrl: String, val apiToken: String) {
 // suppression makes this intentional compatibility boundary visible to the compiler.
 @Suppress("DEPRECATION")
 @Singleton
-class SettingsRepository
-@Inject
-constructor(@ApplicationContext private val context: Context) : NavigationBarPreferences {
+class SettingsRepository @Inject constructor(@ApplicationContext private val context: Context) :
+    NavigationBarPreferences {
 
     private val prefs =
         EncryptedSharedPreferences.create(
@@ -93,8 +92,9 @@ constructor(@ApplicationContext private val context: Context) : NavigationBarPre
 
     /** Destination keys hidden from the bottom navigation bar. */
     override val navigationBarHiddenItems: Flow<Set<String>> =
-        context.syncwichDataStore.data
-            .map { navigationBarOrderFromString(it[KEY_NAV_BAR_HIDDEN_ITEMS]).toSet() }
+        context.syncwichDataStore.data.map {
+            navigationBarOrderFromString(it[KEY_NAV_BAR_HIDDEN_ITEMS]).toSet()
+        }
 
     /** The user's preferred app text scale, defaulting to the current Material typography size. */
     val fontScale: Flow<Float> =
@@ -110,8 +110,9 @@ constructor(@ApplicationContext private val context: Context) : NavigationBarPre
 
     /** Destination keys explicitly shown by the user, even when their cache is empty. */
     override val navigationBarShownItems: Flow<Set<String>> =
-        context.syncwichDataStore.data
-            .map { navigationBarOrderFromString(it[KEY_NAV_BAR_SHOWN_ITEMS]).toSet() }
+        context.syncwichDataStore.data.map {
+            navigationBarOrderFromString(it[KEY_NAV_BAR_SHOWN_ITEMS]).toSet()
+        }
 
     /** True after the first complete foreground sync has populated the offline cache. */
     val initialSyncCompleted: Flow<Boolean> =
@@ -173,7 +174,8 @@ constructor(@ApplicationContext private val context: Context) : NavigationBarPre
 
     suspend fun setNavigationBarItemHidden(key: String, hidden: Boolean) {
         context.syncwichDataStore.edit { prefs ->
-            val current = navigationBarOrderFromString(prefs[KEY_NAV_BAR_HIDDEN_ITEMS]).toMutableSet()
+            val current =
+                navigationBarOrderFromString(prefs[KEY_NAV_BAR_HIDDEN_ITEMS]).toMutableSet()
             val explicitlyShown =
                 navigationBarOrderFromString(prefs[KEY_NAV_BAR_SHOWN_ITEMS]).toMutableSet()
             if (hidden) {
@@ -189,9 +191,7 @@ constructor(@ApplicationContext private val context: Context) : NavigationBarPre
     }
 
     suspend fun saveFontScale(scale: Float) {
-        context.syncwichDataStore.edit { prefs ->
-            prefs[KEY_FONT_SCALE] = sanitizeFontScale(scale)
-        }
+        context.syncwichDataStore.edit { prefs -> prefs[KEY_FONT_SCALE] = sanitizeFontScale(scale) }
     }
 
     suspend fun saveThemeMode(mode: ThemeMode) {
@@ -211,7 +211,10 @@ constructor(@ApplicationContext private val context: Context) : NavigationBarPre
         }
     }
 
-    /** Clears sync bookkeeping when [dev.pschmitt.syncwich.data.repository.AccountRepository] signs out. */
+    /**
+     * Clears sync bookkeeping when [dev.pschmitt.syncwich.data.repository.AccountRepository] signs
+     * out.
+     */
     suspend fun resetSyncState() {
         context.syncwichDataStore.edit { prefs ->
             prefs.remove(KEY_INITIAL_SYNC_COMPLETED)

@@ -39,8 +39,20 @@ class RequestOriginTest {
     fun `authorization is limited to the configured origin`() {
         val configured = "https://recipes.example/mealie".toHttpUrl()
 
-        assertTrue(shouldAttachMealieAuth("https://recipes.example/mealie/api/recipes".toHttpUrl(), configured))
-        assertFalse(shouldAttachMealieAuth("https://images.example/recipe.webp".toHttpUrl(), configured))
-        assertFalse(shouldAttachMealieAuth("http://recipes.example/mealie/api/recipes".toHttpUrl(), configured))
+        assertTrue(
+            shouldAttachMealieAuth(
+                "https://recipes.example/mealie/api/recipes".toHttpUrl(),
+                configured,
+            )
+        )
+        assertFalse(
+            shouldAttachMealieAuth("https://images.example/recipe.webp".toHttpUrl(), configured)
+        )
+        assertFalse(
+            shouldAttachMealieAuth(
+                "http://recipes.example/mealie/api/recipes".toHttpUrl(),
+                configured,
+            )
+        )
     }
 }

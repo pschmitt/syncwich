@@ -1,7 +1,7 @@
 package dev.pschmitt.syncwich.data.api
 
-import dev.pschmitt.syncwich.data.api.dto.PagedResponseDto
 import dev.pschmitt.syncwich.data.api.dto.CreateRecipeDto
+import dev.pschmitt.syncwich.data.api.dto.PagedResponseDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeSummaryDto
 import okhttp3.ResponseBody
@@ -10,10 +10,10 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.PATCH
-import retrofit2.http.Part
 import retrofit2.http.POST
-import retrofit2.http.Path
 import retrofit2.http.PUT
+import retrofit2.http.Part
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface RecipesApi {
@@ -23,8 +23,7 @@ interface RecipesApi {
      * response stays raw because the public schema does not promise whether that string is an id or
      * slug.
      */
-    @POST("api/recipes")
-    suspend fun createRecipe(@Body request: CreateRecipeDto): ResponseBody
+    @POST("api/recipes") suspend fun createRecipe(@Body request: CreateRecipeDto): ResponseBody
 
     /** `PUT /api/recipes/{slug}` accepts the complete `Recipe-Input` object. */
     @PUT("api/recipes/{slug}")

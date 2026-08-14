@@ -77,7 +77,10 @@ class MealPlanViewModel @Inject constructor(private val mealPlanRepository: Meal
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue =
-                    MealPlanUiState(weekStart = weekStart.value, weekEnd = weekStart.value.plusDays(6)),
+                    MealPlanUiState(
+                        weekStart = weekStart.value,
+                        weekEnd = weekStart.value.plusDays(6),
+                    ),
             )
 
     init {
@@ -196,7 +199,8 @@ class MealPlanViewModel @Inject constructor(private val mealPlanRepository: Meal
                         _editorState.update {
                             it.copy(
                                 isSaving = false,
-                                errorMessage = "Couldn't delete. Check your connection and try again.",
+                                errorMessage =
+                                    "Couldn't delete. Check your connection and try again.",
                             )
                         }
                     },

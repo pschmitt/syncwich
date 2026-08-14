@@ -23,7 +23,8 @@ class RecipeImagePrefetchTest {
             [ordinary link](https://images.example/not-an-image.jpg)
             ![relative](images/relative.jpg)
             ![data](data:image/png;base64,abc)
-            """.trimIndent()
+            """
+                .trimIndent()
 
         assertEquals(
             listOf(
@@ -56,7 +57,8 @@ class RecipeImagePrefetchTest {
                 <IMG alt='Pan' src='api/media/recipes/r1/assets/pan.jpg?size=large'>
                 <img src="data:image/png;base64,not-a-request" alt="unsafe" />
                 <img src="//other.example/remote.jpg" alt="cross server" />
-                """.trimIndent(),
+                """
+                    .trimIndent(),
                 "https://mealie.example",
             )
 
@@ -80,7 +82,10 @@ class RecipeImagePrefetchTest {
             ),
         )
         assertEquals(null, resolveRecipeImageUrl("https://mealie.example", "javascript:alert(1)"))
-        assertEquals(null, resolveRecipeImageUrl("https://mealie.example", "https://user:p@evil.example/a"))
+        assertEquals(
+            null,
+            resolveRecipeImageUrl("https://mealie.example", "https://user:p@evil.example/a"),
+        )
     }
 
     @Test
@@ -138,7 +143,8 @@ class RecipeImagePrefetchTest {
                             {"id":"r1","slug":"r1","name":"One","recipeInstructions":[
                               {"text":"<img src=\"/api/media/recipes/r1/assets/step.jpg\" alt=\"Step\">"}
                             ]}
-                            """.trimIndent(),
+                            """
+                                .trimIndent(),
                         )
                     ),
                 json = json,
@@ -161,9 +167,7 @@ class RecipeImagePrefetchTest {
             )
 
         assertEquals(
-            listOf(
-                "https://mealie.example/api/media/recipes/keep/images/min-original.webp?v=1"
-            ),
+            listOf("https://mealie.example/api/media/recipes/keep/images/min-original.webp?v=1"),
             urls,
         )
     }

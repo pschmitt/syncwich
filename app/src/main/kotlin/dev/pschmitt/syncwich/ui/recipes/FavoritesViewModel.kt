@@ -45,17 +45,21 @@ constructor(
                     refreshState = refresh,
                 )
             }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), FavoritesUiState())
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
+                FavoritesUiState(),
+            )
 
-    init { refresh() }
+    init {
+        refresh()
+    }
 
     fun refresh() {
         viewModelScope.launch {
             refreshState.value = RefreshState(isRefreshing = true)
             refreshState.value =
-                RefreshState(
-                    errorMessage = refreshErrorMessage(recipeRepository.refreshRecipes())
-                )
+                RefreshState(errorMessage = refreshErrorMessage(recipeRepository.refreshRecipes()))
         }
     }
 

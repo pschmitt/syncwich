@@ -45,7 +45,9 @@ constructor(savedStateHandle: SavedStateHandle, private val repository: RecipeTi
         viewModelScope.launch {
             _refreshState.value = RefreshState(isRefreshing = true)
             _refreshState.value =
-                RefreshState(errorMessage = refreshErrorMessage(repository.refreshFromServer(recipeId)))
+                RefreshState(
+                    errorMessage = refreshErrorMessage(repository.refreshFromServer(recipeId))
+                )
         }
     }
 }

@@ -11,8 +11,8 @@ import dev.pschmitt.syncwich.data.db.AppDatabase
 import dev.pschmitt.syncwich.data.db.dao.CategoryDao
 import dev.pschmitt.syncwich.data.db.dao.CookbookDao
 import dev.pschmitt.syncwich.data.db.dao.MealPlanDao
-import dev.pschmitt.syncwich.data.db.dao.RecipeDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeActionDao
+import dev.pschmitt.syncwich.data.db.dao.RecipeDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeTimelineEventDao
 import dev.pschmitt.syncwich.data.db.dao.ShoppingListDao
 import dev.pschmitt.syncwich.data.db.dao.TagDao

@@ -37,7 +37,10 @@ class OnboardingModeControlsTest {
         val passwordBounds =
             composeTestRule.onNodeWithTag("onboarding-mode-password").getUnclippedBoundsInRoot()
 
-        assertEquals(tokenBounds.bottom - tokenBounds.top, passwordBounds.bottom - passwordBounds.top)
+        assertEquals(
+            tokenBounds.bottom - tokenBounds.top,
+            passwordBounds.bottom - passwordBounds.top,
+        )
         assertEquals(tokenBounds.top, passwordBounds.top)
     }
 }

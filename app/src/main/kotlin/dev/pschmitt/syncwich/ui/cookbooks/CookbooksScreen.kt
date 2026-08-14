@@ -1,11 +1,11 @@
 package dev.pschmitt.syncwich.ui.cookbooks
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,8 +16,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -94,8 +94,7 @@ fun CookbooksScreen(
                     value = searchQuery,
                     onValueChange = viewModel::onSearchQueryChange,
                     placeholder = "Search cookbooks",
-                    modifier =
-                        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                 )
                 if (cookbooks.isEmpty()) {
                     PlaceholderScreen(
@@ -119,7 +118,8 @@ fun CookbooksScreen(
                 } else {
                     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                         LazyVerticalGrid(
-                            columns = GridCells.Fixed(cookbookGridColumnCount(maxWidth.value.toInt())),
+                            columns =
+                                GridCells.Fixed(cookbookGridColumnCount(maxWidth.value.toInt())),
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(COOKBOOK_GRID_PADDING_DP.dp),
                             horizontalArrangement =
@@ -207,7 +207,7 @@ private fun CookbookPreviewCarousel(recipes: List<RecipeSummaryEntity>, serverUr
                 Modifier.fillMaxWidth()
                     .height(COOKBOOK_PREVIEW_ITEM_HEIGHT_DP.dp)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .maskClip(MaterialTheme.shapes.extraLarge),
+                    .maskClip(MaterialTheme.shapes.extraLarge)
         ) {
             AsyncImage(
                 model = recipeImageUrl(serverUrl, recipe.id, recipe.image),
@@ -228,8 +228,9 @@ internal fun cookbookPreviewRecipes(
 fun filterRecipePreviewsWithImages(
     recipes: List<RecipeSummaryEntity>,
     serverUrl: String,
-): List<RecipeSummaryEntity> =
-    recipes.filter { recipe -> recipeImageUrl(serverUrl, recipe.id, recipe.image) != null }
+): List<RecipeSummaryEntity> = recipes.filter { recipe ->
+    recipeImageUrl(serverUrl, recipe.id, recipe.image) != null
+}
 
 private const val PREVIEW_RECIPE_LIMIT = 5
 

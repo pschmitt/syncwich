@@ -4,9 +4,9 @@ import kotlinx.serialization.Serializable
 
 /**
  * Body for `POST /api/households/shopping/items` - Mealie v3.22.0's `ShoppingListItemCreate`
- * schema, confirmed against the live instance's `/openapi.json`. Only `shoppingListId` is
- * required; a freeform item (no linked food/unit/recipe) is created by setting `display` alone,
- * the same way Mealie's own apps let a user type a plain-text shopping-list line.
+ * schema, confirmed against the live instance's `/openapi.json`. Only `shoppingListId` is required;
+ * a freeform item (no linked food/unit/recipe) is created by setting `display` alone, the same way
+ * Mealie's own apps let a user type a plain-text shopping-list line.
  */
 @Serializable
 data class CreateShoppingListItemDto(

@@ -54,8 +54,9 @@ constructor(
      * Deliberately does *not* touch any list's cached items - see
      * `ShoppingListDao.replaceAllLists`'s kdoc.
      */
-    suspend fun refreshLists(): Result<Unit> = withContext(Dispatchers.IO) {
-        runCatching {
+    suspend fun refreshLists(): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            runCatching {
                 val allItems = mutableListOf<ShoppingListSummaryDto>()
                 var page = 1
                 while (true) {
@@ -70,8 +71,8 @@ constructor(
                 }
                 shoppingListDao.replaceAllLists(allItems.map { it.toEntity() })
             }
-            .onFailure { Timber.w(it, "Shopping list refresh failed; keeping cached data") }
-    }
+                .onFailure { Timber.w(it, "Shopping list refresh failed; keeping cached data") }
+        }
 
     /**
      * Fetches one list's detail (including items) and caches it. An item with a not-yet-synced
@@ -79,8 +80,9 @@ constructor(
      * instead of being overwritten by the server's - same rationale as
      * `RecipeActionRepository.refreshFromServer`'s handling of `favoritePending`.
      */
-    suspend fun refreshListDetail(listId: String): Result<Unit> = withContext(Dispatchers.IO) {
-        runCatching {
+    suspend fun refreshListDetail(listId: String): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            runCatching {
                 val detail = shoppingListsApi.getShoppingListDetail(listId)
                 val pendingById = shoppingListDao.getPendingCheckedItems().associateBy { it.id }
                 shoppingListDao.upsertLists(listOf(detail.toEntity()))
@@ -96,13 +98,13 @@ constructor(
                     },
                 )
             }
-            .onFailure {
-                Timber.w(
-                    it,
-                    "Shopping list detail refresh failed for '$listId'; keeping cached data",
-                )
-            }
-    }
+                .onFailure {
+                    Timber.w(
+                        it,
+                        "Shopping list detail refresh failed for '$listId'; keeping cached data",
+                    )
+                }
+        }
 
     /**
      * Adds a freeform item to a list. Mirrors [CookbookRepository.createCookbook]'s network-first
@@ -111,27 +113,28 @@ constructor(
     suspend fun addItem(listId: String, display: String): Result<ShoppingListItemEntity> =
         withContext(Dispatchers.IO) {
             runCatching {
-                    val response =
-                        shoppingListsApi.createShoppingItem(
-                            CreateShoppingListItemDto(shoppingListId = listId, display = display)
-                        )
-                    val entity =
-                        response.createdItems.firstOrNull()?.toEntity()
-                            ?: error("Mealie did not return the created shopping list item")
-                    shoppingListDao.upsertItems(listOf(entity))
-                    entity
-                }
+                val response =
+                    shoppingListsApi.createShoppingItem(
+                        CreateShoppingListItemDto(shoppingListId = listId, display = display)
+                    )
+                val entity =
+                    response.createdItems.firstOrNull()?.toEntity()
+                        ?: error("Mealie did not return the created shopping list item")
+                shoppingListDao.upsertItems(listOf(entity))
+                entity
+            }
                 .onFailure { Timber.w(it, "Shopping list item create failed; keeping cached data") }
         }
 
     /** Deletes one item from Mealie and, only on success, removes its cached row. */
-    suspend fun removeItem(itemId: String): Result<Unit> = withContext(Dispatchers.IO) {
-        runCatching {
+    suspend fun removeItem(itemId: String): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            runCatching {
                 shoppingListsApi.deleteShoppingItem(itemId).close()
                 shoppingListDao.deleteItem(itemId)
             }
-            .onFailure { Timber.w(it, "Shopping list item delete failed; keeping cached data") }
-    }
+                .onFailure { Timber.w(it, "Shopping list item delete failed; keeping cached data") }
+        }
 
     /**
      * Toggles one item's checked state offline-first: Room is updated immediately (marked
@@ -154,32 +157,35 @@ constructor(
         }
 
     /** Retries any durable offline checked-state changes; each item is retried independently. */
-    suspend fun syncPendingItemChecks(): Result<Unit> = withContext(Dispatchers.IO) {
-        val pending = shoppingListDao.getPendingCheckedItems()
-        val failures = pending.count { item -> syncItemChecked(item.id, item.checked).isFailure }
-        if (failures > 0) {
-            Result.failure(IllegalStateException("$failures pending item(s) failed to sync"))
-        } else {
-            Result.success(Unit)
+    suspend fun syncPendingItemChecks(): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            val pending = shoppingListDao.getPendingCheckedItems()
+            val failures = pending.count { item ->
+                syncItemChecked(item.id, item.checked).isFailure
+            }
+            if (failures > 0) {
+                Result.failure(IllegalStateException("$failures pending item(s) failed to sync"))
+            } else {
+                Result.success(Unit)
+            }
         }
-    }
 
     private suspend fun syncItemChecked(itemId: String, checked: Boolean): Result<Unit> =
         runCatching {
-                // Fetches the item's full current JSON representation and flips only "checked" -
-                // see ShoppingListsApi's kdoc for why a partial typed body is unsafe here.
-                val raw = shoppingListsApi.getShoppingItemRaw(itemId)
-                val patched =
-                    JsonObject(raw.toMutableMap().apply { put("checked", JsonPrimitive(checked)) })
-                shoppingListsApi.updateShoppingItemRaw(itemId, patched)
-                val current = shoppingListDao.getItem(itemId)
-                if (current != null) {
-                    shoppingListDao.upsertItems(
-                        listOf(current.copy(checked = checked, checkedPending = false))
-                    )
-                }
+            // Fetches the item's full current JSON representation and flips only "checked" -
+            // see ShoppingListsApi's kdoc for why a partial typed body is unsafe here.
+            val raw = shoppingListsApi.getShoppingItemRaw(itemId)
+            val patched =
+                JsonObject(raw.toMutableMap().apply { put("checked", JsonPrimitive(checked)) })
+            shoppingListsApi.updateShoppingItemRaw(itemId, patched)
+            val current = shoppingListDao.getItem(itemId)
+            if (current != null) {
+                shoppingListDao.upsertItems(
+                    listOf(current.copy(checked = checked, checkedPending = false))
+                )
             }
-            .onFailure { Timber.w(it, "Shopping list item checked-state sync failed for '$itemId'") }
+        }
+        .onFailure { Timber.w(it, "Shopping list item checked-state sync failed for '$itemId'") }
 
     private fun ShoppingListSummaryDto.toEntity() =
         ShoppingListEntity(id = id, name = name, updatedAt = updatedAt)

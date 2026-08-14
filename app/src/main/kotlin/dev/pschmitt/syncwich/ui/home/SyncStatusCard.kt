@@ -80,14 +80,18 @@ internal fun syncStatusHeadline(status: SyncStatus): String =
         SyncStatusState.SYNCED -> "Recipes up to date"
     }
 
-internal fun syncStatusDetails(status: SyncStatus, nowMillis: Long = System.currentTimeMillis()): String =
+internal fun syncStatusDetails(
+    status: SyncStatus,
+    nowMillis: Long = System.currentTimeMillis(),
+): String =
     when (status.state) {
         SyncStatusState.SYNCING -> "Updating the cache; saved recipes remain available."
         SyncStatusState.ERROR ->
             status.errorMessage ?: "Showing saved data. Check your connection and try again."
         SyncStatusState.STALE ->
             "${formatRelativeSyncTime(status.lastSyncAt, nowMillis)}. Sync when a connection is available."
-        SyncStatusState.NEVER_SYNCED -> "No successful sync yet. Cached content will stay available offline."
+        SyncStatusState.NEVER_SYNCED ->
+            "No successful sync yet. Cached content will stay available offline."
         SyncStatusState.SYNCED -> formatRelativeSyncTime(status.lastSyncAt, nowMillis)
     }
 

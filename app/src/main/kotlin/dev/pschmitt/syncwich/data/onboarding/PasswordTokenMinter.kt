@@ -22,8 +22,8 @@ import retrofit2.Retrofit
  * `/api/auth/token`, then immediately uses that JWT to mint a real long-lived Mealie API token via
  * `/api/users/api-tokens` - that token is the only thing ever returned to the caller (and, from
  * there, the only thing [dev.pschmitt.syncwich.data.settings.SettingsRepository] persists). The
- * password and JWT live only as local `val`s for the duration of this one request chain; neither
- * is ever logged (the [ValidationClient] OkHttpClient's `HttpLoggingInterceptor` redacts the
+ * password and JWT live only as local `val`s for the duration of this one request chain; neither is
+ * ever logged (the [ValidationClient] OkHttpClient's `HttpLoggingInterceptor` redacts the
  * `Authorization` header, and request bodies aren't logged in release builds) or written to disk.
  *
  * Builds its own per-call [Retrofit]/[AuthApi] against the *entered* (not-yet-saved) server URL,
@@ -47,10 +47,7 @@ constructor(@ValidationClient private val client: OkHttpClient, private val json
                 // Retrofit requires a directory-style base URL, while users naturally enter
                 // `https://mealie.example.com` without a trailing slash.
                 url.newBuilder().encodedPath(url.encodedPath.trimEnd('/') + "/").build()
-            }
-                ?: return Result.failure(
-                    OnboardingValidationException(OnboardingError.MalformedUrl)
-                )
+            } ?: return Result.failure(OnboardingValidationException(OnboardingError.MalformedUrl))
 
         val api = authApi(baseUrl)
 
@@ -65,12 +62,18 @@ constructor(@ValidationClient private val client: OkHttpClient, private val json
                 val token =
                     try {
                         api.createApiToken(
-                            "Bearer $accessToken",
-                            LongLiveTokenRequestDto(name = tokenName, integrationId = "generic"),
-                        )
+                                "Bearer $accessToken",
+                                LongLiveTokenRequestDto(
+                                    name = tokenName,
+                                    integrationId = "generic",
+                                ),
+                            )
                             .token
                     } catch (e: HttpException) {
-                        throw OnboardingValidationException(OnboardingError.ServerError(e.code()), e)
+                        throw OnboardingValidationException(
+                            OnboardingError.ServerError(e.code()),
+                            e,
+                        )
                     }
                 Result.success(token)
             }

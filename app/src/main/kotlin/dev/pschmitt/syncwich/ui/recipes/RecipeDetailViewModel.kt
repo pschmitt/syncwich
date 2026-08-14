@@ -6,22 +6,23 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.pschmitt.syncwich.data.api.dto.RecipeDetailDto
+import dev.pschmitt.syncwich.data.api.recipeImageUrl
 import dev.pschmitt.syncwich.data.db.entity.RecipeActionEntity
+import dev.pschmitt.syncwich.data.image.RecipeImageReference
+import dev.pschmitt.syncwich.data.image.extractRecipeImageReferences
 import dev.pschmitt.syncwich.data.repository.RecipeActionRepository
 import dev.pschmitt.syncwich.data.repository.RecipeRepository
 import dev.pschmitt.syncwich.data.repository.RecipeTimelineRepository
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
-import dev.pschmitt.syncwich.data.image.RecipeImageReference
-import dev.pschmitt.syncwich.data.image.extractRecipeImageReferences
-import dev.pschmitt.syncwich.data.api.recipeImageUrl
 import dev.pschmitt.syncwich.ui.common.RefreshState
 import dev.pschmitt.syncwich.ui.common.refreshErrorMessage
 import dev.pschmitt.syncwich.ui.navigation.Route
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -30,7 +31,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -103,10 +103,10 @@ constructor(
 
     private val detailJson: Flow<String?> =
         (if (requestedRecipeId.isBlank()) {
-            recipeRepository.observeRecipeDetailBySlug(route.slug)
-        } else {
-            recipeRepository.observeRecipeDetail(requestedRecipeId)
-        })
+                recipeRepository.observeRecipeDetailBySlug(route.slug)
+            } else {
+                recipeRepository.observeRecipeDetail(requestedRecipeId)
+            })
             .map { it?.detailJson }
             .distinctUntilChanged()
 
@@ -174,7 +174,9 @@ constructor(
                 RecipeDetailUiState.Loading,
             )
 
-    init { refresh(forceRefresh = false) }
+    init {
+        refresh(forceRefresh = false)
+    }
 
     fun refresh() {
         refresh(forceRefresh = true)
@@ -196,8 +198,8 @@ constructor(
                             )
                         )
                 )
-            }
         }
+    }
 
     fun setFavorite(isFavorite: Boolean) {
         viewModelScope.launch {
@@ -250,22 +252,22 @@ internal fun recipeDetailUiState(
         else -> RecipeDetailUiState.Unavailable(refresh.errorMessage)
     }
 
-internal fun decodeRecipeDetail(json: Json, rawJson: String): RecipeDetailDto? =
-    runCatching { json.decodeFromString<RecipeDetailDto>(rawJson) }.getOrNull()
+internal fun decodeRecipeDetail(json: Json, rawJson: String): RecipeDetailDto? = runCatching {
+    json.decodeFromString<RecipeDetailDto>(rawJson)
+}.getOrNull()
 
 internal fun recipeImageIndex(serverUrl: String, recipe: RecipeDetailDto): RecipeImageIndex {
     val coverUrl = recipeImageUrl(serverUrl, recipe.id, recipe.image)
     val instructionReferences =
         recipe.recipeInstructions.map { extractRecipeImageReferences(it.text, serverUrl) }
-    val galleryUrls =
-        buildList {
-            coverUrl?.let(::add)
-            instructionReferences
-                .asSequence()
-                .flatten()
-                .map(RecipeImageReference::url)
-                .distinct()
-                .forEach(::add)
-        }
+    val galleryUrls = buildList {
+        coverUrl?.let(::add)
+        instructionReferences
+            .asSequence()
+            .flatten()
+            .map(RecipeImageReference::url)
+            .distinct()
+            .forEach(::add)
+    }
     return RecipeImageIndex(coverUrl, galleryUrls, instructionReferences)
 }

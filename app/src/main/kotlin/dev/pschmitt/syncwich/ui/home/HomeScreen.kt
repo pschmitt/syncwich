@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
@@ -95,11 +94,7 @@ fun HomeScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp),
             ) {
-                item {
-                    HomeSyncStatusCard(
-                        status = uiState.syncStatus,
-                    )
-                }
+                item { HomeSyncStatusCard(status = uiState.syncStatus) }
                 item {
                     RefreshErrorBanner(
                         errorMessage = uiState.refreshState.errorMessage,

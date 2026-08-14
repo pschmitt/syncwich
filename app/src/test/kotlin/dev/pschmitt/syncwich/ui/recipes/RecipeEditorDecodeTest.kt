@@ -21,10 +21,14 @@ class RecipeEditorDecodeTest {
                 """
                 {"id":"recipe-1","slug":"recipe-one","name":"Recipe One",
                  "recipeIngredient":[],"recipeInstructions":[]}
-                """.trimIndent(),
+                """
+                    .trimIndent(),
             )
 
-        assertEquals(RecipeInputDto(id = "recipe-1", slug = "recipe-one", name = "Recipe One"), input)
+        assertEquals(
+            RecipeInputDto(id = "recipe-1", slug = "recipe-one", name = "Recipe One"),
+            input,
+        )
     }
 
     @Test

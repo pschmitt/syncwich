@@ -10,6 +10,7 @@ import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import dev.pschmitt.syncwich.ui.common.RefreshState
 import dev.pschmitt.syncwich.ui.common.refreshErrorMessage
 import javax.inject.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +19,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -50,9 +50,11 @@ constructor(
                 if (cookbooks.isEmpty()) {
                     flowOf(emptyMap())
                 } else {
-                    combine(cookbooks.map { cookbook ->
-                        cookbookRepository.observeCookbookRecipes(cookbook.id)
-                    }) { recipesByCookbook ->
+                    combine(
+                        cookbooks.map { cookbook ->
+                            cookbookRepository.observeCookbookRecipes(cookbook.id)
+                        }
+                    ) { recipesByCookbook ->
                         cookbooks
                             .mapIndexed { index, cookbook ->
                                 cookbook.id to recipesByCookbook[index]
@@ -75,7 +77,9 @@ constructor(
         _searchQuery.value = query
     }
 
-    init { refresh(forceRefresh = false) }
+    init {
+        refresh(forceRefresh = false)
+    }
 
     fun refresh() = refresh(forceRefresh = true)
 

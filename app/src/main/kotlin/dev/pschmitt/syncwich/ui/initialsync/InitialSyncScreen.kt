@@ -51,60 +51,68 @@ fun InitialSyncScreen(
     BackHandler { viewModel.cancel() }
 
     Scaffold(modifier = modifier) { innerPadding ->
-        CenteredContent(modifier = Modifier.fillMaxSize().padding(innerPadding), maxWidth = 520.dp) {
+        CenteredContent(
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
+            maxWidth = 520.dp,
+        ) {
             Column(
                 modifier = Modifier.fillMaxSize().padding(32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
             ) {
-            Icon(
-                imageVector = Icons.Filled.Sync,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-            )
-            Text(
-                text = stringResource(R.string.initial_sync_title),
-                style = MaterialTheme.typography.headlineSmall,
-                textAlign = TextAlign.Center,
-            )
-            Text(
-                text = stringResource(R.string.initial_sync_subtitle),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
+                Icon(
+                    imageVector = Icons.Filled.Sync,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text = stringResource(R.string.initial_sync_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    text = stringResource(R.string.initial_sync_subtitle),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
 
-            when (val state = uiState) {
-                InitialSyncUiState.Starting -> {
-                    CircularProgressIndicator()
-                    Text(stringResource(R.string.initial_sync_starting))
-                }
-                is InitialSyncUiState.Syncing -> SyncProgressContent(state.progress)
-                is InitialSyncUiState.Failed -> {
-                    Text(
-                        text = stringResource(R.string.initial_sync_error, state.message),
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center,
-                    )
-                    Button(onClick = viewModel::retry, modifier = Modifier.fillMaxWidth()) {
-                        Text(stringResource(R.string.initial_sync_retry))
+                when (val state = uiState) {
+                    InitialSyncUiState.Starting -> {
+                        CircularProgressIndicator()
+                        Text(stringResource(R.string.initial_sync_starting))
                     }
+                    is InitialSyncUiState.Syncing -> SyncProgressContent(state.progress)
+                    is InitialSyncUiState.Failed -> {
+                        Text(
+                            text = stringResource(R.string.initial_sync_error, state.message),
+                            color = MaterialTheme.colorScheme.error,
+                            textAlign = TextAlign.Center,
+                        )
+                        Button(onClick = viewModel::retry, modifier = Modifier.fillMaxWidth()) {
+                            Text(stringResource(R.string.initial_sync_retry))
+                        }
+                        OutlinedButton(
+                            onClick = viewModel::cancel,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(stringResource(R.string.initial_sync_continue))
+                        }
+                    }
+                    InitialSyncUiState.Completed,
+                    InitialSyncUiState.Cancelled -> Unit
+                }
+
+                if (
+                    uiState is InitialSyncUiState.Starting || uiState is InitialSyncUiState.Syncing
+                ) {
                     OutlinedButton(
                         onClick = viewModel::cancel,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(stringResource(R.string.initial_sync_continue))
+                        Text(stringResource(R.string.initial_sync_cancel))
                     }
                 }
-                InitialSyncUiState.Completed,
-                InitialSyncUiState.Cancelled -> Unit
-            }
-
-            if (uiState is InitialSyncUiState.Starting || uiState is InitialSyncUiState.Syncing) {
-                OutlinedButton(onClick = viewModel::cancel, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.initial_sync_cancel))
-                }
-            }
             }
         }
     }
@@ -136,13 +144,12 @@ private fun SyncProgressContent(progress: InitialSyncProgress) {
     )
     Text(
         text =
-            progress.itemCount?.let {
-                stringResource(R.string.initial_sync_count, it)
-            } ?: stringResource(
-                R.string.initial_sync_stage_position,
-                progress.stageNumber,
-                progress.totalStages,
-            ),
+            progress.itemCount?.let { stringResource(R.string.initial_sync_count, it) }
+                ?: stringResource(
+                    R.string.initial_sync_stage_position,
+                    progress.stageNumber,
+                    progress.totalStages,
+                ),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
     )
