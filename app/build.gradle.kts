@@ -133,6 +133,7 @@ dependencies {
 
     // Markdown rendering (Mealie recipe descriptions/instructions support Markdown)
     implementation(libs.markdown.renderer)
+    implementation(libs.markdown.renderer.coil3)
     implementation(libs.markdown.renderer.m3)
 
     // Recipe image loading

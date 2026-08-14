@@ -5,6 +5,7 @@ import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -31,6 +32,18 @@ class RecipeImagePrefetchTest {
             ),
             extractMarkdownImageUrls(markdown),
         )
+    }
+
+    @Test
+    fun `accepts only bounded absolute http images without embedded credentials`() {
+        assertTrue(isSafeRecipeImageUrl("https://images.example/step.jpg?size=large"))
+        assertTrue(isSafeRecipeImageUrl("HTTP://images.example/step.jpg"))
+        assertFalse(isSafeRecipeImageUrl("images/step.jpg"))
+        assertFalse(isSafeRecipeImageUrl("data:image/png;base64,abc"))
+        assertFalse(isSafeRecipeImageUrl("ftp://images.example/step.jpg"))
+        assertFalse(isSafeRecipeImageUrl("https://user:password@images.example/step.jpg"))
+        assertFalse(isSafeRecipeImageUrl("https://"))
+        assertFalse(isSafeRecipeImageUrl("https://images.example/${"x".repeat(2_049)}"))
     }
 
     @Test

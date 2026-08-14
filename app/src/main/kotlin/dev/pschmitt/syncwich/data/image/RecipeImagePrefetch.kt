@@ -18,7 +18,7 @@ fun extractMarkdownImageUrls(markdown: String): List<String> {
     val urls = linkedSetOf<String>()
     MARKDOWN_IMAGE.findAll(markdown).forEach { match ->
         val candidate = match.groups[1]?.value ?: match.groups[2]?.value
-        if (candidate != null && isPrefetchableUrl(candidate)) urls += candidate
+        if (candidate != null && isSafeRecipeImageUrl(candidate)) urls += candidate
     }
     return urls.toList()
 }
@@ -103,7 +103,8 @@ suspend fun prefetchImageUrls(
     )
 }
 
-private fun isPrefetchableUrl(candidate: String): Boolean {
+/** Returns whether a Markdown image destination is safe to load as a remote recipe image. */
+fun isSafeRecipeImageUrl(candidate: String): Boolean {
     if (candidate.length > MAX_MARKDOWN_IMAGE_URL_LENGTH) return false
     val uri = runCatching { URI(candidate) }.getOrNull() ?: return false
     return uri.scheme?.lowercase() in setOf("http", "https") &&

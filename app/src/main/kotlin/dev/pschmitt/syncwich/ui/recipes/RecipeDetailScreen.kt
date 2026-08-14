@@ -37,18 +37,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
 import com.mikepenz.markdown.m3.Markdown
+import com.mikepenz.markdown.model.ImageData
+import com.mikepenz.markdown.model.ImageTransformer
 import dev.pschmitt.syncwich.data.api.dto.RecipeDetailDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeIngredientDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeInstructionDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeNutritionDto
 import dev.pschmitt.syncwich.data.api.recipeImageUrl
+import dev.pschmitt.syncwich.data.image.isSafeRecipeImageUrl
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
 import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
 
@@ -271,9 +277,24 @@ private fun InstructionRow(number: Int, instruction: RecipeInstructionDto) {
             if (!instruction.title.isNullOrBlank()) {
                 Text(text = instruction.title, style = MaterialTheme.typography.titleSmall)
             }
-            Markdown(content = instruction.text, modifier = Modifier.fillMaxWidth())
+            Markdown(
+                content = instruction.text,
+                imageTransformer = SafeRecipeImageTransformer,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
+}
+
+/** Keeps the Markdown renderer from attempting relative, malformed, or non-HTTP image targets. */
+private object SafeRecipeImageTransformer : ImageTransformer {
+    @Composable
+    override fun transform(link: String): ImageData? =
+        if (isSafeRecipeImageUrl(link)) Coil3ImageTransformerImpl.transform(link) else null
+
+    @Composable
+    override fun intrinsicSize(painter: Painter): Size =
+        Coil3ImageTransformerImpl.intrinsicSize(painter)
 }
 
 @Composable

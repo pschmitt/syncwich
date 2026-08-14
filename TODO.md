@@ -631,12 +631,13 @@ tests and remote `just check` remain to be run; Zenfone visual verification rema
 
 ## SW-26: Cache images embedded in recipe steps
 
-- [ ] Display images referenced within recipe step instructions
-- [ ] Cache recipe-step images for offline viewing alongside other recipe images
-- [ ] Skip malformed or unsupported image references safely and add focused coverage
+- [x] Display images referenced within recipe step instructions
+- [x] Cache recipe-step images for offline viewing alongside other recipe images
+- [x] Skip malformed or unsupported image references safely and add focused coverage
 - [ ] Verify cached step images on the Zenfone 10
 
-Status: not started.
+Status: mostly done, 2026-08-14. Step Markdown uses the shared Coil disk cache and rejects unsafe
+image destinations; focused URL/extraction tests pass. Zenfone verification remains.
 
 ## SW-27: Enlarge cookbook preview cards
 
