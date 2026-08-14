@@ -560,3 +560,18 @@ Status: not started.
 - [ ] Verify the corrected header layout visually on the Zenfone 10
 
 Status: not started.
+
+## SW-21: Reorganize Settings into top-level categories
+
+- [ ] Review nyetbox's Settings architecture and adapt it to Syncwich's existing Compose/navigation
+      patterns
+- [ ] Make the Settings destination a top-level menu with clear category rows and navigation into
+      submenus rather than one flat screen
+- [ ] Add a Server submenu for connection details, logout/sign-out, changing the server URL, and
+      replacing or managing the API token/username-password connection
+- [ ] Add an Appearance submenu and move configurable bottom-navigation settings under it
+- [ ] Preserve accessible labels, back navigation, offline-safe behavior, and existing settings
+      persistence while reorganizing the UI
+- [ ] Verify the new settings hierarchy visually on the Zenfone 10
+
+Status: not started.
