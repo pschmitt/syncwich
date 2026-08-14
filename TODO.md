@@ -416,6 +416,8 @@ test asserted the old placeholder string.
 - [x] Only the resulting long-lived token is ever persisted via `SettingsRepository` - the
       password/JWT must never be written to encrypted storage, only held in memory for the single
       token-minting request
+- [x] Normalize a server URL without a trailing slash before building the per-call Retrofit client;
+      regression-covered by `PasswordTokenMinterTest`
 - [ ] Verify Mealie's token-creation endpoint's exact request/response shape against the real
       server first (rbw "Mealie (AI Agent)"), same as every other endpoint in this app
 
@@ -423,9 +425,10 @@ Status: in progress, 2026-08-14. Added the two onboarding modes, a per-call Retr
 and MockWebServer coverage proving the form-login JWT is exchanged for the returned token and that
 an unauthorized login never reaches token creation. The password is held only in the in-memory
 Compose state for the active form and request chain; only the resulting token is passed to
-`SettingsRepository`. Live endpoint verification and real-device sign-in remain pending because
-the configured verification host currently serves the Mealie frontend but returns 404 for its API
-routes; retry against the live API before marking this entry done.
+`SettingsRepository`. Also fixed no-slash server URLs for Retrofit and deployed the checked build to
+all three attached devices. Live endpoint verification and real-device sign-in remain pending
+because the configured verification host currently serves the Mealie frontend but returns 404 for
+its API routes; retry against the live API before marking this entry done.
 
 ## SW-14: Proactively cache all recipe images for true offline use
 
