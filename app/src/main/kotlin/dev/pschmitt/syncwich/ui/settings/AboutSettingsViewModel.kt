@@ -6,8 +6,10 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -22,17 +24,31 @@ class AboutSettingsViewModel @Inject constructor(private val settingsRepository:
             false,
         )
 
+    private val _developerModeToast = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val developerModeToast = _developerModeToast.asSharedFlow()
+
     private var buildRowTapCount = 0
     private var lastBuildRowTapAt = 0L
+    private var unlockInProgress = false
 
     fun onBuildRowTap() {
         val now = SystemClock.elapsedRealtime()
         if (now - lastBuildRowTapAt > TAP_WINDOW_MILLIS) buildRowTapCount = 0
         lastBuildRowTapAt = now
         buildRowTapCount++
-        if (buildRowTapCount >= REQUIRED_TAPS && !developerMode.value) {
+        if (developerMode.value || unlockInProgress) return
+        if (buildRowTapCount >= REQUIRED_TAPS) {
             buildRowTapCount = 0
-            viewModelScope.launch { settingsRepository.setDeveloperMode(true) }
+            unlockInProgress = true
+            viewModelScope.launch {
+                settingsRepository.setDeveloperMode(true)
+                _developerModeToast.emit("Developer mode enabled")
+                unlockInProgress = false
+            }
+        } else {
+            _developerModeToast.tryEmit(
+                "${REQUIRED_TAPS - buildRowTapCount} more taps to become a developer"
+            )
         }
     }
 

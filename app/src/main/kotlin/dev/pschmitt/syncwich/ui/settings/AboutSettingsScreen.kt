@@ -3,6 +3,7 @@ package dev.pschmitt.syncwich.ui.settings
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +33,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalContext
@@ -44,6 +46,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import dev.pschmitt.syncwich.BuildConfig
 import dev.pschmitt.syncwich.R
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 private const val REPOSITORY_URL = "https://github.com/pschmitt/syncwich"
 private const val SPONSORS_URL = "https://github.com/sponsors/pschmitt"
@@ -109,10 +113,15 @@ private val LIBRARIES =
 fun AboutSettingsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    developerMode: Boolean = false,
     onBuildTap: () -> Unit = {},
+    developerModeToast: Flow<String> = emptyFlow(),
 ) {
     val context = LocalContext.current
+    LaunchedEffect(developerModeToast) {
+        developerModeToast.collect { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        }
+    }
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -151,7 +160,6 @@ fun AboutSettingsScreen(
                     BuildInfoRow(
                         context = context,
                         revision = BuildConfig.GIT_REVISION,
-                        developerMode = developerMode,
                         onBuildTap = onBuildTap,
                     )
                     AboutInfoRow(
@@ -228,7 +236,6 @@ internal fun githubCommitUrl(revision: String): String? {
 private fun BuildInfoRow(
     context: Context,
     revision: String,
-    developerMode: Boolean,
     onBuildTap: () -> Unit,
 ) {
     val commitUrl = githubCommitUrl(revision)
@@ -237,16 +244,12 @@ private fun BuildInfoRow(
             Modifier.fillMaxWidth()
                 .clickable(role = Role.Button, onClick = onBuildTap)
                 .semantics {
-                    contentDescription =
-                        if (developerMode) "Build $revision, developer mode enabled"
-                        else "Build $revision"
+                    contentDescription = "Build $revision"
                     role = Role.Button
                 },
         leadingContent = { Icon(Icons.Filled.Tag, contentDescription = null) },
         headlineContent = { Text("Build") },
-        supportingContent = {
-            Text(if (developerMode) "$revision · Developer mode enabled" else revision)
-        },
+        supportingContent = { Text(revision) },
         trailingContent =
             commitUrl?.let { url ->
                 {

@@ -1636,8 +1636,8 @@ its accessible description; the About UI suite covers the updated screen.
 - [x] Add focused interaction coverage
 
 Status: **done**, 2026-08-15. The build row counts seven taps within a bounded two-second window,
-persists developer mode in DataStore, and exposes the enabled state in the row’s supporting text
-and semantics. Focused About interaction coverage was added.
+persists developer mode in DataStore, and reports progress plus completion through transient Toasts
+without exposing the internal flag in the About row. Focused About interaction coverage was added.
 
 ## SW-96: Link About-page libraries to their project homepages
 
@@ -1649,3 +1649,12 @@ and semantics. Focused About interaction coverage was added.
 Status: **done**, 2026-08-15. Every listed dependency now carries its project homepage and uses
 the existing accessible external-link row; the About UI suite verifies library rows expose click
 actions while retaining the license list.
+
+## SW-97: Keep ratings beside descriptions without timing metadata
+
+- [ ] Avoid rendering an empty timing row when prep/cook/total time metadata is absent
+- [ ] Place the rating star beside the recipe description in that case
+- [ ] Preserve the existing top-right timing-card layout when timing metadata exists
+- [ ] Add focused layout coverage
+
+Status: not started.

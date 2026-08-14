@@ -240,12 +240,11 @@ fun SettingsCategoryScreen(
         SettingsCategory.Backup -> BackupSettingsScreen(onBack = onBack, modifier = modifier)
         SettingsCategory.About -> {
             val aboutViewModel: AboutSettingsViewModel = hiltViewModel()
-            val developerMode by aboutViewModel.developerMode.collectAsStateWithLifecycle()
             AboutSettingsScreen(
                 onBack = onBack,
                 modifier = modifier,
-                developerMode = developerMode,
                 onBuildTap = aboutViewModel::onBuildRowTap,
+                developerModeToast = aboutViewModel.developerModeToast,
             )
         }
     }

@@ -9,11 +9,9 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.pschmitt.syncwich.ui.theme.SyncwichTheme
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -55,15 +53,12 @@ class AboutSettingsScreenTest {
     @Test
     fun buildRowUnlocksDeveloperModeAfterSevenTaps() {
         var taps = 0
-        var developerMode by mutableStateOf(false)
         composeTestRule.setContent {
             SyncwichTheme {
                 AboutSettingsScreen(
                     onBack = {},
-                    developerMode = developerMode,
                     onBuildTap = {
                         taps++
-                        if (taps == 7) developerMode = true
                     },
                 )
             }
@@ -71,7 +66,8 @@ class AboutSettingsScreenTest {
 
         repeat(7) { composeTestRule.onNodeWithText("Build").performClick() }
 
-        composeTestRule.waitUntil(5_000) { developerMode }
-        composeTestRule.onNodeWithText("Developer mode enabled", substring = true).assertExists()
+        assertEquals(7, taps)
+        composeTestRule.onAllNodesWithText("Developer mode enabled", substring = true)
+            .assertCountEquals(0)
     }
 }
