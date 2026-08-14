@@ -77,14 +77,25 @@ interface RecipeDao {
 
     @Query("DELETE FROM recipe_cookbook_cross_refs") suspend fun deleteAllCookbookCrossRefs()
 
-    /**
-     * Atomically replaces one cookbook's cached membership - used by
-     * `CookbookRepository.refreshCookbooks` so a "cookbook detail" screen never observes a
-     * transient empty list between the delete and the re-insert.
-     */
+    @Query("DELETE FROM recipe_cookbook_cross_refs WHERE cookbookId = :cookbookId")
+    suspend fun deleteCookbookCrossRefs(cookbookId: String)
+
+    /** Atomically replaces the complete cached cookbook membership set. */
     @Transaction
     suspend fun replaceCookbookCrossRefs(refs: List<RecipeCookbookCrossRef>) {
         deleteAllCookbookCrossRefs()
-        insertCookbookCrossRefs(refs)
+        if (refs.isNotEmpty()) insertCookbookCrossRefs(refs)
+    }
+
+    /** Atomically refreshes one cookbook's summaries and membership without touching other books. */
+    @Transaction
+    suspend fun replaceCookbookRecipeCache(
+        cookbookId: String,
+        recipes: List<RecipeSummaryEntity>,
+        refs: List<RecipeCookbookCrossRef>,
+    ) {
+        if (recipes.isNotEmpty()) upsertAll(recipes)
+        deleteCookbookCrossRefs(cookbookId)
+        if (refs.isNotEmpty()) insertCookbookCrossRefs(refs)
     }
 }

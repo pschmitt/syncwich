@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 data class RecipesUiState(
@@ -67,6 +68,7 @@ constructor(
     private val selectedCategoryId = MutableStateFlow<String?>(null)
     private val selectedTagId = MutableStateFlow<String?>(null)
     private val refreshState = MutableStateFlow(RefreshState())
+    private var refreshJob: Job? = null
 
     // Category and tag chips are mutually exclusive single-select filters (see onCategorySelected/
     // onTagSelected) - the repository only exposes "all"/"by one category"/"by one tag" Room
@@ -119,15 +121,18 @@ constructor(
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), RecipesUiState())
 
-    init { refresh() }
+    init { refresh(forceRefresh = false) }
 
-    fun refresh() {
-        viewModelScope.launch {
+    fun refresh() = refresh(forceRefresh = true)
+
+    private fun refresh(forceRefresh: Boolean) {
+        if (refreshJob?.isActive == true) return
+        refreshJob = viewModelScope.launch {
             refreshState.value = RefreshState(isRefreshing = true)
             val results =
                 coroutineScope {
                     listOf(
-                            async { recipeRepository.refreshRecipes() },
+                            async { recipeRepository.refreshRecipes(forceRefresh) },
                             async { categoryRepository.refreshCategories() },
                             async { tagRepository.refreshTags() },
                         )

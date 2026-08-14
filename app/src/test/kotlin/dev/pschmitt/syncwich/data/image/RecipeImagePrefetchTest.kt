@@ -71,8 +71,8 @@ class RecipeImagePrefetchTest {
 
         assertEquals(
             listOf(
-                "https://mealie.example/api/media/recipes/r1/images/min-original.webp",
-                "https://mealie.example/api/media/recipes/r2/images/min-original.webp",
+                "https://mealie.example/api/media/recipes/r1/images/min-original.webp?v=1",
+                "https://mealie.example/api/media/recipes/r2/images/min-original.webp?v=2",
                 "https://images.example/a.jpg",
                 "https://images.example/c.jpg",
             ),
@@ -99,7 +99,7 @@ class RecipeImagePrefetchTest {
 
         assertEquals(
             listOf(
-                "https://mealie.example/api/media/recipes/keep/images/min-original.webp"
+                "https://mealie.example/api/media/recipes/keep/images/min-original.webp?v=1"
             ),
             urls,
         )

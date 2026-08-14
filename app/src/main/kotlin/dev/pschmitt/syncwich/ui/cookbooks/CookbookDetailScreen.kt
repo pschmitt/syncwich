@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import dev.pschmitt.syncwich.data.api.recipeImageUrl
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
 import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
@@ -144,7 +145,7 @@ private fun CookbookRecipeRow(recipe: RecipeSummaryEntity, serverUrl: String, on
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             AsyncImage(
-                model = recipe.coverImageUrl(serverUrl),
+                model = recipeImageUrl(serverUrl, recipe.id, recipe.image),
                 contentDescription = recipe.name,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.size(64.dp).clip(RoundedCornerShape(8.dp)),
@@ -170,11 +171,3 @@ private fun CookbookRecipeRow(recipe: RecipeSummaryEntity, serverUrl: String, on
         }
     }
 }
-
-/**
- * `image` is a cache-busting version string, not a URL - see [RecipeSummaryEntity]'s kdoc for the
- * confirmed live path. Appended as a query param purely so Coil's URL-keyed cache refetches once
- * Mealie's own image version changes; it isn't sent as an API request anywhere.
- */
-private fun RecipeSummaryEntity.coverImageUrl(serverUrl: String): String? =
-    image?.let { version -> "$serverUrl/api/media/recipes/$id/images/min-original.webp?v=$version" }

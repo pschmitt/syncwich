@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -32,6 +33,7 @@ constructor(
     private val cookbookId = savedStateHandle.toRoute<Route.CookbookDetail>().cookbookId
     private val _refreshState = MutableStateFlow(RefreshState())
     val refreshState: StateFlow<RefreshState> = _refreshState.asStateFlow()
+    private var refreshJob: Job? = null
 
     /** Used to build a recipe's cover-image URL - see `RecipeSummaryEntity.image`'s kdoc. */
     val serverUrl: String
@@ -47,13 +49,21 @@ constructor(
             .observeCookbookRecipes(cookbookId)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), emptyList())
 
-    init { refresh() }
+    init { refresh(forceRefresh = false) }
 
-    fun refresh() {
-        viewModelScope.launch {
+    fun refresh() = refresh(forceRefresh = true)
+
+    private fun refresh(forceRefresh: Boolean) {
+        if (refreshJob?.isActive == true) return
+        refreshJob = viewModelScope.launch {
             _refreshState.value = RefreshState(isRefreshing = true)
             _refreshState.value =
-                RefreshState(errorMessage = refreshErrorMessage(cookbookRepository.refreshCookbooks()))
+                RefreshState(
+                    errorMessage =
+                        refreshErrorMessage(
+                            cookbookRepository.refreshCookbookRecipes(cookbookId, forceRefresh)
+                        )
+                )
         }
     }
 

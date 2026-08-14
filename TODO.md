@@ -928,17 +928,21 @@ Status: not started.
 
 ## SW-37: Audit image caching and unnecessary API calls
 
-- [ ] Trace cookbook recipe-list image loading and confirm Coil disk/memory cache reuse for repeated
+- [x] Trace cookbook recipe-list image loading and confirm Coil disk/memory cache reuse for repeated
       images and revisits
-- [ ] Ensure cached recipe summaries/details and cached image URLs render immediately offline while
+- [x] Ensure cached recipe summaries/details and cached image URLs render immediately offline while
       network refreshes remain best-effort and non-blocking
-- [ ] Identify and remove redundant recipe, cookbook, detail, or image API requests, including
+- [x] Identify and remove redundant recipe, cookbook, detail, or image API requests, including
       recompositions and repeated navigation
-- [ ] Add focused cache/request-count regression coverage and useful debug diagnostics without
+- [x] Add focused cache/request-count regression coverage and useful debug diagnostics without
       logging credentials
 - [ ] Verify offline and slow-network behavior, especially cookbook recipe lists, on the Zenfone 10
 
-Status: not started.
+Status: mostly done, 2026-08-14. Room remains the immediate read source; automatic list, cookbook,
+and detail refreshes are mutex-protected and freshness-coalesced, cookbook detail refreshes only
+query the selected cookbook, and cover URLs are versioned Coil keys. Focused request-count/cache
+tests plus remote `just check` on rofl-13 passed (129 unit tests, no lint failures). Physical
+offline/slow-network verification on the Zenfone 10 remains outstanding.
 
 ## SW-38: Remove the Home Shortcuts section
 

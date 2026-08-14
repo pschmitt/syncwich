@@ -19,6 +19,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -36,6 +38,10 @@ constructor(
     private val recipeDao: RecipeDao,
     private val database: AppDatabase,
 ) {
+
+    private val refreshMutex = Mutex()
+    private var lastRecipeListRefreshAt: Long? = null
+    private val lastDetailRefreshAt = mutableMapOf<String, Long>()
 
     fun observeRecipes(): Flow<List<RecipeSummaryEntity>> = recipeDao.observeAll()
 
@@ -87,77 +93,102 @@ constructor(
      * in one transaction. A failure leaves whatever was cached before completely untouched -
      * callers should treat this as "refresh attempted", not "recipes are now guaranteed fresh".
      */
-    suspend fun refreshRecipes(): Result<Unit> = withContext(Dispatchers.IO) {
-        runCatching {
-                val allItems = mutableListOf<RecipeSummaryDto>()
-                var page = 1
-                while (true) {
-                    val response =
-                        recipesApi.getRecipes(page = page, perPage = RecipesApi.DEFAULT_PAGE_SIZE)
-                    allItems += response.items
-                    if (response.items.isEmpty() || page >= response.totalPages) break
-                    page++
-                }
-
-                val categories = mutableMapOf<String, CategoryEntity>()
-                val tags = mutableMapOf<String, TagEntity>()
-                val categoryRefs = mutableListOf<RecipeCategoryCrossRef>()
-                val tagRefs = mutableListOf<RecipeTagCrossRef>()
-                val recipes = allItems.map { dto ->
-                    dto.recipeCategory.forEach { category ->
-                        categories[category.id] = category.toCategoryEntity()
-                        categoryRefs +=
-                            RecipeCategoryCrossRef(recipeId = dto.id, categoryId = category.id)
-                    }
-                    dto.tags.forEach { tag ->
-                        tags[tag.id] = tag.toTagEntity()
-                        tagRefs += RecipeTagCrossRef(recipeId = dto.id, tagId = tag.id)
-                    }
-                    dto.toEntity()
-                }
-
-                database.withTransaction {
-                    recipeDao.deleteAll()
-                    recipeDao.deleteAllCategoryCrossRefs()
-                    recipeDao.deleteAllTagCrossRefs()
-                    // Non-destructive: unlike the recipe list itself, the category/tag dictionaries
-                    // are
-                    // authoritatively refreshed by CategoryRepository/TagRepository - upsert here
-                    // only so
-                    // a name/slug embedded in this response is never stale, without racing a delete
-                    // of a
-                    // category that has no recipes (and thus never shows up in this loop) out from
-                    // under
-                    // CategoryRepository's own refresh.
-                    if (categories.isNotEmpty())
-                        database.categoryDao().upsertAll(categories.values.toList())
-                    if (tags.isNotEmpty()) database.tagDao().upsertAll(tags.values.toList())
-                    recipeDao.upsertAll(recipes)
-                    if (categoryRefs.isNotEmpty()) recipeDao.insertCategoryCrossRefs(categoryRefs)
-                    if (tagRefs.isNotEmpty()) recipeDao.insertTagCrossRefs(tagRefs)
-                }
-            }
-            .onFailure { Timber.w(it, "Recipe list refresh failed; keeping cached data") }
-    }
-
-    /** Fetches one recipe's full detail and caches its raw JSON - see [RecipeDetailEntity]. */
-    suspend fun refreshRecipeDetail(recipeId: String, slug: String): Result<Unit> =
+    suspend fun refreshRecipes(forceRefresh: Boolean = false): Result<Unit> =
         withContext(Dispatchers.IO) {
-            runCatching {
-                val body = recipesApi.getRecipeDetailRaw(slug).string()
-                recipeDao.upsertDetail(
-                    RecipeDetailEntity(
-                        id = recipeId,
-                        slug = slug,
-                        detailJson = body,
-                        fetchedAt = System.currentTimeMillis(),
-                    )
-                )
-            }
-            .onFailure {
-                Timber.w(it, "Recipe detail refresh failed for '$slug'; keeping cached data")
+            refreshMutex.withLock {
+                if (!forceRefresh && isFresh(lastRecipeListRefreshAt)) {
+                    Timber.d("Skipping fresh recipe-list refresh")
+                    return@withLock Result.success(Unit)
+                }
+                runCatching {
+                    val allItems = mutableListOf<RecipeSummaryDto>()
+                    var page = 1
+                    while (true) {
+                        val response =
+                            recipesApi.getRecipes(
+                                page = page,
+                                perPage = RecipesApi.DEFAULT_PAGE_SIZE,
+                            )
+                        allItems += response.items
+                        if (response.items.isEmpty() || page >= response.totalPages) break
+                        page++
+                    }
+
+                    val categories = mutableMapOf<String, CategoryEntity>()
+                    val tags = mutableMapOf<String, TagEntity>()
+                    val categoryRefs = mutableListOf<RecipeCategoryCrossRef>()
+                    val tagRefs = mutableListOf<RecipeTagCrossRef>()
+                    val recipes = allItems.map { dto ->
+                        dto.recipeCategory.forEach { category ->
+                            categories[category.id] = category.toCategoryEntity()
+                            categoryRefs +=
+                                RecipeCategoryCrossRef(recipeId = dto.id, categoryId = category.id)
+                        }
+                        dto.tags.forEach { tag ->
+                            tags[tag.id] = tag.toTagEntity()
+                            tagRefs += RecipeTagCrossRef(recipeId = dto.id, tagId = tag.id)
+                        }
+                        dto.toEntity()
+                    }
+
+                    database.withTransaction {
+                        recipeDao.deleteAll()
+                        recipeDao.deleteAllCategoryCrossRefs()
+                        recipeDao.deleteAllTagCrossRefs()
+                        // Non-destructive: unlike the recipe list itself, the category/tag dictionaries
+                        // are authoritatively refreshed by CategoryRepository/TagRepository - upsert
+                        // here only so a name/slug embedded in this response is never stale, without
+                        // racing a delete of a category that has no recipes (and thus never shows up
+                        // in this loop) out from under CategoryRepository's own refresh.
+                        if (categories.isNotEmpty())
+                            database.categoryDao().upsertAll(categories.values.toList())
+                        if (tags.isNotEmpty()) database.tagDao().upsertAll(tags.values.toList())
+                        recipeDao.upsertAll(recipes)
+                        if (categoryRefs.isNotEmpty())
+                            recipeDao.insertCategoryCrossRefs(categoryRefs)
+                        if (tagRefs.isNotEmpty()) recipeDao.insertTagCrossRefs(tagRefs)
+                    }
+                    lastRecipeListRefreshAt = System.currentTimeMillis()
+                    Timber.d("Recipe-list refresh cached ${recipes.size} summaries")
+                }
+                    .onFailure { Timber.w(it, "Recipe list refresh failed; keeping cached data") }
             }
         }
+
+    /** Fetches one recipe's full detail and caches its raw JSON - see [RecipeDetailEntity]. */
+    suspend fun refreshRecipeDetail(
+        recipeId: String,
+        slug: String,
+        forceRefresh: Boolean = false,
+    ): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            refreshMutex.withLock {
+                if (!forceRefresh && isFresh(lastDetailRefreshAt[recipeId])) {
+                    Timber.d("Skipping fresh recipe-detail refresh for $recipeId")
+                    return@withLock Result.success(Unit)
+                }
+                runCatching {
+                    val body = recipesApi.getRecipeDetailRaw(slug).string()
+                    recipeDao.upsertDetail(
+                        RecipeDetailEntity(
+                            id = recipeId,
+                            slug = slug,
+                            detailJson = body,
+                            fetchedAt = System.currentTimeMillis(),
+                        )
+                    )
+                    lastDetailRefreshAt[recipeId] = System.currentTimeMillis()
+                    Timber.d("Recipe-detail refresh cached $recipeId")
+                }
+                    .onFailure {
+                        Timber.w(it, "Recipe detail refresh failed for '$slug'; keeping cached data")
+                    }
+            }
+        }
+
+    private fun isFresh(lastRefreshAt: Long?): Boolean =
+        lastRefreshAt != null &&
+            System.currentTimeMillis() - lastRefreshAt < AUTOMATIC_REFRESH_WINDOW_MS
 
     private fun OrganizerDto.toCategoryEntity() = CategoryEntity(id = id, name = name, slug = slug)
 
@@ -183,6 +214,10 @@ constructor(
             dateAdded = dateAdded,
             lastMade = lastMade,
         )
+
+    private companion object {
+        const val AUTOMATIC_REFRESH_WINDOW_MS = 30_000L
+    }
 }
 
 private fun OrganizerDto.toTagEntity() = TagEntity(id = id, name = name, slug = slug)

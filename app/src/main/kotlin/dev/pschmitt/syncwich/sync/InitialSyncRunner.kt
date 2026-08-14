@@ -90,7 +90,7 @@ constructor(
         when (stage) {
             InitialSyncStage.Recipes ->
                 refreshAndCount(
-                    refresh = { recipeRepository.refreshRecipes() },
+                    refresh = { recipeRepository.refreshRecipes(forceRefresh = true) },
                     count = { recipeRepository.observeRecipes().first().size },
                 )
             InitialSyncStage.Categories ->
@@ -110,7 +110,7 @@ constructor(
                 )
             InitialSyncStage.Cookbooks ->
                 refreshAndCount(
-                    refresh = { cookbookRepository.refreshCookbooks() },
+                    refresh = { cookbookRepository.refreshCookbooks(forceRefresh = true) },
                     count = { cookbookRepository.observeCookbooks().first().size },
                 )
             InitialSyncStage.MealPlan -> {

@@ -28,7 +28,7 @@ class RecipeImageGalleryTest {
 
         assertEquals(
             listOf(
-                "https://mealie.example/api/media/recipes/recipe-1/images/min-original.webp",
+                "https://mealie.example/api/media/recipes/recipe-1/images/min-original.webp?v=cover-marker",
                 "https://images.example/one.webp",
             ),
             recipeImageGalleryUrls("https://mealie.example", recipe),

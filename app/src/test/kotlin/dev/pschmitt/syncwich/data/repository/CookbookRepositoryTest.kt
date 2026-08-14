@@ -152,6 +152,57 @@ class CookbookRepositoryTest {
         )
     }
 
+    @Test
+    fun `automatic cookbook refreshes reuse the recent cache and detail refresh is targeted`() =
+        runTest {
+            val cookbooks =
+                listOf(
+                    CookbookDto("one", "One", "one", "", 0, false),
+                    CookbookDto("two", "Two", "two", "", 1, false),
+                )
+            val cookbooksApi = FakeCookbooksApi(cookbooks = cookbooks)
+            val recipesApi =
+                FakeRecipesApi(
+                    byCookbook =
+                        mapOf(
+                            "one" to listOf(RecipeSummaryDto("r1", "r1", "One recipe")),
+                            "two" to listOf(RecipeSummaryDto("r2", "r2", "Two recipe")),
+                        )
+                )
+            val repository =
+                CookbookRepository(cookbooksApi, recipesApi, FakeCookbookDao(), FakeRecipeDao())
+
+            repository.refreshCookbooks()
+            repository.refreshCookbooks()
+            assertEquals(1, cookbooksApi.requestCount)
+            assertEquals(1, recipesApi.requestCount("one"))
+            assertEquals(1, recipesApi.requestCount("two"))
+
+            val targetedApi =
+                FakeRecipesApi(
+                    byCookbook =
+                        mapOf(
+                            "one" to listOf(RecipeSummaryDto("r1", "r1", "One recipe")),
+                            "two" to listOf(RecipeSummaryDto("r2", "r2", "Two recipe")),
+                        )
+                )
+            val targetedRepository =
+                CookbookRepository(
+                    FakeCookbooksApi(),
+                    targetedApi,
+                    FakeCookbookDao(),
+                    FakeRecipeDao(),
+                )
+            targetedRepository.refreshCookbookRecipes("one")
+            targetedRepository.refreshCookbookRecipes("one")
+            assertEquals(
+                "A restored cookbook detail only refreshes its own membership",
+                1,
+                targetedApi.requestCount("one"),
+            )
+            assertEquals(0, targetedApi.requestCount("two"))
+        }
+
     private class FakeCookbookDao(seed: List<CookbookEntity> = emptyList()) : CookbookDao {
         private val state = MutableStateFlow(seed)
 
@@ -236,6 +287,20 @@ class CookbookRepositoryTest {
         override suspend fun deleteAllCookbookCrossRefs() {
             cookbookRefs.value = emptyList()
         }
+
+        override suspend fun deleteCookbookCrossRefs(cookbookId: String) {
+            cookbookRefs.value = cookbookRefs.value.filterNot { it.cookbookId == cookbookId }
+        }
+
+        override suspend fun replaceCookbookRecipeCache(
+            cookbookId: String,
+            recipes: List<RecipeSummaryEntity>,
+            refs: List<RecipeCookbookCrossRef>,
+        ) {
+            upsertAll(recipes)
+            deleteCookbookCrossRefs(cookbookId)
+            insertCookbookCrossRefs(refs)
+        }
     }
 
     private class FakeCookbooksApi(
@@ -245,6 +310,9 @@ class CookbookRepositoryTest {
         private val updateResponse: CookbookDto? = null,
         private val mutationFailure: Throwable? = null,
     ) : CookbooksApi {
+        var requestCount = 0
+            private set
+
         override suspend fun createCookbook(request: CreateCookbookDto): CookbookDto =
             mutationFailure?.let { throw it }
                 ?: createResponse
@@ -259,13 +327,19 @@ class CookbookRepositoryTest {
                 ?: error("not used by CookbookRepositoryTest")
 
         override suspend fun getCookbooks(page: Int, perPage: Int): PagedResponseDto<CookbookDto> {
+            requestCount++
             failure?.let { throw it }
             return PagedResponseDto(1, cookbooks.size, cookbooks.size, 1, cookbooks)
         }
     }
 
-    private class FakeRecipesApi(private val byCookbook: Map<String, List<RecipeSummaryDto>> = emptyMap()) :
-        RecipesApi {
+    private class FakeRecipesApi(
+        private val byCookbook: Map<String, List<RecipeSummaryDto>> = emptyMap()
+    ) : RecipesApi {
+        private val cookbookRequestCounts = mutableMapOf<String, Int>()
+
+        fun requestCount(cookbookId: String): Int = cookbookRequestCounts[cookbookId] ?: 0
+
         override suspend fun createRecipe(request: CreateRecipeDto): ResponseBody =
             error("not used by CookbookRepositoryTest")
 
@@ -286,6 +360,7 @@ class CookbookRepositoryTest {
             page: Int,
             perPage: Int,
         ): PagedResponseDto<RecipeSummaryDto> {
+            cookbookRequestCounts[cookbookId] = requestCount(cookbookId) + 1
             val items = byCookbook[cookbookId].orEmpty()
             return PagedResponseDto(1, items.size, items.size, 1, items)
         }

@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -33,6 +34,7 @@ constructor(
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
     private val _refreshState = MutableStateFlow(RefreshState())
     val refreshState: StateFlow<RefreshState> = _refreshState.asStateFlow()
+    private var refreshJob: Job? = null
 
     val cookbooks: StateFlow<List<CookbookEntity>> =
         combine(cookbookRepository.observeCookbooks(), searchQuery) { cookbooks, query ->
@@ -73,15 +75,19 @@ constructor(
         _searchQuery.value = query
     }
 
-    init {
-        refresh()
-    }
+    init { refresh(forceRefresh = false) }
 
-    fun refresh() {
-        viewModelScope.launch {
+    fun refresh() = refresh(forceRefresh = true)
+
+    private fun refresh(forceRefresh: Boolean) {
+        if (refreshJob?.isActive == true) return
+        refreshJob = viewModelScope.launch {
             _refreshState.value = RefreshState(isRefreshing = true)
             _refreshState.value =
-                RefreshState(errorMessage = refreshErrorMessage(cookbookRepository.refreshCookbooks()))
+                RefreshState(
+                    errorMessage =
+                        refreshErrorMessage(cookbookRepository.refreshCookbooks(forceRefresh))
+                )
         }
     }
 

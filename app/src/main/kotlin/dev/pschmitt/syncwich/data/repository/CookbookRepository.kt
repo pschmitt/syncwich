@@ -16,6 +16,8 @@ import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -26,7 +28,9 @@ import timber.log.Timber
  * that currently match it - both cached so [observeCookbookRecipes] works fully offline. All network
  * calls happen before any Room write, so a failure partway through (a bad cookbook filter, a
  * dropped connection) leaves whatever was cached before completely untouched, same contract as
- * [RecipeRepository.refreshRecipes].
+ * [RecipeRepository.refreshRecipes]. Automatic refreshes are coalesced for a short freshness
+ * window because Home, the cookbook list, and a restored navigation destination can all become
+ * active around the same time.
  */
 @Singleton
 class CookbookRepository
@@ -37,6 +41,10 @@ constructor(
     private val cookbookDao: CookbookDao,
     private val recipeDao: RecipeDao,
 ) {
+
+    private val refreshMutex = Mutex()
+    private var lastCookbookDictionaryRefreshAt: Long? = null
+    private val lastCookbookRefreshAt = mutableMapOf<String, Long>()
 
     fun observeCookbooks(): Flow<List<CookbookEntity>> = cookbookDao.observeAll()
 
@@ -61,33 +69,89 @@ constructor(
         request: CreateCookbookDto,
     ): Result<CookbookEntity> = mutateCookbook { cookbooksApi.updateCookbook(cookbookId, request) }
 
-    suspend fun refreshCookbooks(): Result<Unit> = withContext(Dispatchers.IO) {
-        runCatching {
-                val cookbooks = fetchAllPages { page -> cookbooksApi.getCookbooks(page = page) }
+    suspend fun refreshCookbooks(forceRefresh: Boolean = false): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            refreshMutex.withLock {
+                if (!forceRefresh && isFresh(lastCookbookDictionaryRefreshAt)) {
+                    Timber.d("Skipping fresh cookbook refresh")
+                    return@withLock Result.success(Unit)
+                }
+                runCatching {
+                    val cookbooks = fetchAllPages { page -> cookbooksApi.getCookbooks(page = page) }
 
-                val recipeSummaries = mutableMapOf<String, RecipeSummaryEntity>()
-                val cookbookRefs = mutableListOf<RecipeCookbookCrossRef>()
-                cookbooks.forEach { cookbook ->
+                    val recipeSummaries = mutableMapOf<String, RecipeSummaryEntity>()
+                    val cookbookRefs = mutableListOf<RecipeCookbookCrossRef>()
+                    cookbooks.forEach { cookbook ->
+                        val recipes =
+                            fetchAllPages { page ->
+                                recipesApi.getRecipesByCookbook(cookbookId = cookbook.id, page = page)
+                            }
+                        recipes.forEach { recipe ->
+                            recipeSummaries[recipe.id] = recipe.toEntity()
+                            cookbookRefs +=
+                                RecipeCookbookCrossRef(
+                                    recipeId = recipe.id,
+                                    cookbookId = cookbook.id,
+                                )
+                        }
+                    }
+
+                    // Non-destructive: recipes seen here are opportunistically kept fresh, but
+                    // RecipeRepository.refreshRecipes remains the sole authoritative full-list replace -
+                    // see its kdoc for the equivalent category/tag rationale.
+                    if (recipeSummaries.isNotEmpty())
+                        recipeDao.upsertAll(recipeSummaries.values.toList())
+                    recipeDao.replaceCookbookCrossRefs(cookbookRefs)
+                    cookbookDao.replaceAll(cookbooks.map { it.toEntity() })
+                    val refreshedAt = System.currentTimeMillis()
+                    lastCookbookDictionaryRefreshAt = refreshedAt
+                    lastCookbookRefreshAt.clear()
+                    cookbooks.forEach { lastCookbookRefreshAt[it.id] = refreshedAt }
+                    Timber.d(
+                        "Cookbook refresh cached ${cookbooks.size} cookbooks and " +
+                            "${recipeSummaries.size} recipe summaries"
+                    )
+                }
+                    .onFailure { Timber.w(it, "Cookbook refresh failed; keeping cached data") }
+            }
+        }
+
+    /** Refreshes one cookbook's matching summaries without touching other cookbook membership. */
+    suspend fun refreshCookbookRecipes(
+        cookbookId: String,
+        forceRefresh: Boolean = false,
+    ): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            refreshMutex.withLock {
+                if (!forceRefresh && isFresh(lastCookbookRefreshAt[cookbookId])) {
+                    Timber.d("Skipping fresh cookbook recipe refresh for $cookbookId")
+                    return@withLock Result.success(Unit)
+                }
+                runCatching {
                     val recipes =
                         fetchAllPages { page ->
-                            recipesApi.getRecipesByCookbook(cookbookId = cookbook.id, page = page)
+                            recipesApi.getRecipesByCookbook(cookbookId = cookbookId, page = page)
                         }
-                    recipes.forEach { recipe ->
-                        recipeSummaries[recipe.id] = recipe.toEntity()
-                        cookbookRefs +=
-                            RecipeCookbookCrossRef(recipeId = recipe.id, cookbookId = cookbook.id)
-                    }
+                    val entities = recipes.map { it.toEntity() }
+                    recipeDao.replaceCookbookRecipeCache(
+                        cookbookId = cookbookId,
+                        recipes = entities,
+                        refs = recipes.map { RecipeCookbookCrossRef(it.id, cookbookId) },
+                    )
+                    lastCookbookRefreshAt[cookbookId] = System.currentTimeMillis()
+                    Timber.d(
+                        "Cookbook recipe refresh cached ${entities.size} summaries for $cookbookId"
+                    )
                 }
-
-                // Non-destructive: recipes seen here are opportunistically kept fresh, but
-                // RecipeRepository.refreshRecipes remains the sole authoritative full-list replace -
-                // see its kdoc for the equivalent category/tag rationale.
-                if (recipeSummaries.isNotEmpty()) recipeDao.upsertAll(recipeSummaries.values.toList())
-                recipeDao.replaceCookbookCrossRefs(cookbookRefs)
-                cookbookDao.replaceAll(cookbooks.map { it.toEntity() })
+                    .onFailure {
+                        Timber.w(it, "Cookbook recipe refresh failed for $cookbookId; keeping cache")
+                    }
             }
-            .onFailure { Timber.w(it, "Cookbook refresh failed; keeping cached data") }
-    }
+        }
+
+    private fun isFresh(lastRefreshAt: Long?): Boolean =
+        lastRefreshAt != null &&
+            System.currentTimeMillis() - lastRefreshAt < AUTOMATIC_REFRESH_WINDOW_MS
 
     private suspend fun <T> fetchAllPages(
         loadPage: suspend (page: Int) -> PagedResponseDto<T>
@@ -139,4 +203,8 @@ constructor(
             dateAdded = dateAdded,
             lastMade = lastMade,
         )
+
+    private companion object {
+        const val AUTOMATIC_REFRESH_WINDOW_MS = 30_000L
+    }
 }

@@ -65,7 +65,9 @@ constructor(
 
         val failures =
             listOf(
-                    syncStep("Refreshing recipes…") { recipeRepository.refreshRecipes() },
+                    syncStep("Refreshing recipes…") {
+                        recipeRepository.refreshRecipes(forceRefresh = false)
+                    },
                     // No request is made when there are no pending offline actions; pending
                     // favorite/rating flags are retried only after Room has made them visible.
                     syncStep("Syncing recipe actions…") {
@@ -85,7 +87,9 @@ constructor(
                     syncStep("Syncing shopping-list checks…") {
                         shoppingListRepository.syncPendingItemChecks()
                     },
-                    syncStep("Refreshing cookbooks…") { cookbookRepository.refreshCookbooks() },
+                    syncStep("Refreshing cookbooks…") {
+                        cookbookRepository.refreshCookbooks(forceRefresh = false)
+                    },
                     syncStep("Refreshing meal plan…") {
                         mealPlanRepository.refreshMealPlan(mealPlanStart, mealPlanEnd)
                     },

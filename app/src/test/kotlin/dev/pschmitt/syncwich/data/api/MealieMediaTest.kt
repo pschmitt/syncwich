@@ -14,8 +14,24 @@ class MealieMediaTest {
     @Test
     fun `builds the min-original cover image URL when an image version is present`() {
         assertEquals(
-            "https://mealie.example.com/api/media/recipes/abc-123/images/min-original.webp",
+            "https://mealie.example.com/api/media/recipes/abc-123/images/min-original.webp?v=130",
             recipeImageUrl("https://mealie.example.com", "abc-123", "130"),
+        )
+    }
+
+    @Test
+    fun `changes to the Mealie image version produce a new Coil cache key`() {
+        val first = recipeImageUrl("https://mealie.example.com", "abc-123", "130")
+        val second = recipeImageUrl("https://mealie.example.com", "abc-123", "131")
+
+        assertEquals(false, first == second)
+    }
+
+    @Test
+    fun `normalizes a trailing slash without changing the cache key`() {
+        assertEquals(
+            recipeImageUrl("https://mealie.example.com", "abc-123", "130"),
+            recipeImageUrl("https://mealie.example.com/", "abc-123", "130"),
         )
     }
 

@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -80,6 +81,7 @@ constructor(
     private val route = savedStateHandle.toRoute<Route.RecipeDetail>()
     private val _refreshState = MutableStateFlow(RefreshState())
     val refreshState: StateFlow<RefreshState> = _refreshState.asStateFlow()
+    private var refreshJob: Job? = null
 
     private val detailJson: Flow<String?> =
         recipeRepository
@@ -119,23 +121,30 @@ constructor(
                 RecipeDetailUiState.Loading,
             )
 
-    init {
-        refresh()
-    }
+    init { refresh(forceRefresh = false) }
 
     fun refresh() {
+        refresh(forceRefresh = true)
+    }
+
+    private fun refresh(forceRefresh: Boolean) {
+        if (refreshJob?.isActive == true) return
         refreshActions()
-        viewModelScope.launch {
+        refreshJob = viewModelScope.launch {
             _refreshState.value = RefreshState(isRefreshing = true)
             _refreshState.value =
                 RefreshState(
                     errorMessage =
                         refreshErrorMessage(
-                            recipeRepository.refreshRecipeDetail(route.recipeId, route.slug)
+                            recipeRepository.refreshRecipeDetail(
+                                route.recipeId,
+                                route.slug,
+                                forceRefresh,
+                            )
                         )
                 )
+            }
         }
-    }
 
     fun setFavorite(isFavorite: Boolean) {
         viewModelScope.launch {
