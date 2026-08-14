@@ -534,3 +534,11 @@ replacements, and best-effort refresh semantics. Remote `just check` passed on a
 checkout; the actual shared worktree still contains unrelated pre-existing SW-15/SW-16 changes.
 
 Status: mostly done, 2026-08-14.
+
+## SW-18: Equalize onboarding authentication mode controls
+
+- [ ] Make the “API token” and “Username & password” mode buttons/chips use the same height and
+      aligned vertical content so the pair looks intentional on narrow and large screens
+- [ ] Verify the corrected layout visually on the Zenfone 10
+
+Status: not started.
