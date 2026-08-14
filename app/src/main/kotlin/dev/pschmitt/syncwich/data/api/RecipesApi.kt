@@ -1,13 +1,41 @@
 package dev.pschmitt.syncwich.data.api
 
 import dev.pschmitt.syncwich.data.api.dto.PagedResponseDto
+import dev.pschmitt.syncwich.data.api.dto.CreateRecipeDto
+import dev.pschmitt.syncwich.data.api.dto.RecipeInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeSummaryDto
 import okhttp3.ResponseBody
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.PATCH
+import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.PUT
 import retrofit2.http.Query
 
 interface RecipesApi {
+
+    /**
+     * Mealie v3.22.0's `POST /api/recipes` accepts `CreateRecipe` and returns a plain string. The
+     * response stays raw because the public schema does not promise whether that string is an id or
+     * slug.
+     */
+    @POST("api/recipes")
+    suspend fun createRecipe(@Body request: CreateRecipeDto): ResponseBody
+
+    /** `PUT /api/recipes/{slug}` accepts the complete `Recipe-Input` object. */
+    @PUT("api/recipes/{slug}")
+    suspend fun updateRecipe(
+        @Path("slug") slug: String,
+        @Body request: RecipeInputDto,
+    ): ResponseBody
+
+    /** `PATCH /api/recipes/{slug}` has the same request shape as the single-item PUT route. */
+    @PATCH("api/recipes/{slug}")
+    suspend fun patchRecipe(
+        @Path("slug") slug: String,
+        @Body request: RecipeInputDto,
+    ): ResponseBody
 
     @GET("api/recipes")
     suspend fun getRecipes(

@@ -3,7 +3,10 @@ package dev.pschmitt.syncwich.data.repository
 import dev.pschmitt.syncwich.data.api.CookbooksApi
 import dev.pschmitt.syncwich.data.api.RecipesApi
 import dev.pschmitt.syncwich.data.api.dto.CookbookDto
+import dev.pschmitt.syncwich.data.api.dto.CreateCookbookDto
+import dev.pschmitt.syncwich.data.api.dto.CreateRecipeDto
 import dev.pschmitt.syncwich.data.api.dto.PagedResponseDto
+import dev.pschmitt.syncwich.data.api.dto.RecipeInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeSummaryDto
 import dev.pschmitt.syncwich.data.db.dao.CookbookDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeDao
@@ -183,6 +186,14 @@ class CookbookRepositoryTest {
         private val cookbooks: List<CookbookDto> = emptyList(),
         private val failure: Throwable? = null,
     ) : CookbooksApi {
+        override suspend fun createCookbook(request: CreateCookbookDto): CookbookDto =
+            error("not used by CookbookRepositoryTest")
+
+        override suspend fun updateCookbook(
+            itemId: String,
+            request: CreateCookbookDto,
+        ): CookbookDto = error("not used by CookbookRepositoryTest")
+
         override suspend fun getCookbooks(page: Int, perPage: Int): PagedResponseDto<CookbookDto> {
             failure?.let { throw it }
             return PagedResponseDto(1, cookbooks.size, cookbooks.size, 1, cookbooks)
@@ -191,6 +202,15 @@ class CookbookRepositoryTest {
 
     private class FakeRecipesApi(private val byCookbook: Map<String, List<RecipeSummaryDto>> = emptyMap()) :
         RecipesApi {
+        override suspend fun createRecipe(request: CreateRecipeDto): ResponseBody =
+            error("not used by CookbookRepositoryTest")
+
+        override suspend fun updateRecipe(slug: String, request: RecipeInputDto): ResponseBody =
+            error("not used by CookbookRepositoryTest")
+
+        override suspend fun patchRecipe(slug: String, request: RecipeInputDto): ResponseBody =
+            error("not used by CookbookRepositoryTest")
+
         override suspend fun getRecipes(page: Int, perPage: Int): PagedResponseDto<RecipeSummaryDto> =
             error("not used by CookbookRepository")
 

@@ -2,7 +2,9 @@ package dev.pschmitt.syncwich.data.repository
 
 import androidx.room.withTransaction
 import dev.pschmitt.syncwich.data.api.RecipesApi
+import dev.pschmitt.syncwich.data.api.dto.CreateRecipeDto
 import dev.pschmitt.syncwich.data.api.dto.OrganizerDto
+import dev.pschmitt.syncwich.data.api.dto.RecipeInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeSummaryDto
 import dev.pschmitt.syncwich.data.db.AppDatabase
 import dev.pschmitt.syncwich.data.db.dao.RecipeDao
@@ -36,6 +38,27 @@ constructor(
 ) {
 
     fun observeRecipes(): Flow<List<RecipeSummaryEntity>> = recipeDao.observeAll()
+
+    /**
+     * Sends the minimal `CreateRecipe` body. No cache is cleared on failure; a later refresh can
+     * discover a successful server-side create without making an offline read unavailable.
+     */
+    suspend fun createRecipe(request: CreateRecipeDto): Result<String> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                    require(request.name.isNotBlank()) { "Recipe name must not be blank" }
+                    recipesApi.createRecipe(request).use { it.string() }
+                }
+                .onFailure { Timber.w(it, "Recipe create failed; keeping cached data") }
+        }
+
+    /** Sends one complete `Recipe-Input` through Mealie's single-recipe PUT route. */
+    suspend fun updateRecipe(slug: String, request: RecipeInputDto): Result<Unit> =
+        mutateRecipe(slug) { recipesApi.updateRecipe(slug, request) }
+
+    /** Sends one complete `Recipe-Input` through Mealie's single-recipe PATCH route. */
+    suspend fun patchRecipe(slug: String, request: RecipeInputDto): Result<Unit> =
+        mutateRecipe(slug) { recipesApi.patchRecipe(slug, request) }
 
     fun observeRecipesByCategory(categoryId: String): Flow<List<RecipeSummaryEntity>> =
         recipeDao.observeByCategory(categoryId)
@@ -137,6 +160,15 @@ constructor(
         }
 
     private fun OrganizerDto.toCategoryEntity() = CategoryEntity(id = id, name = name, slug = slug)
+
+    private suspend fun mutateRecipe(
+        slug: String,
+        request: suspend () -> okhttp3.ResponseBody,
+    ): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            runCatching { request().use { } }
+                .onFailure { Timber.w(it, "Recipe mutation failed for '$slug'; keeping cached data") }
+        }
 
     private fun RecipeSummaryDto.toEntity() =
         RecipeSummaryEntity(

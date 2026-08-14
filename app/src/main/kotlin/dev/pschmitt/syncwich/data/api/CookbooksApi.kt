@@ -1,8 +1,13 @@
 package dev.pschmitt.syncwich.data.api
 
 import dev.pschmitt.syncwich.data.api.dto.CookbookDto
+import dev.pschmitt.syncwich.data.api.dto.CreateCookbookDto
 import dev.pschmitt.syncwich.data.api.dto.PagedResponseDto
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.PUT
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 /**
@@ -12,6 +17,20 @@ import retrofit2.http.Query
  * [RecipesApi.getRecipesByCookbook].
  */
 interface CookbooksApi {
+
+    /** `POST /api/households/cookbooks` accepts the public schema's `CreateCookBook` body. */
+    @POST("api/households/cookbooks")
+    suspend fun createCookbook(@Body request: CreateCookbookDto): CookbookDto
+
+    /**
+     * Mealie uses the same `CreateCookBook` body for the single-item PUT route. This is distinct
+     * from its bulk PUT route, which accepts an array of `UpdateCookBook` objects.
+     */
+    @PUT("api/households/cookbooks/{itemId}")
+    suspend fun updateCookbook(
+        @Path("itemId") itemId: String,
+        @Body request: CreateCookbookDto,
+    ): CookbookDto
 
     @GET("api/households/cookbooks")
     suspend fun getCookbooks(

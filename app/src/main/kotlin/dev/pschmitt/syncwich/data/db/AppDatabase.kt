@@ -6,6 +6,7 @@ import dev.pschmitt.syncwich.data.db.dao.CategoryDao
 import dev.pschmitt.syncwich.data.db.dao.CookbookDao
 import dev.pschmitt.syncwich.data.db.dao.MealPlanDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeDao
+import dev.pschmitt.syncwich.data.db.dao.RecipeActionDao
 import dev.pschmitt.syncwich.data.db.dao.ShoppingListDao
 import dev.pschmitt.syncwich.data.db.dao.TagDao
 import dev.pschmitt.syncwich.data.db.entity.CategoryEntity
@@ -14,6 +15,7 @@ import dev.pschmitt.syncwich.data.db.entity.MealPlanEntryEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeCategoryCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeCookbookCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeDetailEntity
+import dev.pschmitt.syncwich.data.db.entity.RecipeActionEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeTagCrossRef
 import dev.pschmitt.syncwich.data.db.entity.ShoppingListEntity
@@ -33,6 +35,7 @@ import dev.pschmitt.syncwich.data.db.entity.TagEntity
         [
             RecipeSummaryEntity::class,
             RecipeDetailEntity::class,
+            RecipeActionEntity::class,
             CategoryEntity::class,
             TagEntity::class,
             CookbookEntity::class,
@@ -43,15 +46,18 @@ import dev.pschmitt.syncwich.data.db.entity.TagEntity
             MealPlanEntryEntity::class,
             RecipeCookbookCrossRef::class,
         ],
+    // v5: SW-24/SW-30 add durable per-user favorite/rating action state.
     // v4: SW-5 (shopping lists), SW-4 (meal plan), and SW-6 (cookbooks) each independently bumped
     // this pre-1.0, in their own worktrees, to different version numbers with different entities;
     // reconciled to v4 on merge. No migration path exists yet - see DatabaseModule's
     // fallbackToDestructiveMigration().
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun recipeDao(): RecipeDao
+
+    abstract fun recipeActionDao(): RecipeActionDao
 
     abstract fun categoryDao(): CategoryDao
 

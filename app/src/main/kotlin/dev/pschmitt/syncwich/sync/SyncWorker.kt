@@ -10,6 +10,7 @@ import dev.pschmitt.syncwich.data.repository.CategoryRepository
 import dev.pschmitt.syncwich.data.repository.CookbookRepository
 import dev.pschmitt.syncwich.data.repository.MealPlanRepository
 import dev.pschmitt.syncwich.data.repository.RecipeRepository
+import dev.pschmitt.syncwich.data.repository.RecipeActionRepository
 import dev.pschmitt.syncwich.data.repository.ShoppingListRepository
 import dev.pschmitt.syncwich.data.repository.TagRepository
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
@@ -38,6 +39,7 @@ constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
     private val recipeRepository: RecipeRepository,
+    private val recipeActionRepository: RecipeActionRepository,
     private val categoryRepository: CategoryRepository,
     private val tagRepository: TagRepository,
     private val shoppingListRepository: ShoppingListRepository,
@@ -59,6 +61,9 @@ constructor(
         val failures =
             listOf(
                     recipeRepository.refreshRecipes(),
+                    // No request is made when there are no pending offline actions; pending
+                    // favorite/rating flags are retried only after Room has made them visible.
+                    recipeActionRepository.syncPendingActions(),
                     categoryRepository.refreshCategories(),
                     tagRepository.refreshTags(),
                     shoppingListRepository.refreshLists(),

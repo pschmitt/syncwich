@@ -3,6 +3,7 @@ package dev.pschmitt.syncwich.data.repository
 import dev.pschmitt.syncwich.data.api.CookbooksApi
 import dev.pschmitt.syncwich.data.api.RecipesApi
 import dev.pschmitt.syncwich.data.api.dto.CookbookDto
+import dev.pschmitt.syncwich.data.api.dto.CreateCookbookDto
 import dev.pschmitt.syncwich.data.api.dto.PagedResponseDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeSummaryDto
 import dev.pschmitt.syncwich.data.db.dao.CookbookDao
@@ -46,6 +47,19 @@ constructor(
 
     fun observeCookbookRecipes(cookbookId: String): Flow<List<RecipeSummaryEntity>> =
         recipeDao.observeByCookbook(cookbookId)
+
+    /**
+     * Creates a cookbook and immediately caches the returned server object. A failed request
+     * leaves the existing cookbook cache untouched, including when the device is offline.
+     */
+    suspend fun createCookbook(request: CreateCookbookDto): Result<CookbookEntity> =
+        mutateCookbook { cookbooksApi.createCookbook(request) }
+
+    /** Updates one cookbook using the v3.22.0 single-item PUT route and refreshes its Room row. */
+    suspend fun updateCookbook(
+        cookbookId: String,
+        request: CreateCookbookDto,
+    ): Result<CookbookEntity> = mutateCookbook { cookbooksApi.updateCookbook(cookbookId, request) }
 
     suspend fun refreshCookbooks(): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
@@ -97,6 +111,18 @@ constructor(
             description = description.orEmpty(),
             position = position,
         )
+
+    private suspend fun mutateCookbook(
+        request: suspend () -> CookbookDto,
+    ): Result<CookbookEntity> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                    val entity = request().toEntity()
+                    cookbookDao.upsertAll(listOf(entity))
+                    entity
+                }
+                .onFailure { Timber.w(it, "Cookbook mutation failed; keeping cached data") }
+        }
 
     private fun RecipeSummaryDto.toEntity() =
         RecipeSummaryEntity(

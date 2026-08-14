@@ -615,13 +615,18 @@ showed only Recipes and Cookbooks while empty Meal Plan/Shopping destinations st
 
 - [ ] Add support for creating recipes, cookbooks, meal plans, and shopping lists
 - [ ] Add support for updating existing recipes, cookbooks, meal plans, and shopping lists
-- [ ] Preserve offline-first behavior and confirm the Mealie write API shapes against the real
-      instance before implementing network mutations
+- [x] Add the recipe/cookbook mutation DTOs, Retrofit routes, and repository entry points for the
+      confirmed v3.22.0 single-item routes
+- [x] Preserve cache-first reads and leave existing Room data untouched when a mutation fails
+- [x] Confirm the recipe/cookbook write request shapes against the public schema
 - [ ] Add focused coverage and verify the editing flows on the Zenfone 10
 
-Status: in progress, 2026-08-14. Write support is intentionally waiting for confirmed Mealie
-mutation request/response shapes; the configured verification host currently serves frontend HTML
-and returns 404/405 for API routes, so no write request has been attempted.
+Status: in progress, 2026-08-14. Data-layer groundwork is implemented, but full editor UI and
+meal-plan/shopping-list mutations remain. Read-only inspection of
+`https://nom.brkn.lol/openapi.json` confirmed `CreateRecipe`, `Recipe-Input`, and the
+`CreateCookBook` single-item PUT shape; no POST/PUT/PATCH/DELETE request was made. Remote `just
+check` passed; Zenfone editor-flow verification is still blocked because no editor UI is included
+in this bounded slice.
 
 ## SW-25: Make font size configurable in Appearance settings
 
@@ -679,16 +684,19 @@ the accessible close, page-count, and image-description nodes without crashes.
 
 ## SW-30: Add recipe actions and rating controls
 
-- [ ] Add a favorite action with cache-first state and Mealie synchronization when supported
+- [x] Add the favorite/rating cache and repository actions with durable pending synchronization
 - [ ] Add an “I made this” action and persist or synchronize the cooking event
 - [ ] Add a 1–5 star rating control with accessible labels and offline-safe state
 - [ ] Add an “Open timeline” action, keeping the timeline destination explicitly marked as pending
-- [ ] Confirm all write API shapes against the real Mealie instance before implementing mutations
+- [x] Confirm the favorite/rating write API shapes against the public schema
 - [ ] Verify the actions and rating UI on the Zenfone 10
 
-Status: in progress, 2026-08-14. The action UI and mutation paths are waiting for confirmed Mealie
-write endpoint shapes; the configured verification host currently serves frontend HTML and returns
-404/405 for API routes, so no write request has been attempted.
+Status: in progress, 2026-08-14. Room-backed favorite/rating actions now update offline state first,
+retain pending flags, and retry from the background worker; the action UI, “I made this,” and
+timeline remain pending. Read-only inspection of `https://nom.brkn.lol/openapi.json` confirmed
+`POST/DELETE /api/users/{id}/favorites/{slug}` and `POST /api/users/{id}/ratings/{slug}` with
+`UserRatingUpdate`; no live write request was made. Remote `just check` passed, while Zenfone UI
+verification remains blocked by the intentionally bounded data-layer-only scope.
 
 ## SW-31: Replace cookbook previews with a Material 3 carousel
 
