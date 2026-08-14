@@ -1217,5 +1217,16 @@ editor verification passed.
 - [ ] Run a release workflow with the new secrets and verify the signed artifacts
 
 Status: mostly done, 2026-08-14. The keystore was generated on rofl-13, stored in Bitwarden, and
-the four GitHub secrets are present. The previous release run failed before secret configuration
-with `encodedString value is not set`; a new release workflow run remains as final validation.
+the four GitHub secrets are present. The release workflow decoded the key, passed signing
+validation, and passed unit tests; its later release build is blocked by SW-58's unrelated R8
+missing-class failure.
+
+## SW-58: Fix release R8 missing annotations
+
+- [ ] Resolve the missing `com.google.errorprone.annotations.*` classes reported by R8
+- [ ] Keep the release minification behavior intact and avoid weakening shrinker coverage
+- [ ] Verify signed APK and AAB release builds in GitHub Actions
+
+Status: not started, 2026-08-14. The first post-signing-secrets release run reached `minifyReleaseWithR8`
+but failed because `com.google.crypto.tink` references missing Error Prone annotations. Signing,
+keystore decoding, and unit tests passed before that unrelated build failure.
