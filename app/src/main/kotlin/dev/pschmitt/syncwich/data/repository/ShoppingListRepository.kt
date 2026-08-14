@@ -155,11 +155,13 @@ constructor(
 
     /** Retries any durable offline checked-state changes; each item is retried independently. */
     suspend fun syncPendingItemChecks(): Result<Unit> = withContext(Dispatchers.IO) {
-        runCatching {
-                val pending = shoppingListDao.getPendingCheckedItems()
-                pending.forEach { item -> syncItemChecked(item.id, item.checked).getOrThrow() }
-            }
-            .onFailure { Timber.w(it, "Pending shopping list item sync failed; keeping pending state") }
+        val pending = shoppingListDao.getPendingCheckedItems()
+        val failures = pending.count { item -> syncItemChecked(item.id, item.checked).isFailure }
+        if (failures > 0) {
+            Result.failure(IllegalStateException("$failures pending item(s) failed to sync"))
+        } else {
+            Result.success(Unit)
+        }
     }
 
     private suspend fun syncItemChecked(itemId: String, checked: Boolean): Result<Unit> =
