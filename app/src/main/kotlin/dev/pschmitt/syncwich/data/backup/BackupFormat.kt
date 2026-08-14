@@ -164,6 +164,9 @@ constructor(
                 } ?: throw IOException("Could not open the selected backup")
             val payload = decodeArchive(BackupCrypto.decode(bytes, password))
             validate(payload.manifest)
+            if (payload.credentials.serverUrl.isBlank() || payload.credentials.apiToken.isBlank()) {
+                throw BackupFormatException("The backup has no usable Mealie connection")
+            }
             restoreCache(payload)
             settingsRepository.restoreBackupSettings(payload.settings)
             settingsRepository.save(payload.credentials.serverUrl, payload.credentials.apiToken)
@@ -285,6 +288,7 @@ constructor(
         payload.databaseFile?.let { restoreDatabase(it) }
         payload.imageDirectory?.let { restoreImages(it) }
         payload.databaseFile?.parentFile?.deleteRecursively()
+        payload.imageDirectory?.parentFile?.takeIf(File::exists)?.deleteRecursively()
     }
 
     private fun checkpointDatabase() {
