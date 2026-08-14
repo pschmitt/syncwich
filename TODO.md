@@ -441,17 +441,41 @@ test asserted the old placeholder string.
       token-minting request
 - [x] Normalize a server URL without a trailing slash before building the per-call Retrofit client;
       regression-covered by `PasswordTokenMinterTest`
-- [ ] Verify Mealie's token-creation endpoint's exact request/response shape against the real
+- [x] Verify Mealie's token-creation endpoint's exact request/response shape against the real
       server first (rbw "Mealie (AI Agent)"), same as every other endpoint in this app
 
-Status: in progress, 2026-08-14. Added the two onboarding modes, a per-call Retrofit auth client,
+Status: mostly done, 2026-08-14. Added the two onboarding modes, a per-call Retrofit auth client,
 and MockWebServer coverage proving the form-login JWT is exchanged for the returned token and that
 an unauthorized login never reaches token creation. The password is held only in the in-memory
 Compose state for the active form and request chain; only the resulting token is passed to
 `SettingsRepository`. Also fixed no-slash server URLs for Retrofit and deployed the checked build to
-all three attached devices. Live endpoint verification and real-device sign-in remain pending
-because the configured verification host currently serves the Mealie frontend but returns 404 for
-its API routes; retry against the live API before marking this entry done.
+all three attached devices. Shape verification done, read-only, against the host in rbw "Mealie (AI
+Agent)"'s stored URI (`nom.brkn.lol`, v3.22.0): `GET /openapi.json` confirms `POST
+/api/users/api-tokens`'s request (`LongLiveTokenIn`: `name` required, `integrationId` optional
+string default `"generic"`) and response (`LongLiveTokenCreateResponse`: `name`, `id` int,
+`createdAt` nullable date-time, `token`; 201 on success) match `LongLiveTokenRequestDto` /
+`LongLiveTokenResponseDto` exactly - no code change needed. `POST /api/auth/token`'s response isn't
+typed in the schema, so its `access_token` field was instead confirmed by reading the real
+production frontend's own compiled JS at `https://nom.brkn.lol/_nuxt/B8RB6R9E.js` (the minified
+line reads `let{access_token:n}=(await e.post("/api/auth/token",t,...)).data`), matching
+`PasswordLoginResponseDto`'s `@SerialName("access_token")` exactly; also noted (informational, not
+a bug) that the live frontend posts that form as `multipart/form-data` while this app uses
+`application/x-www-form-urlencoded` per the schema's declared content type - FastAPI's `Form(...)`
+dependency accepts either, so no fix needed. Token-name format `"Syncwich (<device model>)"`
+re-checked in both `OnboardingViewModel.kt` and `SettingsViewModel.kt` - matches exactly, no drift.
+Root-caused the prior "verification host serves the frontend but 404s on API routes" note: it was
+a false alarm from probing a POST-only route (`/api/auth/token`) with `GET` - the reverse proxy's
+SPA fallback returns HTTP 404 with the frontend's own `index.html` for any unmatched method/route
+on this host, which is a routing quirk, not a broken API; confirmed the real API is fully healthy
+on the same host via `GET /api/app/about` (200 JSON, `allowPasswordLogin: true`) and
+`GET /api/users/self` with no auth (401 JSON, correct auth-required response). All of the above was
+read-only (schema/static-asset `GET`s only - no login attempt, no token minted, no device
+wiped/uninstalled). What remains genuinely unconfirmed: an actual end-to-end live run of the two
+POSTs in sequence against this real server (does the whole chain really mint a usable token) -
+intentionally not attempted, since doing so would require a real sign-in (and, per this task's
+explicit instruction, live-write requests needed unapproved sign-in/token-minting were to be
+skipped and reported rather than performed). Flagging that live end-to-end run as a blocker for the
+coordinator/user to explicitly approve before this entry can be marked fully done.
 
 ## SW-14: Proactively cache all recipe images for true offline use
 
