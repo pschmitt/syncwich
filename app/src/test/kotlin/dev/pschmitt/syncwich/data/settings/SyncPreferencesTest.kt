@@ -1,9 +1,15 @@
 package dev.pschmitt.syncwich.data.settings
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SyncPreferencesTest {
+
+    @Test
+    fun `sync on app start defaults to enabled`() {
+        assertTrue(DEFAULT_SYNC_ON_APP_START)
+    }
 
     @Test
     fun `interval is clamped to WorkManager-safe user-facing bounds`() {

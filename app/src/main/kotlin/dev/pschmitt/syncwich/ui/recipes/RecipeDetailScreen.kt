@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.OpenInBrowser
@@ -277,6 +278,7 @@ private fun RecipeDetailContent(
     val imageUrl = imageIndex.coverUrl
     val galleryImages = imageIndex.galleryUrls
     var viewerPage by rememberSaveable { mutableStateOf<Int?>(null) }
+    var stepsFullScreen by rememberSaveable { mutableStateOf(false) }
 
     LazyColumn(modifier = modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
         if (imageUrl != null) {
@@ -344,7 +346,20 @@ private fun RecipeDetailContent(
         }
 
         if (recipe.recipeInstructions.isNotEmpty()) {
-            item { SectionHeader(icon = Icons.AutoMirrored.Filled.ListAlt, title = "Steps") }
+            item {
+                SectionHeader(
+                    icon = Icons.AutoMirrored.Filled.ListAlt,
+                    title = "Steps",
+                    action = {
+                        IconButton(onClick = { stepsFullScreen = true }) {
+                            Icon(
+                                Icons.Filled.Fullscreen,
+                                contentDescription = "Open steps full screen",
+                            )
+                        }
+                    },
+                )
+            }
             itemsIndexed(recipe.recipeInstructions) { index, instruction ->
                 InstructionRow(
                     number = index + 1,
@@ -382,6 +397,15 @@ private fun RecipeDetailContent(
             images = galleryImages,
             initialPage = page,
             onDismiss = { viewerPage = null },
+        )
+    }
+
+    if (stepsFullScreen) {
+        FullScreenStepsDialog(
+            recipeName = recipe.name,
+            instructions = recipe.recipeInstructions,
+            imageReferences = imageIndex.instructionReferences,
+            onDismiss = { stepsFullScreen = false },
         )
     }
 }
@@ -446,7 +470,11 @@ fun recipeImageGalleryUrls(serverUrl: String, recipe: RecipeDetailDto): List<Str
     recipeImageIndex(serverUrl, recipe).galleryUrls
 
 @Composable
-private fun SectionHeader(icon: ImageVector, title: String) {
+private fun SectionHeader(
+    icon: ImageVector,
+    title: String,
+    action: (@Composable () -> Unit)? = null,
+) {
     HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -456,8 +484,9 @@ private fun SectionHeader(icon: ImageVector, title: String) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(start = 8.dp),
+            modifier = Modifier.padding(start = 8.dp).weight(1f),
         )
+        action?.invoke()
     }
 }
 
@@ -569,6 +598,79 @@ private fun stripRecipeImageSyntax(content: String): String =
     HTML_IMAGE_SYNTAX.replace(stripMarkdownImageSyntax(content), "")
 
 private val HTML_IMAGE_SYNTAX = Regex("""<img\b[^>]*>""", RegexOption.IGNORE_CASE)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FullScreenStepsDialog(
+    recipeName: String,
+    instructions: List<RecipeInstructionDto>,
+    imageReferences: List<List<RecipeImageReference>>,
+    onDismiss: () -> Unit,
+) {
+    val images = fullScreenStepImageUrls(imageReferences)
+    var viewerPage by rememberSaveable { mutableStateOf<Int?>(null) }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties =
+            DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false,
+            ),
+    ) {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            "Steps · $recipeName",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onDismiss) {
+                            Icon(
+                                Icons.Filled.Close,
+                                contentDescription = "Close full-screen steps",
+                            )
+                        }
+                    },
+                )
+            },
+        ) { innerPadding ->
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+            ) {
+                itemsIndexed(instructions) { index, instruction ->
+                    InstructionRow(
+                        number = index + 1,
+                        instruction = instruction,
+                        imageReferences = imageReferences.getOrNull(index).orEmpty(),
+                        onImageClick = { url ->
+                            val page = images.indexOf(url)
+                            if (page >= 0) viewerPage = page
+                        },
+                    )
+                }
+            }
+        }
+    }
+
+    viewerPage?.let { page ->
+        RecipeImageViewer(
+            images = images,
+            initialPage = page,
+            onDismiss = { viewerPage = null },
+        )
+    }
+}
+
+internal fun fullScreenStepImageUrls(
+    imageReferences: List<List<RecipeImageReference>>,
+): List<String> = imageReferences.flatten().map(RecipeImageReference::url).distinct()
 
 @Composable
 private fun RecipeImageViewer(

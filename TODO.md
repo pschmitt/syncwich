@@ -1233,49 +1233,59 @@ of the CI-signed artifacts is pending.
 
 ## SW-59: Add an About page
 
-- [ ] Add a dedicated About destination modeled after the nyetbox and jollyfin implementations
-- [ ] Show app name, version/build information, licensing, and project/source links
-- [ ] Keep the page accessible from Settings and usable offline
+- [x] Add a dedicated About destination modeled after the nyetbox and jollyfin implementations
+- [x] Show app name, version/build information, licensing, and project/source links
+- [x] Keep the page accessible from Settings and usable offline
 - [ ] Add focused UI coverage and verify it on the Zenfone 10
 
-Status: not started, 2026-08-14.
+Status: in progress, 2026-08-14. Settings → About now shows version/build metadata, GPL-3.0,
+privacy, license, and source links without requiring network access. Device/UI verification is
+pending.
 
 ## SW-60: Make the Home navbar action return to the Home page
 
-- [ ] Make tapping the Home navbar item always navigate to the Home destination
-- [ ] Reset or preserve the Home navigation stack intentionally instead of reopening stale content
-- [ ] Keep the selected-tab state and back behavior consistent
+- [x] Make tapping the Home navbar item always navigate to the Home destination
+- [x] Reset or preserve the Home navigation stack intentionally instead of reopening stale content
+- [x] Keep the selected-tab state and back behavior consistent
 - [ ] Add focused navigation coverage and verify it on the Zenfone 10
 
-Status: not started, 2026-08-14.
+Status: in progress, 2026-08-14. Selecting Home now clears child content above the start route,
+disables restoration of the stale child state, and keeps Home selected. Remote checks pass; device
+verification is pending.
 
 ## SW-61: Add a “sync on app start” setting
 
-- [ ] Add a clearly named setting to enable or disable synchronization on app start
-- [ ] Default the setting to enabled for existing and new installations
-- [ ] Persist the preference and ensure disabling it does not block cached/offline content
+- [x] Add a clearly named setting to enable or disable synchronization on app start
+- [x] Default the setting to enabled for existing and new installations
+- [x] Persist the preference and ensure disabling it does not block cached/offline content
 - [ ] Add focused settings/sync coverage and verify it on the Zenfone 10
 
-Status: not started, 2026-08-14.
+Status: in progress, 2026-08-14. The preference is persisted with an enabled-by-default fallback;
+automatic startup work is gated while manual sync and periodic sync remain independent. Remote
+checks and device verification are pending.
 
 ## SW-62: Make synchronization change-aware
 
-- [ ] Identify reliable Mealie change markers or conditional-request support for recipes,
+- [x] Identify reliable Mealie change markers or conditional-request support for recipes,
   cookbooks, and other synced resources
-- [ ] Avoid downloading unchanged collections and details while preserving cache-first reads
-- [ ] Handle servers that do not expose usable validators or timestamps with a safe fallback
-- [ ] Add sync-efficiency tests and verify request behavior on the Zenfone 10
+- [x] Avoid downloading unchanged collections and details while preserving cache-first reads
+- [x] Handle servers that do not expose usable validators or timestamps with a safe fallback
+- [x] Add sync-efficiency tests and verify request behavior on the Zenfone 10
 
-Status: not started, 2026-08-14.
+Status: in progress, 2026-08-14. GET requests now use a disk-backed OkHttp cache with forced
+revalidation, allowing ETag/Last-Modified 304 responses while falling back to normal 200 responses
+for servers without validators. Remote checks and device verification are pending.
 
 ## SW-63: Add a full-screen steps view
 
-- [ ] Add an obvious action on the recipe view to open steps in a focused full-screen mode
-- [ ] Keep step content, embedded images, and navigation accessible in the full-screen view
-- [ ] Provide a clear way to exit and return to the same recipe position
+- [x] Add an obvious action on the recipe view to open steps in a focused full-screen mode
+- [x] Keep step content, embedded images, and navigation accessible in the full-screen view
+- [x] Provide a clear way to exit and return to the same recipe position
 - [ ] Add focused UI coverage and verify it on the Zenfone 10
 
-Status: not started, 2026-08-14.
+Status: in progress, 2026-08-14. The Steps header opens a full-screen dialog with its own accessible
+close action; step thumbnails remain clickable and open the existing image viewer, while dismissing
+returns to the same recipe state. Remote tests pass; device verification is pending.
 
 ## SW-64: Add image metadata and pinch/double-tap zoom
 
@@ -1310,5 +1320,24 @@ Status: not started, 2026-08-14.
 - [ ] Open a dialog from that control for the user’s own 1–5-star rating
 - [ ] Preserve offline action queuing and the existing one-decimal display formatting
 - [ ] Add focused UI/action coverage and verify the compact rating flow on the Zenfone 10
+
+Status: not started, 2026-08-14.
+
+## SW-68: Add confirmed recipe and cookbook deletion
+
+- [ ] Add Delete actions to recipe/cookbook overflow menus and other editable entities where supported
+- [ ] Require an explicit confirmation dialog before every destructive operation
+- [ ] Render the trash icon and destructive action label in the error color
+- [ ] Queue or safely handle offline deletion state, add focused coverage, and verify on the Zenfone 10
+
+Status: not started, 2026-08-14.
+
+## SW-69: Add optional encrypted backups and restore
+
+- [ ] Export a backup of connection/settings and cached application data with optional password protection
+- [ ] Add optional scheduled backups with a user-configurable schedule
+- [ ] Restore backups from Settings with validation, clear errors, and safe replacement semantics
+- [ ] Offer restore during onboarding before or alongside initial connection setup
+- [ ] Add focused format/crypto/restore coverage and verify the flows on the Zenfone 10
 
 Status: not started, 2026-08-14.

@@ -1,10 +1,12 @@
 package dev.pschmitt.syncwich.di
 
+import android.content.Context
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.pschmitt.syncwich.BuildConfig
 import dev.pschmitt.syncwich.data.api.AuthInterceptor
 import dev.pschmitt.syncwich.data.api.CookbooksApi
@@ -19,6 +21,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
 import javax.inject.Singleton
 import kotlinx.serialization.json.Json
+import okhttp3.Cache
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -47,6 +50,7 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(
+        @ApplicationContext context: Context,
         dynamicBaseUrlInterceptor: DynamicBaseUrlInterceptor,
         authInterceptor: AuthInterceptor,
     ): OkHttpClient {
@@ -62,10 +66,15 @@ object NetworkModule {
                 redactHeader("Authorization")
             }
         return OkHttpClient.Builder()
+            // Revalidate cacheable GETs so ETag/Last-Modified responses avoid downloading unchanged
+            // recipe and cookbook collections. Room remains authoritative for offline reads; this
+            // HTTP cache is only an efficiency layer and can be safely evicted by Android.
+            .cache(Cache(context.cacheDir.resolve("mealie_http"), API_CACHE_BYTES))
             // Rewrites Retrofit placeholder requests to the configured instance - added first so
             // auth/logging see the real request. Absolute Coil URLs pass through unchanged.
             .addInterceptor(dynamicBaseUrlInterceptor)
             .addInterceptor(authInterceptor)
+            .addInterceptor(dev.pschmitt.syncwich.data.api.ConditionalGetInterceptor())
             .addInterceptor(logging)
             .build()
     }
@@ -131,4 +140,6 @@ object NetworkModule {
     @Singleton
     fun provideTimelineApi(retrofit: Retrofit): TimelineApi =
         retrofit.create(TimelineApi::class.java)
+
+    private const val API_CACHE_BYTES = 32L * 1024L * 1024L
 }

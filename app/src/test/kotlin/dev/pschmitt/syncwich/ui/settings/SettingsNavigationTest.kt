@@ -11,7 +11,12 @@ class SettingsNavigationTest {
     @Test
     fun `top-level settings categories keep the intended order`() {
         assertEquals(
-            listOf(SettingsCategory.Server, SettingsCategory.Appearance, SettingsCategory.Sync),
+            listOf(
+                SettingsCategory.Server,
+                SettingsCategory.Appearance,
+                SettingsCategory.Sync,
+                SettingsCategory.About,
+            ),
             SettingsCategory.entries,
         )
     }

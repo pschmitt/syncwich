@@ -54,10 +54,9 @@ class SyncwichApp : Application(), Configuration.Provider, SingletonImageLoader.
             Timber.plant(Timber.DebugTree())
         }
         syncNotifier.start()
-        // Both calls are no-ops until onboarding is complete (SyncWorker.doWork() returns early
-        // when unconfigured) - scheduled unconditionally here so the very first sync fires as soon
-        // as a connection is saved, without every screen having to know to kick one off itself.
+        // Periodic work is independent of the process-start preference. The startup pass is
+        // gated so disabling "Sync on app start" does not generate a surprise network request.
         syncScheduler.schedulePeriodic()
-        syncScheduler.scheduleStartup()
+        syncScheduler.scheduleStartupIfEnabled()
     }
 }

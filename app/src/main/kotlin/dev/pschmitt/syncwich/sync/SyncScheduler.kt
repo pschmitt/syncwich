@@ -62,6 +62,17 @@ constructor(
         scope.launch { enqueueStartup(settingsRepository.syncPreferences.first()) }
     }
 
+    /** Enqueues the automatic process-start pass only when the user has enabled it. */
+    fun scheduleStartupIfEnabled() {
+        scope.launch {
+            if (settingsRepository.syncOnAppStart.first()) {
+                enqueueStartup(settingsRepository.syncPreferences.first())
+            } else {
+                workManager.cancelUniqueWork(STARTUP_WORK_NAME)
+            }
+        }
+    }
+
     private fun enqueueStartup(preferences: SyncPreferences) {
         val request =
             OneTimeWorkRequestBuilder<SyncWorker>()

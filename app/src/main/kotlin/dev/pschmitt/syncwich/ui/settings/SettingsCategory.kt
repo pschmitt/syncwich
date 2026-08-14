@@ -2,6 +2,7 @@ package dev.pschmitt.syncwich.ui.settings
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -15,4 +16,5 @@ enum class SettingsCategory(
     Server("Server", "Connection details and sign-in", Icons.Filled.Dns),
     Appearance("Appearance", "Theme and bottom navigation", Icons.Filled.Palette),
     Sync("Sync", "Background refresh and network use", Icons.Filled.Sync),
+    About("About", "Application and build information", Icons.Filled.Info),
 }

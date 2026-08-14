@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.FormatSize
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.ViewCarousel
@@ -101,6 +102,11 @@ fun SettingsScreen(
             item {
                 SettingsGroupCard(title = "Personalization", icon = Icons.Filled.Palette) {
                     SettingsCategoryRow(SettingsCategory.Appearance, onCategoryClick)
+                }
+            }
+            item {
+                SettingsGroupCard(title = "About", icon = Icons.Filled.Info) {
+                    SettingsCategoryRow(SettingsCategory.About, onCategoryClick)
                 }
             }
         }
@@ -206,6 +212,7 @@ fun SettingsCategoryScreen(
             )
         SettingsCategory.Sync ->
             SyncSettingsScreen(onBack = onBack, modifier = modifier, viewModel = viewModel)
+        SettingsCategory.About -> AboutSettingsScreen(onBack = onBack, modifier = modifier)
     }
 }
 

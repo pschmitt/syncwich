@@ -10,6 +10,7 @@ import dev.pschmitt.syncwich.data.onboarding.OnboardingValidator
 import dev.pschmitt.syncwich.data.onboarding.PasswordTokenMinter
 import dev.pschmitt.syncwich.data.repository.AccountRepository
 import dev.pschmitt.syncwich.data.settings.DEFAULT_FONT_SCALE
+import dev.pschmitt.syncwich.data.settings.DEFAULT_SYNC_ON_APP_START
 import dev.pschmitt.syncwich.data.settings.DEFAULT_SYNC_INTERVAL_HOURS
 import dev.pschmitt.syncwich.data.settings.MealieCredentials
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
@@ -100,7 +101,7 @@ constructor(
         settingsRepository.syncWhileRoaming.stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
-            true,
+            DEFAULT_SYNC_ON_APP_START,
         )
 
     val syncIntervalHours: StateFlow<Int> =
@@ -108,6 +109,13 @@ constructor(
             viewModelScope,
             SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
             DEFAULT_SYNC_INTERVAL_HOURS,
+        )
+
+    val syncOnAppStart: StateFlow<Boolean> =
+        settingsRepository.syncOnAppStart.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
+            true,
         )
 
     fun saveNavigationBarOrder(order: List<String>) {
@@ -148,6 +156,13 @@ constructor(
         viewModelScope.launch {
             settingsRepository.setSyncIntervalHours(hours)
             syncScheduler.schedulePeriodic()
+        }
+    }
+
+    fun setSyncOnAppStart(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setSyncOnAppStart(enabled)
+            if (!enabled) syncScheduler.cancelStartup()
         }
     }
 

@@ -86,6 +86,10 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
     val syncWhileRoaming: Flow<Boolean> = syncPreferences.map { it.syncWhileRoaming }
     val syncIntervalHours: Flow<Int> = syncPreferences.map { it.syncIntervalHours }
 
+    /** Whether a new app process should enqueue an immediate background sync. */
+    val syncOnAppStart: Flow<Boolean> =
+        context.syncwichDataStore.data.map { it[KEY_SYNC_ON_APP_START] ?: DEFAULT_SYNC_ON_APP_START }
+
     /** The user's preferred order, with unknown or missing keys resolved by the caller. */
     override val navigationBarOrder: Flow<List<String>> =
         context.syncwichDataStore.data.map { navigationBarOrderFromString(it[KEY_NAV_BAR_ORDER]) }
@@ -164,6 +168,10 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         context.syncwichDataStore.edit { prefs ->
             prefs[KEY_SYNC_INTERVAL_HOURS] = sanitizeSyncIntervalHours(hours)
         }
+    }
+
+    suspend fun setSyncOnAppStart(enabled: Boolean) {
+        context.syncwichDataStore.edit { prefs -> prefs[KEY_SYNC_ON_APP_START] = enabled }
     }
 
     suspend fun saveNavigationBarOrder(order: List<String>) {
@@ -245,5 +253,6 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         val KEY_SYNC_ONLY_ON_WIFI = booleanPreferencesKey("sync_only_on_wifi")
         val KEY_SYNC_WHILE_ROAMING = booleanPreferencesKey("sync_while_roaming")
         val KEY_SYNC_INTERVAL_HOURS = intPreferencesKey("sync_interval_hours")
+        val KEY_SYNC_ON_APP_START = booleanPreferencesKey("sync_on_app_start")
     }
 }

@@ -58,6 +58,9 @@ private data class TopLevelNavItem(
     val label: String,
 )
 
+internal fun shouldResetHomeStack(destination: TopLevelDestination): Boolean =
+    destination == TopLevelDestination.HOME
+
 private val topLevelNavItems =
     listOf(
         TopLevelNavItem(TopLevelDestination.HOME, Icons.Filled.Home, "Home"),
@@ -158,12 +161,25 @@ fun SyncwichNavHost(
                         NavigationBarItem(
                             selected = selected,
                             onClick = {
-                                navController.navigate(item.destination.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+                                if (shouldResetHomeStack(item.destination)) {
+                                    // Home is a reset point: selecting it from a recipe/detail
+                                    // stack must never restore stale child content or leave the
+                                    // user one back press away from the same page again.
+                                    navController.navigate(Route.Home) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = false
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = false
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
+                                } else {
+                                    navController.navigate(item.destination.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
                                 }
                             },
                             icon = { Icon(item.icon, contentDescription = item.label) },

@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SignalCellularAlt
 import androidx.compose.material.icons.filled.Wifi
@@ -47,6 +48,7 @@ fun SyncSettingsScreen(
     val syncOnlyOnWifi by viewModel.syncOnlyOnWifi.collectAsStateWithLifecycle()
     val syncWhileRoaming by viewModel.syncWhileRoaming.collectAsStateWithLifecycle()
     val syncIntervalHours by viewModel.syncIntervalHours.collectAsStateWithLifecycle()
+    val syncOnAppStart by viewModel.syncOnAppStart.collectAsStateWithLifecycle()
     var intervalMenuExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -67,6 +69,15 @@ fun SyncSettingsScreen(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            item {
+                SyncToggleRow(
+                    title = "Sync on app start",
+                    subtitle = "Refresh the cache when Syncwich starts",
+                    checked = syncOnAppStart,
+                    onCheckedChange = viewModel::setSyncOnAppStart,
+                    icon = Icons.Filled.PowerSettingsNew,
+                )
+            }
             item {
                 SyncToggleRow(
                     title = "Sync only on Wi-Fi",
