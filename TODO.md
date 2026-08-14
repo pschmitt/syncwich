@@ -581,12 +581,12 @@ instrumentation regression and a live debug install/screenshot on the Zenfone 10
 - [x] Add an Appearance submenu and move configurable bottom-navigation settings under it
 - [x] Preserve accessible labels, back navigation, offline-safe behavior, and existing settings
       persistence while reorganizing the UI
-- [ ] Verify the new settings hierarchy visually on the Zenfone 10
+- [x] Verify the new settings hierarchy visually on the Zenfone 10
 
-Status: mostly done, 2026-08-14. Settings now opens a category menu with Server and Appearance
+Status: **done**, 2026-08-14. Settings now opens a category menu with Server and Appearance
 submenus; connection changes and sign-out are wired to existing validation/credential persistence,
-and bottom-navigation controls live under Appearance. Remote `just check` passed with 63 tests;
-Zenfone visual verification remains to be repeated after final integration.
+and bottom-navigation controls live under Appearance. Remote `just check` passed with 71 tests; the
+integrated Zenfone build displayed both category rows and the Appearance controls.
 
 ## SW-22: Hide cookbook preview placeholders for image-less recipes
 
