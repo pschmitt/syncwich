@@ -1667,3 +1667,13 @@ Status: not started.
 - [ ] Add focused layout coverage
 
 Status: not started.
+
+## SW-99: Compact recipe cookbook and tag metadata rows
+
+- [ ] Remove the standalone “Cookbooks” and “Tags” section titles
+- [ ] Render cookbooks and tags as labeled rows of buttons
+- [ ] Put the relevant cookbook/tag icon inside each button before its label
+- [ ] Preserve navigation to cookbook and tag-filter views
+- [ ] Add focused layout and interaction coverage
+
+Status: not started.
