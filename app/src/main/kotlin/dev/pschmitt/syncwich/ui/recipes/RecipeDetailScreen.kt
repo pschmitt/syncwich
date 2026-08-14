@@ -1,7 +1,14 @@
 package dev.pschmitt.syncwich.ui.recipes
 
+import android.os.SystemClock
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,6 +32,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.automirrored.filled.StickyNote2
 import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Edit
@@ -53,21 +62,38 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.PointerInputScope
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -75,6 +101,8 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
+import coil3.compose.rememberAsyncImagePainter
 import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.model.ImageData
@@ -87,6 +115,7 @@ import dev.pschmitt.syncwich.data.image.RecipeImageReference
 import dev.pschmitt.syncwich.data.image.isSafeRecipeImageUrl
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
 import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -276,7 +305,7 @@ private fun RecipeDetailContent(
     modifier: Modifier = Modifier,
 ) {
     val imageUrl = imageIndex.coverUrl
-    val galleryImages = imageIndex.galleryUrls
+    val viewerImages = remember(recipe.name, imageIndex) { recipeViewerImages(recipe.name, imageIndex) }
     var viewerPage by rememberSaveable { mutableStateOf<Int?>(null) }
     var stepsFullScreen by rememberSaveable { mutableStateOf(false) }
 
@@ -291,7 +320,8 @@ private fun RecipeDetailContent(
                         Modifier.fillMaxWidth()
                             .height(220.dp)
                             .clickable {
-                                viewerPage = galleryImages.indexOf(imageUrl).coerceAtLeast(0)
+                                viewerPage =
+                                    viewerImages.indexOfFirst { it.url == imageUrl }.coerceAtLeast(0)
                             }
                             .semantics { contentDescription = "Open recipe images" },
                 )
@@ -365,7 +395,9 @@ private fun RecipeDetailContent(
                     number = index + 1,
                     instruction = instruction,
                     imageReferences = imageIndex.instructionReferences.getOrNull(index).orEmpty(),
-                    onImageClick = { viewerPage = galleryImages.indexOf(it).coerceAtLeast(0) },
+                    onImageClick = {
+                        viewerPage = viewerImages.indexOfFirst { image -> image.url == it }.coerceAtLeast(0)
+                    },
                 )
             }
         }
@@ -394,7 +426,7 @@ private fun RecipeDetailContent(
 
     viewerPage?.let { page ->
         RecipeImageViewer(
-            images = galleryImages,
+            images = viewerImages,
             initialPage = page,
             onDismiss = { viewerPage = null },
         )
@@ -468,6 +500,77 @@ internal fun ratingContentDescription(star: Int): String {
 
 fun recipeImageGalleryUrls(serverUrl: String, recipe: RecipeDetailDto): List<String> =
     recipeImageIndex(serverUrl, recipe).galleryUrls
+
+internal data class RecipeViewerImage(
+    val url: String,
+    val title: String,
+    val sourceLabel: String,
+    val altText: String? = null,
+)
+
+internal data class ImageDimensions(val width: Int, val height: Int)
+
+internal fun recipeViewerImages(
+    recipeName: String,
+    imageIndex: RecipeImageIndex,
+): List<RecipeViewerImage> {
+    val images = linkedMapOf<String, RecipeViewerImage>()
+    imageIndex.coverUrl?.let { url ->
+        images[url] =
+            RecipeViewerImage(
+                url = url,
+                title = recipeName,
+                sourceLabel = "Recipe cover",
+            )
+    }
+    imageIndex.instructionReferences.forEachIndexed { instructionIndex, references ->
+        references.forEach { reference ->
+            images.putIfAbsent(
+                reference.url,
+                RecipeViewerImage(
+                    url = reference.url,
+                    title = recipeName,
+                    sourceLabel = "Step ${instructionIndex + 1} image",
+                    altText = reference.altText,
+                ),
+            )
+        }
+    }
+    imageIndex.galleryUrls.forEach { url ->
+        images.putIfAbsent(
+            url,
+            RecipeViewerImage(url = url, title = recipeName, sourceLabel = "Recipe image"),
+        )
+    }
+    return images.values.toList()
+}
+
+internal fun stepViewerImages(
+    recipeName: String,
+    imageReferences: List<List<RecipeImageReference>>,
+): List<RecipeViewerImage> =
+    imageReferences
+        .flatMapIndexed { instructionIndex, references ->
+            references.map { reference ->
+                RecipeViewerImage(
+                    url = reference.url,
+                    title = recipeName,
+                    sourceLabel = "Step ${instructionIndex + 1} image",
+                    altText = reference.altText,
+                )
+            }
+        }
+        .distinctBy(RecipeViewerImage::url)
+
+internal fun imageMetadataRows(
+    image: RecipeViewerImage,
+    dimensions: ImageDimensions?,
+): List<Pair<String, String>> =
+    buildList {
+        add("Source" to image.sourceLabel)
+        image.altText?.takeIf(String::isNotBlank)?.let { add("Description" to it) }
+        dimensions?.let { add("Dimensions" to "${it.width} × ${it.height} px") }
+    }
 
 @Composable
 private fun SectionHeader(
@@ -607,7 +710,7 @@ private fun FullScreenStepsDialog(
     imageReferences: List<List<RecipeImageReference>>,
     onDismiss: () -> Unit,
 ) {
-    val images = fullScreenStepImageUrls(imageReferences)
+    val images = remember(recipeName, imageReferences) { stepViewerImages(recipeName, imageReferences) }
     var viewerPage by rememberSaveable { mutableStateOf<Int?>(null) }
 
     Dialog(
@@ -650,7 +753,7 @@ private fun FullScreenStepsDialog(
                         instruction = instruction,
                         imageReferences = imageReferences.getOrNull(index).orEmpty(),
                         onImageClick = { url ->
-                            val page = images.indexOf(url)
+                            val page = images.indexOfFirst { it.url == url }
                             if (page >= 0) viewerPage = page
                         },
                     )
@@ -673,47 +776,291 @@ internal fun fullScreenStepImageUrls(
 ): List<String> = imageReferences.flatten().map(RecipeImageReference::url).distinct()
 
 @Composable
-private fun RecipeImageViewer(
-    images: List<String>,
+internal fun RecipeImageViewer(
+    images: List<RecipeViewerImage>,
     initialPage: Int,
     onDismiss: () -> Unit,
 ) {
     if (images.isEmpty()) return
     val pagerState =
         rememberPagerState(initialPage = initialPage.coerceIn(images.indices)) { images.size }
+    val scope = rememberCoroutineScope()
+    val focusRequester = remember { FocusRequester() }
+    var isZoomed by remember { mutableStateOf(false) }
+    var loadedDimensions by remember { mutableStateOf<Map<String, ImageDimensions>>(emptyMap()) }
 
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
-        Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-            HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
-                AsyncImage(
-                    model = images[page],
-                    contentDescription = "Recipe image ${page + 1} of ${images.size}",
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize().padding(16.dp),
+        LaunchedEffect(Unit) { focusRequester.requestFocus() }
+        LaunchedEffect(pagerState.currentPage) { isZoomed = false }
+        val currentPage = pagerState.currentPage.coerceIn(0, images.lastIndex)
+        Box(
+            modifier =
+                Modifier.fillMaxSize()
+                    .background(Color.Black)
+                    .focusRequester(focusRequester)
+                    .focusable()
+                    .onPreviewKeyEvent { event ->
+                        if (event.type != KeyEventType.KeyDown) {
+                            false
+                        } else {
+                            val target =
+                                when (event.key) {
+                                    Key.DirectionLeft -> (currentPage - 1).takeIf { it >= 0 }
+                                    Key.DirectionRight ->
+                                        (currentPage + 1).takeIf { it < images.size }
+                                    else -> null
+                                }
+                            if (target == null) {
+                                false
+                            } else {
+                                scope.launch { pagerState.animateScrollToPage(target) }
+                                true
+                            }
+                        }
+                    }
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxSize(),
+                        userScrollEnabled = !isZoomed,
+                    ) { page ->
+                        ZoomableRecipeImagePage(
+                            image = images[page],
+                            page = page,
+                            pageCount = images.size,
+                            onZoomChanged = { zoomed ->
+                                if (page == pagerState.currentPage) isZoomed = zoomed
+                            },
+                            onDimensionsLoaded = { url, dimensions ->
+                                if (dimensions != null) {
+                                    loadedDimensions = loadedDimensions + (url to dimensions)
+                                }
+                            },
+                        )
+                    }
+
+                    if (images.size > 1) {
+                        val previousPage = (currentPage - 1).takeIf { it >= 0 }
+                        val nextPage = (currentPage + 1).takeIf { it < images.size }
+                        IconButton(
+                            onClick = {
+                                previousPage?.let { scope.launch { pagerState.animateScrollToPage(it) } }
+                            },
+                            enabled = previousPage != null,
+                            modifier =
+                                Modifier.align(Alignment.CenterStart)
+                                    .padding(start = 8.dp)
+                                    .background(Color.Black.copy(alpha = 0.45f)),
+                        ) {
+                            Icon(
+                                Icons.Filled.ChevronLeft,
+                                contentDescription = "Previous image",
+                                tint = Color.White.copy(alpha = if (previousPage == null) 0.35f else 1f),
+                            )
+                        }
+                        IconButton(
+                            onClick = {
+                                nextPage?.let { scope.launch { pagerState.animateScrollToPage(it) } }
+                            },
+                            enabled = nextPage != null,
+                            modifier =
+                                Modifier.align(Alignment.CenterEnd)
+                                    .padding(end = 8.dp)
+                                    .background(Color.Black.copy(alpha = 0.45f)),
+                        ) {
+                            Icon(
+                                Icons.Filled.ChevronRight,
+                                contentDescription = "Next image",
+                                tint = Color.White.copy(alpha = if (nextPage == null) 0.35f else 1f),
+                            )
+                        }
+                    }
+
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
+                    ) {
+                        Icon(
+                            Icons.Filled.Close,
+                            contentDescription = "Close image viewer",
+                            tint = Color.White,
+                        )
+                    }
+                    Text(
+                        text = "${currentPage + 1} / ${images.size}",
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
+                    )
+                }
+                ImageMetadataPanel(
+                    image = images[currentPage],
+                    dimensions = loadedDimensions[images[currentPage].url],
                 )
             }
-            IconButton(
-                onClick = onDismiss,
-                modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
-            ) {
-                Icon(
-                    Icons.Filled.Close,
-                    contentDescription = "Close image viewer",
-                    tint = Color.White,
-                )
-            }
-            Text(
-                text = "${pagerState.currentPage + 1} / ${images.size}",
-                color = Color.White,
-                style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
-            )
         }
     }
 }
+
+@Composable
+private fun ZoomableRecipeImagePage(
+    image: RecipeViewerImage,
+    page: Int,
+    pageCount: Int,
+    onZoomChanged: (Boolean) -> Unit,
+    onDimensionsLoaded: (String, ImageDimensions?) -> Unit,
+) {
+    var scale by remember(image.url) { mutableFloatStateOf(1f) }
+    var offset by remember(image.url) { mutableStateOf(Offset.Zero) }
+    val painter = rememberAsyncImagePainter(model = image.url)
+    val painterState by painter.state.collectAsState()
+    val dimensions =
+        (painterState as? AsyncImagePainter.State.Success)?.result?.image?.let {
+            ImageDimensions(width = it.width, height = it.height)
+        }
+
+    LaunchedEffect(image.url, dimensions) { onDimensionsLoaded(image.url, dimensions) }
+
+    Box(
+        modifier =
+            Modifier.fillMaxSize()
+                .pointerInput(image.url) {
+                    detectRecipeImageZoomPan(
+                        isZoomed = { scale > MIN_IMAGE_SCALE },
+                        onGesture = { pan, zoom ->
+                            val newScale =
+                                (scale * zoom).coerceIn(MIN_IMAGE_SCALE, MAX_IMAGE_SCALE)
+                            val maxOffsetX = (size.width * (newScale - 1f)) / 2f
+                            val maxOffsetY = (size.height * (newScale - 1f)) / 2f
+                            offset =
+                                Offset(
+                                    x = (offset.x + pan.x).coerceIn(-maxOffsetX, maxOffsetX),
+                                    y = (offset.y + pan.y).coerceIn(-maxOffsetY, maxOffsetY),
+                                )
+                            scale = newScale
+                            onZoomChanged(newScale > MIN_IMAGE_SCALE)
+                        },
+                        onDoubleTap = {
+                            scale =
+                                if (scale > MIN_IMAGE_SCALE) MIN_IMAGE_SCALE
+                                else DEFAULT_DOUBLE_TAP_SCALE
+                            offset = Offset.Zero
+                            onZoomChanged(scale > MIN_IMAGE_SCALE)
+                        },
+                    )
+                }
+                .semantics {
+                    contentDescription =
+                        "${image.title}, ${image.sourceLabel}, image ${page + 1} of $pageCount"
+                    stateDescription =
+                        if (scale > MIN_IMAGE_SCALE) "Zoomed in; pan with one finger"
+                        else "Not zoomed; swipe left or right to change images"
+                },
+        contentAlignment = Alignment.Center,
+    ) {
+        Image(
+            painter = painter,
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            modifier =
+                Modifier.fillMaxSize()
+                    .padding(16.dp)
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                        translationX = offset.x
+                        translationY = offset.y
+                    },
+        )
+    }
+}
+
+private suspend fun PointerInputScope.detectRecipeImageZoomPan(
+    isZoomed: () -> Boolean,
+    onGesture: (pan: Offset, zoom: Float) -> Unit,
+    onDoubleTap: (Offset) -> Unit,
+) {
+    var lastTapAt = 0L
+    var lastTapPosition = Offset.Unspecified
+    awaitEachGesture {
+        val firstDown = awaitFirstDown(requireUnconsumed = false)
+        var moved = false
+        var multiTouch = false
+        do {
+            val event = awaitPointerEvent()
+            val zoomChange = event.calculateZoom()
+            val panChange = event.calculatePan()
+            multiTouch = multiTouch || event.changes.size > 1
+            moved =
+                moved ||
+                    (event.changes.firstOrNull()?.position?.minus(firstDown.position)?.getDistance()
+                        ?: 0f) > viewConfiguration.touchSlop
+            if (event.changes.size > 1 || zoomChange != 1f || isZoomed()) {
+                onGesture(panChange, zoomChange)
+                event.changes.forEach { if (it.positionChanged()) it.consume() }
+            }
+        } while (event.changes.any { it.pressed })
+
+        val now = SystemClock.uptimeMillis()
+        val tapPosition = firstDown.position
+        if (!moved && !multiTouch) {
+            val isSecondTap =
+                lastTapAt != 0L &&
+                    now - lastTapAt <= viewConfiguration.doubleTapTimeoutMillis &&
+                    (tapPosition - lastTapPosition).getDistance() <= viewConfiguration.touchSlop * 2
+            if (isSecondTap) {
+                onDoubleTap(tapPosition)
+                lastTapAt = 0L
+            } else {
+                lastTapAt = now
+                lastTapPosition = tapPosition
+            }
+        } else {
+            lastTapAt = 0L
+        }
+    }
+}
+
+@Composable
+private fun ImageMetadataPanel(image: RecipeViewerImage, dimensions: ImageDimensions?) {
+    Column(
+        modifier =
+            Modifier.fillMaxWidth()
+                .background(Color.Black.copy(alpha = 0.65f))
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+    ) {
+        Text(
+            text = image.title,
+            color = Color.White,
+            style = MaterialTheme.typography.titleMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        imageMetadataRows(image, dimensions).forEach { (label, value) ->
+            Row(modifier = Modifier.padding(top = 3.dp)) {
+                Text(
+                    text = "$label: ",
+                    color = Color.White.copy(alpha = 0.85f),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Text(
+                    text = value,
+                    color = Color.White.copy(alpha = 0.85f),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
+    }
+}
+
+private const val MIN_IMAGE_SCALE = 1f
+private const val DEFAULT_DOUBLE_TAP_SCALE = 2.5f
+private const val MAX_IMAGE_SCALE = 5f
 
 /** Keeps the Markdown renderer from attempting relative, malformed, or non-HTTP image targets. */
 private object SafeRecipeImageTransformer : ImageTransformer {

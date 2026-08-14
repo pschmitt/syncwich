@@ -2,6 +2,7 @@ package dev.pschmitt.syncwich.ui.recipes
 
 import dev.pschmitt.syncwich.data.api.dto.RecipeDetailDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeInstructionDto
+import dev.pschmitt.syncwich.data.image.RecipeImageReference
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -60,5 +61,64 @@ class RecipeImageGalleryTest {
             index.galleryUrls,
         )
         assertEquals("Step", index.instructionReferences.single().single().altText)
+    }
+
+    @Test
+    fun `viewer items add source and alt text metadata without duplicating images`() {
+        val index =
+            RecipeImageIndex(
+                coverUrl = "https://example.test/cover.jpg",
+                galleryUrls =
+                    listOf(
+                        "https://example.test/cover.jpg",
+                        "https://example.test/step.jpg",
+                    ),
+                instructionReferences =
+                    listOf(
+                        listOf(
+                            RecipeImageReference(
+                                url = "https://example.test/step.jpg",
+                                altText = "Sear the pork",
+                            )
+                        )
+                    ),
+            )
+
+        assertEquals(
+            listOf(
+                RecipeViewerImage(
+                    url = "https://example.test/cover.jpg",
+                    title = "Recipe One",
+                    sourceLabel = "Recipe cover",
+                ),
+                RecipeViewerImage(
+                    url = "https://example.test/step.jpg",
+                    title = "Recipe One",
+                    sourceLabel = "Step 1 image",
+                    altText = "Sear the pork",
+                ),
+            ),
+            recipeViewerImages("Recipe One", index),
+        )
+    }
+
+    @Test
+    fun `metadata rows include dimensions when the image has loaded`() {
+        val image =
+            RecipeViewerImage(
+                url = "https://example.test/step.jpg",
+                title = "Recipe One",
+                sourceLabel = "Step 2 image",
+                altText = "Sear the pork",
+            )
+
+        assertEquals(
+            listOf(
+                "Source" to "Step 2 image",
+                "Description" to "Sear the pork",
+                "Dimensions" to "1600 × 900 px",
+            ),
+            imageMetadataRows(image, ImageDimensions(width = 1600, height = 900)),
+        )
     }
 }
