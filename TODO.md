@@ -637,20 +637,26 @@ showed only Recipes and Cookbooks while empty Meal Plan/Shopping destinations st
 
 ## SW-24: Add and update recipes and collections
 
-- [ ] Add support for creating recipes, cookbooks, meal plans, and shopping lists
-- [ ] Add support for updating existing recipes, cookbooks, meal plans, and shopping lists
+- [x] Add support for creating recipes and cookbooks (meal plans and shopping lists remain)
+- [x] Add support for updating existing recipes and cookbooks (meal plans and shopping lists
+      remain)
 - [x] Add the recipe/cookbook mutation DTOs, Retrofit routes, and repository entry points for the
       confirmed v3.22.0 single-item routes
 - [x] Preserve cache-first reads and leave existing Room data untouched when a mutation fails
 - [x] Confirm the recipe/cookbook write request shapes against the public schema
-- [ ] Add focused coverage and verify the editing flows on the Zenfone 10
+- [x] Add focused coverage for the recipe/cookbook editing flows
+- [ ] Verify the editing flows on the Zenfone 10
 
-Status: in progress, 2026-08-14. Data-layer groundwork is implemented, but full editor UI and
-meal-plan/shopping-list mutations remain. Read-only inspection of
-`https://nom.brkn.lol/openapi.json` confirmed `CreateRecipe`, `Recipe-Input`, and the
-`CreateCookBook` single-item PUT shape; no POST/PUT/PATCH/DELETE request was made. Remote `just
-check` passed; Zenfone editor-flow verification is still blocked because no editor UI is included
-in this bounded slice.
+Status: mostly done, 2026-08-14. The recipe half of this slice now has a full create/edit UI (see
+SW-33) on top of the previously-landed data-layer groundwork; a standalone cookbook editor landed
+earlier. Meal-plan and shopping-list creation/editing are still unstarted. Read-only inspection of
+`https://nom.brkn.lol/openapi.json` reconfirmed `CreateRecipe`, `Recipe-Input` (including its
+`RecipeIngredient`/`RecipeStep`/`RecipeCategory`/`RecipeTag` input shapes), and the `CreateCookBook`
+single-item PUT shape are unchanged from the prior confirmation; no POST/PUT/PATCH/DELETE request
+was made. Remote `just check` on rofl-13 passed: `ktfmtCheck`, `:app:testDebugUnitTest` (100 tests,
+0 failures, includes the new `RecipeEditorDraftTest`/`RecipeEditorDecodeTest`), and `lintDebug`.
+Zenfone verification of the new recipe editor remains a separate follow-up pass, as does
+meal-plan/shopping-list mutation work.
 
 ## SW-25: Make font size configurable in Appearance settings
 
@@ -754,17 +760,28 @@ wired Zenfone 10 and exposed the Home sections and navigation nodes without cras
 ## SW-33: Add and edit recipes and collections
 
 - [x] Add a bounded cookbook create/edit flow with an explicit save action and validation
-- [ ] Add recipe creation/editing and editing flows for meal plans and shopping lists
-- [x] Preserve the in-session draft on validation/network failure, read cached cookbook edits from
-      Room first, and retain cookbook visibility/filter fields in the cache
-- [x] Reuse the already-confirmed Mealie cookbook write shape; no live write was made
+- [x] Add a bounded recipe create/edit flow with an explicit save action and validation
+- [ ] Add editing flows for meal plans and shopping lists
+- [x] Preserve the in-session draft on validation/network failure, read cached cookbook/recipe
+      edits from Room first, and retain cookbook visibility/filter fields and unedited recipe
+      fields (image, category/tags, nutrition, settings, assets, notes, extras) in the cache
+- [x] Reuse the already-confirmed Mealie cookbook/recipe write shapes; no live write was made
 - [ ] Verify create/edit flows on the Zenfone 10
 
-Status: in progress, 2026-08-14. Added the standalone cookbook editor route for create and cached
-edit flows, with draft validation, explicit save, cache-safe repository mutations, and an offline
-error that keeps the draft. Focused draft/repository/DTO tests and remote `just check` passed. No
-meal-plan, shopping-list, or recipe editor was claimed, no live instance was contacted, and
-Zenfone verification remains pending.
+Status: in progress, 2026-08-14. Added the standalone cookbook editor (landed earlier) and a new
+recipe editor route (`Route.RecipeEditor`, `RecipeEditorScreen`/`RecipeEditorViewModel`/
+`RecipeEditorDraft`) for create and cached edit flows, mirroring the cookbook editor's
+offline-draft/explicit-save/cache-first-on-failure UX. The recipe editor covers name, description,
+yield, prep/cook/total time, and freeform ingredient/step text rows (structured
+quantity/unit/food/ingredient-references aren't exposed by this bounded editor); an edit seeds its
+draft by decoding the cached `RecipeDetailEntity.detailJson` as the `Recipe-Input` envelope so
+fields the editor doesn't expose round-trip untouched through the PUT. `RecipesScreen` gained a
+"New recipe" FAB and `RecipeDetailScreen`'s top app bar gained an Edit action (its favorite/rating/
+"I made this"/timeline action row was intentionally left untouched - a concurrent agent owns that
+area). Focused draft/decode tests (`RecipeEditorDraftTest`, `RecipeEditorDecodeTest`) and remote
+`just check` on rofl-13 passed: `ktfmtCheck`, `:app:testDebugUnitTest` (100 tests, 0 failures),
+`lintDebug`. No meal-plan, shopping-list mutation, or live write was made; Zenfone verification of
+both editors remains pending as a separate follow-up pass.
 
 ## SW-34: Improve recipe-detail loading and add sync preferences
 

@@ -18,12 +18,14 @@ import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -53,6 +55,7 @@ import dev.pschmitt.syncwich.ui.common.SearchField
 fun RecipesScreen(
     onRecipeClick: (RecipeSummaryEntity) -> Unit,
     modifier: Modifier = Modifier,
+    onCreateClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     viewModel: RecipesViewModel = hiltViewModel(),
 ) {
@@ -68,6 +71,13 @@ fun RecipesScreen(
                         Icon(Icons.Filled.Settings, contentDescription = "Settings")
                     }
                 },
+            )
+        },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = onCreateClick,
+                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                text = { Text("New recipe") },
             )
         },
     ) { innerPadding ->

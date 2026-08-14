@@ -18,6 +18,9 @@ sealed interface Route {
     // extra Room lookup is needed to fetch/refresh detail after navigating here.
     @Serializable data class RecipeDetail(val recipeId: String, val slug: String) : Route
 
+    /** Empty [recipeId] opens a create draft; a cached id opens an edit draft. */
+    @Serializable data class RecipeEditor(val recipeId: String = "") : Route
+
     @Serializable data object MealPlan : Route
 
     @Serializable data object ShoppingLists : Route
