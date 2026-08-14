@@ -8,7 +8,10 @@ sealed interface Route {
 
     @Serializable data object Recipes : Route
 
-    @Serializable data class RecipeDetail(val recipeId: String) : Route
+    // slug is carried alongside recipeId because Mealie's full-detail endpoint is keyed by slug,
+    // not id (see RecipesApi.getRecipeDetailRaw) - the tapped recipe card already has both, so no
+    // extra Room lookup is needed to fetch/refresh detail after navigating here.
+    @Serializable data class RecipeDetail(val recipeId: String, val slug: String) : Route
 
     @Serializable data object MealPlan : Route
 

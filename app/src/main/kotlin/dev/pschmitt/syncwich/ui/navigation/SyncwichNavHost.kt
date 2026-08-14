@@ -26,6 +26,7 @@ import androidx.navigation.compose.rememberNavController
 import dev.pschmitt.syncwich.ui.cookbooks.CookbooksScreen
 import dev.pschmitt.syncwich.ui.mealplan.MealPlanScreen
 import dev.pschmitt.syncwich.ui.onboarding.OnboardingScreen
+import dev.pschmitt.syncwich.ui.recipes.RecipeDetailScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipesScreen
 import dev.pschmitt.syncwich.ui.settings.SettingsScreen
 import dev.pschmitt.syncwich.ui.shoppinglists.ShoppingListsScreen
@@ -110,15 +111,19 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
                     }
                 )
             }
-            composable<Route.Recipes> { RecipesScreen() }
+            composable<Route.Recipes> {
+                RecipesScreen(
+                    onRecipeClick = { recipe ->
+                        navController.navigate(Route.RecipeDetail(recipe.id, recipe.slug))
+                    }
+                )
+            }
             composable<Route.MealPlan> { MealPlanScreen() }
             composable<Route.ShoppingLists> { ShoppingListsScreen() }
             composable<Route.Cookbooks> { CookbooksScreen() }
             composable<Route.Settings> { SettingsScreen() }
             composable<Route.RecipeDetail> {
-                // TODO(SW-3): real recipe detail screen, keyed by
-                // toRoute<Route.RecipeDetail>().recipeId.
-                RecipesScreen()
+                RecipeDetailScreen(onBack = { navController.popBackStack() })
             }
         }
     }
