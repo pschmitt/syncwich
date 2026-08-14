@@ -1,5 +1,6 @@
 package dev.pschmitt.syncwich.ui.navigation
 
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
@@ -82,6 +83,11 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
 
     Scaffold(
         modifier = modifier,
+        // Each destination owns its content scaffold and applies the status-bar inset alongside
+        // its own top app bar. Applying the outer scaffold's default system-bar insets here would
+        // offset that whole destination a second time; NavigationBar still contributes its full
+        // height (including the navigation-bar inset) to the content padding below.
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             val backStackEntry by navController.currentBackStackEntryAsState()
             val currentDestination = backStackEntry?.destination

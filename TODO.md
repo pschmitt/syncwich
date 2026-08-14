@@ -556,12 +556,14 @@ fallback schemes. Remote `just check` passed on rofl-13 (ktfmt, unit tests, Andr
 
 ## SW-20: Investigate excessive top/header spacing
 
-- [ ] Trace the source of the large empty area above the screen content (status-bar insets, top app
+- [x] Trace the source of the large empty area above the screen content (status-bar insets, top app
       bar height, scaffold padding, or nested window insets)
-- [ ] Reduce the spacing while preserving safe edge-to-edge behavior and accessibility
-- [ ] Verify the corrected header layout visually on the Zenfone 10
+- [x] Reduce the spacing while preserving safe edge-to-edge behavior and accessibility
+- [x] Verify the corrected header layout visually on the Zenfone 10
 
-Status: not started.
+Status: **done**, 2026-08-14. Removed the duplicate top inset from the outer navigation scaffold;
+the destination scaffold remains responsible for status-bar-safe content. Verified with the
+instrumentation regression and a live debug install/screenshot on the Zenfone 10.
 
 ## SW-21: Reorganize Settings into top-level categories
 
