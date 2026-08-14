@@ -844,3 +844,16 @@ Status: not started.
 - [ ] Update focused coverage and verify the simplified Home view on the Zenfone 10
 
 Status: not started.
+
+## SW-39: Redesign Settings menus to match nyetbox patterns
+
+- [ ] Inspect nyetbox's settings menu hierarchy, row treatments, spacing, icons, and navigation
+      patterns
+- [ ] Redesign Syncwich's Settings landing page and category menus with a current Material 3 visual
+      treatment
+- [ ] Preserve the existing Server, Appearance, and navigation preferences behavior while improving
+      labels, affordances, accessibility, and back navigation
+- [ ] Add focused UI coverage for the redesigned menu structure
+- [ ] Verify the updated Settings experience visually and accessibly on the Zenfone 10
+
+Status: not started.
