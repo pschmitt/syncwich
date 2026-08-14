@@ -619,7 +619,9 @@ showed only Recipes and Cookbooks while empty Meal Plan/Shopping destinations st
       instance before implementing network mutations
 - [ ] Add focused coverage and verify the editing flows on the Zenfone 10
 
-Status: not started.
+Status: in progress, 2026-08-14. Write support is intentionally waiting for confirmed Mealie
+mutation request/response shapes; the configured verification host currently serves frontend HTML
+and returns 404/405 for API routes, so no write request has been attempted.
 
 ## SW-25: Make font size configurable in Appearance settings
 
@@ -684,4 +686,6 @@ the accessible close, page-count, and image-description nodes without crashes.
 - [ ] Confirm all write API shapes against the real Mealie instance before implementing mutations
 - [ ] Verify the actions and rating UI on the Zenfone 10
 
-Status: not started.
+Status: in progress, 2026-08-14. The action UI and mutation paths are waiting for confirmed Mealie
+write endpoint shapes; the configured verification host currently serves frontend HTML and returns
+404/405 for API routes, so no write request has been attempted.
