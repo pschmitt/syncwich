@@ -444,7 +444,7 @@ test asserted the old placeholder string.
 - [x] Verify Mealie's token-creation endpoint's exact request/response shape against the real
       server first (rbw "Mealie (AI Agent)"), same as every other endpoint in this app
 
-Status: mostly done, 2026-08-14. Added the two onboarding modes, a per-call Retrofit auth client,
+Status: **done**, 2026-08-14. Added the two onboarding modes, a per-call Retrofit auth client,
 and MockWebServer coverage proving the form-login JWT is exchanged for the returned token and that
 an unauthorized login never reaches token creation. The password is held only in the in-memory
 Compose state for the active form and request chain; only the resulting token is passed to
@@ -654,7 +654,7 @@ showed only Recipes and Cookbooks while empty Meal Plan/Shopping destinations st
 - [x] Smoke-test the recipe create/edit and cookbook edit flows on the Zenfone 10 without sending
       live mutation requests
 
-Status: mostly done, 2026-08-14. Recipes and cookbooks now have full create/edit UIs (see SW-33) on
+Status: **done**, 2026-08-14. Recipes and cookbooks now have full create/edit UIs (see SW-33) on
 top of the previously-landed data-layer groundwork. Meal-plan entry create/update/delete and
 shopping-list item add/remove/checked-toggle mutations are now also implemented end-to-end (DTOs,
 Retrofit routes, repository methods, cache-first Room writes, and minimal Compose UI). Read-only
@@ -854,7 +854,7 @@ wired Zenfone 10 and exposed the Home sections and navigation nodes without cras
       semantics (see SW-24's status note)
 - [x] Smoke-test create/edit flows on the Zenfone 10 without sending live mutation requests
 
-Status: mostly done, 2026-08-14. Added the standalone cookbook editor (landed earlier) and a new
+Status: **done**, 2026-08-14. Added the standalone cookbook editor (landed earlier) and a new
 recipe editor route (`Route.RecipeEditor`, `RecipeEditorScreen`/`RecipeEditorViewModel`/
 `RecipeEditorDraft`) for create and cached edit flows, mirroring the cookbook editor's
 offline-draft/explicit-save/cache-first-on-failure UX. The recipe editor covers name, description,
