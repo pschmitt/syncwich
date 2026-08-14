@@ -77,7 +77,7 @@ import dev.pschmitt.syncwich.data.api.dto.RecipeIngredientDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeInstructionDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeNutritionDto
 import dev.pschmitt.syncwich.data.api.recipeImageUrl
-import dev.pschmitt.syncwich.data.image.extractMarkdownImageUrls
+import dev.pschmitt.syncwich.data.image.extractRecipeImageReferences
 import dev.pschmitt.syncwich.data.image.isSafeRecipeImageUrl
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
 import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
@@ -255,6 +255,7 @@ private fun RecipeDetailContent(
                 InstructionRow(
                     number = index + 1,
                     instruction = instruction,
+                    serverUrl = serverUrl,
                     galleryImages = galleryImages,
                     onImageClick = { viewerPage = galleryImages.indexOf(it).coerceAtLeast(0) },
                 )
@@ -407,8 +408,7 @@ fun recipeImageGalleryUrls(serverUrl: String, recipe: RecipeDetailDto): List<Str
     buildList {
         recipeImageUrl(serverUrl, recipe.id, recipe.image)?.let(::add)
         recipe.recipeInstructions
-            .flatMap { extractMarkdownImageUrls(it.text) }
-            .filter(::isSafeRecipeImageUrl)
+            .flatMap { extractRecipeImageReferences(it.text, serverUrl).map { reference -> reference.url } }
             .forEach { if (it !in this) add(it) }
     }
 
@@ -465,6 +465,7 @@ private fun IngredientRow(ingredient: RecipeIngredientDto) {
 private fun InstructionRow(
     number: Int,
     instruction: RecipeInstructionDto,
+    serverUrl: String,
     galleryImages: List<String>,
     onImageClick: (String) -> Unit,
 ) {
@@ -480,28 +481,30 @@ private fun InstructionRow(
                 Text(text = instruction.title, style = MaterialTheme.typography.titleSmall)
             }
             Markdown(
-                content = stripMarkdownImageSyntax(instruction.text),
+                content = stripRecipeImageSyntax(instruction.text),
                 imageTransformer = SafeRecipeImageTransformer,
                 modifier = Modifier.fillMaxWidth(),
             )
-            val imageUrls = extractMarkdownImageUrls(instruction.text)
-            if (imageUrls.isNotEmpty()) {
+            val imageReferences = extractRecipeImageReferences(instruction.text, serverUrl)
+            if (imageReferences.isNotEmpty()) {
                 Row(
                     modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    imageUrls.forEachIndexed { index, url ->
+                    imageReferences.forEachIndexed { index, reference ->
                         AsyncImage(
-                            model = url,
-                            contentDescription = "Open step image ${index + 1}",
+                            model = reference.url,
+                            contentDescription =
+                                reference.altText ?: "Open step image ${index + 1}",
                             contentScale = ContentScale.Crop,
                             modifier =
                                 Modifier.width(160.dp)
                                     .height(100.dp)
-                                    .clickable { onImageClick(url) }
+                                    .clickable { onImageClick(reference.url) }
                                     .semantics {
                                         contentDescription =
-                                            "Open step image ${index + 1} of ${imageUrls.size}"
+                                            reference.altText
+                                                ?: "Open step image ${index + 1} of ${imageReferences.size}"
                                     },
                         )
                     }
@@ -518,6 +521,11 @@ private val MARKDOWN_IMAGE_SYNTAX =
 
 private fun stripMarkdownImageSyntax(markdown: String): String =
     MARKDOWN_IMAGE_SYNTAX.replace(markdown, "")
+
+private fun stripRecipeImageSyntax(content: String): String =
+    HTML_IMAGE_SYNTAX.replace(stripMarkdownImageSyntax(content), "")
+
+private val HTML_IMAGE_SYNTAX = Regex("""<img\b[^>]*>""", RegexOption.IGNORE_CASE)
 
 @Composable
 private fun RecipeImageViewer(

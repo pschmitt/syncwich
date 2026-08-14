@@ -20,7 +20,8 @@ class RecipeImageGalleryTest {
                         RecipeInstructionDto(
                             text =
                                 "![Step one](https://images.example/one.webp) " +
-                                    "![Duplicate](https://images.example/one.webp)",
+                                    "![Duplicate](https://images.example/one.webp) " +
+                                    "<img src=\"/api/media/recipes/recipe-1/assets/step.jpg\" />",
                         ),
                         RecipeInstructionDto(text = "![Unsafe](javascript:alert(1))"),
                     ),
@@ -30,6 +31,7 @@ class RecipeImageGalleryTest {
             listOf(
                 "https://mealie.example/api/media/recipes/recipe-1/images/min-original.webp?v=cover-marker",
                 "https://images.example/one.webp",
+                "https://mealie.example/api/media/recipes/recipe-1/assets/step.jpg",
             ),
             recipeImageGalleryUrls("https://mealie.example", recipe),
         )

@@ -1064,12 +1064,17 @@ on the wired Zenfone without crashes.
 
 ## SW-45: Render and cache images embedded in recipe step HTML
 
-- [ ] Parse image elements embedded as `<img>` tags inside recipe step contents, including their
+- [x] Parse image elements embedded as `<img>` tags inside recipe step contents, including their
       source URLs and useful alt text where available
-- [ ] Render those step images in the recipe detail view alongside existing Markdown images
-- [ ] Prefetch and persist them through the shared Coil disk cache for offline-first reuse
-- [ ] Handle relative/unsafe URLs without creating unnecessary API calls or unsafe requests
-- [ ] Add focused parsing/cache coverage and verify the Baek Jong-won tofu recipe offline on the
+- [x] Render those step images in the recipe detail view alongside existing Markdown images
+- [x] Prefetch and persist them through the shared Coil disk cache for offline-first reuse
+- [x] Handle relative/unsafe URLs without creating unnecessary API calls or unsafe requests
+- [x] Add focused parsing/cache coverage and verify the Baek Jong-won tofu recipe offline on the
       Zenfone 10
 
-Status: not started.
+Status: **done**, 2026-08-14. The live Baek Jong-won recipe contains five root-relative HTML media
+tags in its instruction text. The shared extractor resolves those same-server paths, filters
+unsafe destinations, renders clickable thumbnails/gallery entries, and feeds the resolved URLs to
+Coil's bounded disk-cache prefetcher. Remote `just check` passed; all five media requests returned
+200 on the online Zenfone run, and the cached step images remained visible after Wi-Fi/data were
+disabled and the recipe was reopened, with no subsequent media requests.

@@ -47,6 +47,43 @@ class RecipeImagePrefetchTest {
     }
 
     @Test
+    fun `extracts HTML images and resolves relative Mealie media paths`() {
+        val references =
+            extractRecipeImageReferences(
+                """
+                First step.
+                <img src="/api/media/recipes/r1/assets/ingredients-webp.webp" alt="Ingredients" width="100%"/>
+                <IMG alt='Pan' src='api/media/recipes/r1/assets/pan.jpg?size=large'>
+                <img src="data:image/png;base64,not-a-request" alt="unsafe" />
+                <img src="//other.example/remote.jpg" alt="cross server" />
+                """.trimIndent(),
+                "https://mealie.example",
+            )
+
+        assertEquals(
+            listOf(
+                "https://mealie.example/api/media/recipes/r1/assets/ingredients-webp.webp",
+                "https://mealie.example/api/media/recipes/r1/assets/pan.jpg?size=large",
+            ),
+            references.map(RecipeImageReference::url),
+        )
+        assertEquals(listOf("Ingredients", "Pan"), references.map(RecipeImageReference::altText))
+    }
+
+    @Test
+    fun `resolves HTML entities but rejects unsafe or malformed image destinations`() {
+        assertEquals(
+            "https://mealie.example/api/media/r1/a.jpg?size=large&format=webp",
+            resolveRecipeImageUrl(
+                "https://mealie.example",
+                "/api/media/r1/a.jpg?size=large&amp;format=webp",
+            ),
+        )
+        assertEquals(null, resolveRecipeImageUrl("https://mealie.example", "javascript:alert(1)"))
+        assertEquals(null, resolveRecipeImageUrl("https://mealie.example", "https://user:p@evil.example/a"))
+    }
+
+    @Test
     fun `selects every cover before capped inline images`() {
         val recipes = listOf(recipeSummary("r1", "1"), recipeSummary("r2", "2"))
         val details =
@@ -84,6 +121,32 @@ class RecipeImagePrefetchTest {
                 maxInlineImagesPerRecipe = 1,
                 maxInlineImages = 2,
             ),
+        )
+    }
+
+    @Test
+    fun `prefetch selection includes HTML images from cached instructions`() {
+        val urls =
+            selectRecipeImagePrefetchUrls(
+                serverUrl = "https://mealie.example",
+                recipes = emptyList(),
+                details =
+                    listOf(
+                        detail(
+                            "r1",
+                            """
+                            {"id":"r1","slug":"r1","name":"One","recipeInstructions":[
+                              {"text":"<img src=\"/api/media/recipes/r1/assets/step.jpg\" alt=\"Step\">"}
+                            ]}
+                            """.trimIndent(),
+                        )
+                    ),
+                json = json,
+            )
+
+        assertEquals(
+            listOf("https://mealie.example/api/media/recipes/r1/assets/step.jpg"),
+            urls,
         )
     }
 
