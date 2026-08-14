@@ -71,10 +71,64 @@ for this device test ("Syncwich SW-2 onboarding e2e test (agent, revoke after re
 
 ## SW-3: Recipes UI
 
-- [ ] Recipe list: search, category/tag filter chips, cards with cover image
-- [ ] Recipe detail: hero image, ingredients, steps, nutrition, rating/times, Markdown rendering
+- [x] Recipe list: search, category/tag filter chips, cards with cover image
+- [x] Recipe detail: hero image, ingredients, steps, nutrition, rating/times, Markdown rendering
 
-Status: not started.
+Status: mostly done, 2026-08-14 (code complete, on-device visual verification incomplete - see
+below). `just check` (ktfmtCheck, 18 unit tests incl. 8 new ones for the
+image-URL helper and search filter, Android Lint) green on rofl-13. `RecipesScreen` reads
+`RecipeRepository.observeRecipes()`/`observeRecipesByCategory`/`observeRecipesByTag` (all Room
+`Flow`s) through a new `RecipesViewModel`, with category/tag chips as mutually-exclusive
+single-select filters (the repository only exposes "all"/"by one category"/"by one tag" queries,
+which is what a single self-hosted recipe box actually needs) and an in-memory name/description
+search on top - `RecipesViewModel.init` also kicks a best-effort `refreshRecipes`/
+`refreshCategories`/`refreshTags` per AGENTS.md's offline-first rule, never blocking the cached
+list. `RecipeDetailScreen`/`RecipeDetailViewModel` decode `RecipeDetailEntity.detailJson` into
+`RecipeDetailDto` and render hero image, rating, prep/cook/active/total time, ingredients, numbered
+steps, nutrition, and notes, with `multiplatform-markdown-renderer`'s `com.mikepenz.markdown.m3.Markdown`
+for the description and each instruction's text (Mealie stores both as Markdown). `Route.RecipeDetail`
+now carries `slug` alongside `recipeId` (Mealie's detail endpoint is keyed by slug, not id) - a
+breaking change to that route's constructor since it was still an unused stub; flagged for the
+reviewer to check for conflicts with the other three SW-N worktrees editing `Route.kt`/
+`SyncwichNavHost.kt` concurrently, though none of them reference `RecipeDetail` today. Wired a Coil3
+`SingletonImageLoader.Factory` onto `SyncwichApp` reusing the app's existing authenticated/
+dynamic-base-URL `OkHttpClient` (there was no image loader configured at all before this) - added
+`data/api/MealieMedia.kt#recipeImageUrl` to build the cover image URL.
+
+Verified live against the real Mealie instance (read-only GETs via the rbw "Mealie (AI Agent)"
+account, password-login since that entry holds a login password not an API token) before writing
+any UI code: confirmed `GET {serverUrl}/api/media/recipes/{id}/images/min-original.webp` serves the
+cover image (worked with and without the `Authorization` header on this instance, so the
+auth-header approach is the safe default for locked-down deployments) and, importantly, caught a
+real gotcha - Mealie's `image` field is the literal string `"no image"` (not `null`) when a recipe
+has no cover, on both `/api/recipes` and `/api/recipes/{slug}`; `recipeImageUrl` special-cases it
+(regression-tested in `MealieMediaTest`). Confirmed the recipe detail JSON shape already modeled by
+`RecipeDetailDto` matches the live server exactly (ingredients' `display` field, instructions'
+`text` field, `nutrition`/`settings`/`notes`), so no DTO changes were needed.
+
+Verified on-device: `just deploy-zenfone` installed cleanly and the app launched without crashing
+(confirmed via logcat - no `FATAL`/`AndroidRuntime` entries, app stayed foregrounded). The device
+had been signed out since SW-2's verification run, so completing onboarding was needed to reach the
+Recipes screen; that part of the on-device pass is only partially complete. `adb shell input text`
+into the Server URL field repeatedly got corrupted (old content resurfacing and concatenating with
+newly-typed text) in a way that outlasted disabling the device's Keyguard autofill service, so it's
+some other IME/state-restoration quirk on this particular physical device rather than a clean
+"autofill got in the way" story. One attempt did get far enough to submit real credentials end to
+end: with a valid live JWT (password-login via the rbw "Mealie (AI Agent)" account, since that entry
+holds a login password, not a long-lived API token) and a correctly-entered server URL, tapping
+through triggered a real network call and the app correctly rendered
+`OnboardingViewModel`'s "That server rejected the API token" message for a 401 - i.e. the
+network/error-handling path exercised correctly end-to-end, just not with a token Mealie was willing
+to accept via that path (a curl with the same token against `/api/users/self` succeeded, so the
+mismatch is likely specific to how the JWT interacts with validation rather than the token being
+outright invalid). Did not reach a signed-in state, so the recipe grid/detail screens themselves are
+unverified by eye on this pass. Restored the device's autofill setting and left the app
+signed-out/force-stopped, matching how it was found. Confidence instead rests on: `just check` fully
+green (including the new tests above), the recipe detail JSON shape and image URL behavior confirmed
+live against the real server before writing any code, and a crash-free launch/onboarding submission.
+Recommend the reviewer (or a follow-up pass, possibly with a real long-lived API token instead of a
+password-login JWT) complete one successful sign-in and browse the Recipes/detail screens before
+considering the on-device verification bar fully met.
 
 ## SW-4: Meal plan UI
 
