@@ -21,6 +21,7 @@ androidx-test-uiautomator = "2.4.0"
 androidx-espresso = "3.7.0"
 androidx-work = "2.11.2"
 coil = "3.5.0"
+errorprone-annotations = "2.47.0"
 fastlane-screengrab = "2.1.1"
 hilt = "2.60.1"
 junit = "4.13.2"
@@ -72,6 +73,7 @@ androidx-work = { group = "androidx.work", name = "work-runtime-ktx", version.re
 androidx-work-testing = { group = "androidx.work", name = "work-testing", version.ref = "androidx-work" }
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
+errorprone-annotations = { group = "com.google.errorprone", name = "error_prone_annotations", version.ref = "errorprone-annotations" }
 fastlane-screengrab = { group = "tools.fastlane", name = "screengrab", version.ref = "fastlane-screengrab" }
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }

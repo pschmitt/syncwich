@@ -147,6 +147,9 @@ dependencies {
 
     // Encrypted server URL + API token storage, plus plain prefs (last sync time, UI prefs)
     implementation(libs.androidx.security.crypto)
+    // AndroidX Security pulls Tink's annotations as a compile-time dependency; keep them on the
+    // release shrinker's classpath so R8 can resolve the referenced annotations.
+    implementation(libs.errorprone.annotations)
     implementation(libs.androidx.datastore.preferences)
 
     // Background sync

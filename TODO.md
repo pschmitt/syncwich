@@ -1223,13 +1223,13 @@ missing-class failure.
 
 ## SW-58: Fix release R8 missing annotations
 
-- [ ] Resolve the missing `com.google.errorprone.annotations.*` classes reported by R8
-- [ ] Keep the release minification behavior intact and avoid weakening shrinker coverage
+- [x] Resolve the missing `com.google.errorprone.annotations.*` classes reported by R8
+- [x] Keep the release minification behavior intact and avoid weakening shrinker coverage
 - [ ] Verify signed APK and AAB release builds in GitHub Actions
 
-Status: not started, 2026-08-14. The first post-signing-secrets release run reached `minifyReleaseWithR8`
-but failed because `com.google.crypto.tink` references missing Error Prone annotations. Signing,
-keystore decoding, and unit tests passed before that unrelated build failure.
+Status: in progress, 2026-08-14. The missing annotations are now an explicit dependency; remote
+ktfmt/unit-test/lint checks and minified release APK/AAB builds both pass. GitHub Actions verification
+of the CI-signed artifacts is pending.
 
 ## SW-59: Add an About page
 
@@ -1274,5 +1274,41 @@ Status: not started, 2026-08-14.
 - [ ] Keep step content, embedded images, and navigation accessible in the full-screen view
 - [ ] Provide a clear way to exit and return to the same recipe position
 - [ ] Add focused UI coverage and verify it on the Zenfone 10
+
+Status: not started, 2026-08-14.
+
+## SW-64: Add image metadata and pinch/double-tap zoom
+
+- [ ] Show useful metadata for the selected recipe image in the viewer
+- [ ] Add double-tap zoom in/out behavior
+- [ ] Add pinch-to-zoom and pan while zoomed
+- [ ] Preserve swipe navigation/accessibility and verify on the Zenfone 10
+
+Status: not started, 2026-08-14.
+
+## SW-65: Support camera capture in image uploads
+
+- [ ] Add a camera capture action alongside the existing gallery/image picker actions
+- [ ] Request and handle camera permission only when capture is chosen
+- [ ] Reuse the existing image processing, preview, and upload/edit pipeline
+- [ ] Preserve offline-safe draft behavior and verify capture on the Zenfone 10
+
+Status: not started, 2026-08-14.
+
+## SW-66: Replace the editor with a rich-text editing experience
+
+- [ ] Evaluate and integrate an actual rich-text editor for Markdown/HTML-capable fields
+- [ ] Generate/update rendered previews automatically while editing
+- [ ] Preserve existing Markdown/HTML, embedded images, and offline drafts
+- [ ] Add focused editor coverage and verify recipe/cookbook editing on the Zenfone 10
+
+Status: not started, 2026-08-14.
+
+## SW-67: Consolidate recipe rating controls
+
+- [ ] Replace the duplicate rating widgets with one compact global rating display
+- [ ] Open a dialog from that control for the user’s own 1–5-star rating
+- [ ] Preserve offline action queuing and the existing one-decimal display formatting
+- [ ] Add focused UI/action coverage and verify the compact rating flow on the Zenfone 10
 
 Status: not started, 2026-08-14.
