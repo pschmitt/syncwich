@@ -432,3 +432,17 @@ Status: not started.
       is specifically a first-run experience, not something shown on every 6h background resync
 
 Status: not started.
+
+## SW-16: Cookbook grid recipe preview carousel + search
+
+- [ ] Each cookbook card in `CookbooksScreen`'s grid currently shows no indication of its contents -
+      add a horizontally-scrolling carousel of that cookbook's recipes' cover images as a preview
+      (a handful of thumbnails, e.g. via `CookbookRepository`/`RecipeDao.observeByCookbook`, which
+      SW-6 already built) so a user can tell what's in a cookbook without opening it
+- [ ] Add a search field to `CookbooksScreen` (filtering the cookbook list by name/description) -
+      once SW-9 lands, match its rounded search bar styling rather than inventing a new one
+- [ ] Consider whether the carousel needs its own lightweight query/cache path or can reuse
+      `CookbookRepository`'s existing per-cookbook recipe flow without triggering a full detail
+      fetch for every card on screen at once
+
+Status: not started.
