@@ -25,10 +25,13 @@ maintained.
       apps exactly
 - [x] `AGENTS.md`, `README.md`, `PRIVACY.md`, `LICENSE` (GPL-3.0), `.gitignore`, `renovate.json`,
       fastlane skeleton (Appfile/Screengrabfile/Fastfile/metadata + a real `ScreenshotTest`)
-- [ ] Verified via remote `just build`/`just check` on rofl-13 and installed on a real device
+- [x] Verified via remote `just build`/`just check` on rofl-13 and installed on a real device
 
-Status: in progress, 2026-08-14. All files scaffolded; remote build/check and device install still
-need to run.
+Status: **done**, 2026-08-14. `just check` (ktfmtCheck + Android Lint) and `assembleDebugAndroidTest`
+passed on rofl-13; `just deploy-all` built, fetched, and installed the debug APK on the Zenfone 10,
+Mi Pad 4, and Pixel 5. Confirmed via screenshot on the Zenfone 10: app launches, Material You
+dynamic color is active (wallpaper-derived blue accent), bottom nav renders all four tabs with
+correct icons and placeholder copy.
 
 ## SW-2: Server connection + data layer
 
