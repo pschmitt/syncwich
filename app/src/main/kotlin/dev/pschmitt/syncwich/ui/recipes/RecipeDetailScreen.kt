@@ -61,7 +61,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.SmallFloatingActionButton
@@ -635,21 +634,18 @@ internal fun RecipeActionControls(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                imageVector = Icons.Filled.Star,
-                contentDescription = null,
+                imageVector =
+                    if (globalRating == null) Icons.Filled.StarBorder else Icons.Filled.Star,
+                contentDescription = if (globalRating == null) "No ratings yet" else null,
                 tint = MaterialTheme.colorScheme.primary,
             )
-            Text(
-                text = globalRating?.let { "${formatRating(it)} / 5" } ?: "No ratings yet",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(start = 8.dp),
-            )
-            Text(
-                text = "Rate",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(start = 8.dp),
-            )
+            globalRating?.let {
+                Text(
+                    text = "${formatRating(it)} / 5",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            }
         }
 
         if (ratingDialogVisible) {
@@ -698,12 +694,18 @@ private fun RecipeRatingDialog(
         title = { Text("Rate this recipe") },
         text = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text =
-                        globalRating?.let { "Overall rating: ${formatRating(it)} / 5" }
-                            ?: "No ratings yet",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+                if (globalRating != null) {
+                    Text(
+                        text = "Overall rating: ${formatRating(globalRating)} / 5",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Filled.StarBorder,
+                        contentDescription = "No overall rating",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 Text(
                     text = "Your rating",
                     style = MaterialTheme.typography.titleSmall,
@@ -856,15 +858,14 @@ internal fun imageMetadataRows(
     }
 
 @Composable
-private fun SectionHeader(
+internal fun SectionHeader(
     icon: ImageVector,
     title: String,
     action: (@Composable () -> Unit)? = null,
 ) {
-    HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp),
     ) {
         Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
         Text(

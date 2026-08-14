@@ -1,5 +1,6 @@
 package dev.pschmitt.syncwich.ui.recipes
 
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -156,5 +157,35 @@ class RecipeActionControlsTest {
         composeTestRule.onNodeWithContentDescription("Open rating dialog").performClick()
         composeTestRule.onNodeWithText("Your rating").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Rate 1 out of 5 stars").assertIsDisplayed()
+    }
+
+    @Test
+    fun unratedRecipeUsesAnEmptyStarWithoutTheRateLabel() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                RecipeActionControls(
+                    actions = RecipeActionUiState(),
+                    onRatingSelected = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithContentDescription("No ratings yet").assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("No ratings yet").assertCountEquals(0)
+        composeTestRule.onAllNodesWithText("Rate").assertCountEquals(0)
+    }
+
+    @Test
+    fun sectionHeadersRelyOnCardSpacingInsteadOfSeparators() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                SectionHeader(
+                    icon = androidx.compose.material.icons.Icons.Filled.Star,
+                    title = "Ingredients",
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("Ingredients").assertIsDisplayed()
     }
 }

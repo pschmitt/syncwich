@@ -1521,3 +1521,23 @@ rating instrumentation, remote checks, and ZF10 verification pass.
 Status: **done**, 2026-08-14. Recipe and cookbook result titles/descriptions use accessible
 tertiary-container match spans with case-insensitive range coverage; search filtering remains
 cache-first. Unit coverage, remote checks, and the verified ZF10 build pass.
+
+## SW-85: Remove recipe-view separators between cards
+
+- [x] Remove horizontal separators from the recipe view now that content groups use cards
+- [x] Preserve clear spacing and visual hierarchy between adjacent cards
+- [x] Add focused UI coverage and verify the updated recipe view on the Zenfone 10
+
+Status: **done**, 2026-08-14. Recipe section headers no longer draw horizontal dividers and use
+card-internal spacing instead. Focused instrumentation passed on the Zenfone 10.
+
+## SW-86: Compact the recipe ratings widget
+
+- [x] Remove the visible “Rate” label from the recipe ratings widget
+- [x] Replace the “No ratings yet” text with an empty-star affordance
+- [x] Preserve rating access, accessibility semantics, and one-decimal formatting
+- [x] Add focused UI coverage and verify the compact widget on the Zenfone 10
+
+Status: **done**, 2026-08-14. Rated recipes show only the compact star/value pair; unrated recipes
+show an accessible empty star, including in the rating dialog. Focused instrumentation, remote
+unit tests, lint, and ZF10 verification pass.
