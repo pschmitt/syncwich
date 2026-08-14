@@ -1249,6 +1249,16 @@ Status: not started, 2026-08-14.
 
 Status: not started, 2026-08-14.
 
+## SW-62: Make synchronization change-aware
+
+- [ ] Identify reliable Mealie change markers or conditional-request support for recipes,
+  cookbooks, and other synced resources
+- [ ] Avoid downloading unchanged collections and details while preserving cache-first reads
+- [ ] Handle servers that do not expose usable validators or timestamps with a safe fallback
+- [ ] Add sync-efficiency tests and verify request behavior on the Zenfone 10
+
+Status: not started, 2026-08-14.
+
 ## SW-61: Add a “sync on app start” setting
 
 - [ ] Add a clearly named setting to enable or disable synchronization on app start
