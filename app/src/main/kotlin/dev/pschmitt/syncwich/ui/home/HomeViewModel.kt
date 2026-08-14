@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.pschmitt.syncwich.data.db.entity.CookbookEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.data.repository.CookbookRepository
+import dev.pschmitt.syncwich.data.repository.RecipeHistoryRepository
 import dev.pschmitt.syncwich.data.repository.RecipeRepository
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import dev.pschmitt.syncwich.sync.SyncScheduler
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 data class HomeUiState(
+    val recentlyViewedRecipes: List<RecipeSummaryEntity> = emptyList(),
     val recentlyAddedRecipes: List<RecipeSummaryEntity> = emptyList(),
     val recentlyCookedRecipes: List<RecipeSummaryEntity> = emptyList(),
     val favoriteRecipes: List<RecipeSummaryEntity> = emptyList(),
@@ -45,6 +47,7 @@ class HomeViewModel
 @Inject
 constructor(
     private val recipeRepository: RecipeRepository,
+    private val recipeHistoryRepository: RecipeHistoryRepository,
     private val cookbookRepository: CookbookRepository,
     settingsRepository: SettingsRepository,
     private val syncScheduler: SyncScheduler,
@@ -63,15 +66,24 @@ constructor(
                 ?: flowOf(emptyList())
         }
 
+    private val recipeSections =
+        combine(recipeRepository.observeRecipes(), recipeHistoryRepository.recipeIds) {
+                recipes,
+                historyIds,
+            ->
+            recipes to recipesForHistory(historyIds, recipes)
+        }
+
     val uiState: StateFlow<HomeUiState> =
         combine(
-                recipeRepository.observeRecipes(),
+                recipeSections,
                 favoriteCookbook,
                 favoriteRecipes,
                 settingsRepository.credentials,
                 syncStatusRepository.status,
-            ) { recipes, favoritesCookbook, favorites, credentials, syncStatus ->
+            ) { (recipes, recentlyViewed), favoritesCookbook, favorites, credentials, syncStatus ->
                 HomeUiState(
+                    recentlyViewedRecipes = recentlyViewed,
                     recentlyAddedRecipes =
                         sortRecipesByDate(recipes, RecipeSummaryEntity::dateAdded),
                     recentlyCookedRecipes =
@@ -126,3 +138,16 @@ fun sortRecipesByDate(
                 .thenBy { it.name.lowercase() }
         )
         .take(limit.coerceAtLeast(0))
+
+/** Resolves the ordered local history against cached summaries, omitting missing cache entries. */
+fun recipesForHistory(
+    historyIds: List<String>,
+    recipes: List<RecipeSummaryEntity>,
+    limit: Int = HOME_RECIPE_PREVIEW_LIMIT,
+): List<RecipeSummaryEntity> {
+    val recipesById = recipes.associateBy { it.id }
+    return historyIds
+        .mapNotNull { recipesById[it] }
+        .distinctBy { it.id }
+        .take(limit.coerceAtLeast(0))
+}

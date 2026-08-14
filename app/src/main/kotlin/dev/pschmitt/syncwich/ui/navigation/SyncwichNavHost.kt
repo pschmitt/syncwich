@@ -80,6 +80,11 @@ private val topLevelNavItems =
 fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Route.Home) {
     val navController = rememberNavController()
     val navigationBarViewModel: NavigationBarViewModel = hiltViewModel()
+    val recipeHistoryViewModel: RecipeHistoryViewModel = hiltViewModel()
+    val openRecipe: (String, String) -> Unit = { recipeId, slug ->
+        recipeHistoryViewModel.recordOpen(recipeId)
+        navController.navigate(Route.RecipeDetail(recipeId, slug))
+    }
     val visibleNavBarItemKeys by
         navigationBarViewModel.visibleItemKeys.collectAsStateWithLifecycle()
     val resolvedTopLevelNavItems =
@@ -163,7 +168,7 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
             composable<Route.Home> {
                 HomeScreen(
                     onRecipeClick = { recipe ->
-                        navController.navigate(Route.RecipeDetail(recipe.id, recipe.slug))
+                        openRecipe(recipe.id, recipe.slug)
                     },
                     onRecipesClick = { navController.navigate(Route.Recipes) },
                     onCookbooksClick = { navController.navigate(Route.Cookbooks) },
@@ -176,7 +181,7 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
             composable<Route.Recipes> {
                 RecipesScreen(
                     onRecipeClick = { recipe ->
-                        navController.navigate(Route.RecipeDetail(recipe.id, recipe.slug))
+                        openRecipe(recipe.id, recipe.slug)
                     },
                     onCreateClick = { navController.navigate(Route.RecipeEditor()) },
                     onSettingsClick = { navController.navigate(Route.Settings) },
@@ -185,7 +190,7 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
             composable<Route.Favorites> {
                 FavoritesScreen(
                     onRecipeClick = { recipe ->
-                        navController.navigate(Route.RecipeDetail(recipe.id, recipe.slug))
+                        openRecipe(recipe.id, recipe.slug)
                     },
                     onSettingsClick = { navController.navigate(Route.Settings) },
                 )
@@ -193,7 +198,7 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
             composable<Route.MealPlan> {
                 MealPlanScreen(
                     onRecipeClick = { recipeId, slug ->
-                        navController.navigate(Route.RecipeDetail(recipeId, slug))
+                        openRecipe(recipeId, slug)
                     },
                     onSettingsClick = { navController.navigate(Route.Settings) },
                 )
@@ -218,7 +223,7 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
             composable<Route.CookbookDetail> {
                 CookbookDetailScreen(
                     onRecipeClick = { recipeId, slug ->
-                        navController.navigate(Route.RecipeDetail(recipeId, slug))
+                        openRecipe(recipeId, slug)
                     },
                     onEditClick = { cookbookId ->
                         navController.navigate(Route.CookbookEditor(cookbookId))

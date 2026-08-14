@@ -13,11 +13,16 @@ import javax.inject.Singleton
 @Singleton
 class AccountRepository
 @Inject
-constructor(private val settingsRepository: SettingsRepository, private val database: AppDatabase) {
+constructor(
+    private val settingsRepository: SettingsRepository,
+    private val database: AppDatabase,
+    private val recipeHistoryRepository: RecipeHistoryRepository,
+) {
 
     suspend fun signOut() {
         settingsRepository.clear()
         settingsRepository.resetSyncState()
         database.clearAllTables()
+        recipeHistoryRepository.clear()
     }
 }

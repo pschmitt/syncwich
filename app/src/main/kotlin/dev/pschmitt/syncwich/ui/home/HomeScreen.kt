@@ -61,7 +61,8 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val hasCachedRecipes =
-        uiState.recentlyAddedRecipes.isNotEmpty() ||
+        uiState.recentlyViewedRecipes.isNotEmpty() ||
+            uiState.recentlyAddedRecipes.isNotEmpty() ||
             uiState.recentlyCookedRecipes.isNotEmpty() ||
             uiState.favoriteRecipes.isNotEmpty()
 
@@ -120,6 +121,17 @@ fun HomeScreen(
                                 onRetry = viewModel::refresh,
                             )
                         }
+                    }
+                }
+                if (uiState.recentlyViewedRecipes.isNotEmpty()) {
+                    item {
+                        RecipeSection(
+                            title = "Recently viewed",
+                            recipes = uiState.recentlyViewedRecipes,
+                            serverUrl = uiState.serverUrl,
+                            onRecipeClick = onRecipeClick,
+                            onSeeAll = onRecipesClick,
+                        )
                     }
                 }
                 if (uiState.recentlyAddedRecipes.isNotEmpty()) {

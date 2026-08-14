@@ -1019,13 +1019,20 @@ Status: not started.
 
 ## SW-42: Add a Home Recently viewed section
 
-- [ ] Record recipe opens locally with a bounded, recency-ordered history
-- [ ] Add a cache-first Home section for recipes recently viewed inside Syncwich
-- [ ] Avoid duplicate entries, keep the list useful offline, and handle deleted/uncached recipes
+- [x] Record recipe opens locally with a bounded, recency-ordered DataStore history, deduplicating
+      repeated opens and clearing account-local history on sign-out
+- [x] Add a cache-first Home section for recipes recently viewed inside Syncwich, resolved against
+      Room summaries without requiring a network refresh
+- [x] Avoid duplicate entries, keep the list useful offline, and omit deleted/uncached recipes
       gracefully
-- [ ] Add focused ordering/history coverage and verify the section on the Zenfone 10
+- [x] Add focused ordering/history coverage
+- [ ] Verify the section on the Zenfone 10
 
-Status: not started.
+Status: mostly done, 2026-08-14. Added bounded DataStore-backed recipe-open history, centralized
+recording at every recipe-detail navigation, and a Room-resolved Recently viewed Home section that
+preserves existing sync/status behavior and skips missing cache entries. Focused history and Home
+ordering tests were added; remote `just check` on rofl-13 passed (143 unit tests, ktfmt, and lint).
+Zenfone verification remains open.
 
 ## SW-43: Recover from the startup Room schema mismatch
 
@@ -1046,5 +1053,3 @@ was made.
 - [ ] Keep refresh operations cache-first, deduplicated, and accessible with clear progress/failure
       feedback
 - [ ] Add focused coverage and verify the gestures and sync scope on the Zenfone 10
-
-Status: not started.

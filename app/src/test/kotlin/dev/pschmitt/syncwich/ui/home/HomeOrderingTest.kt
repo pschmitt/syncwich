@@ -45,6 +45,17 @@ class HomeOrderingTest {
         assertEquals(null, findFavoriteCookbook(cookbooks.take(1)))
     }
 
+    @Test
+    fun `recently viewed follows history order and omits uncached recipes`() {
+        val recipes = listOf(recipe("one", null), recipe("three", null), recipe("two", null))
+
+        assertEquals(
+            listOf("two", "one"),
+            recipesForHistory(listOf("missing", "two", "one", "three"), recipes, limit = 2)
+                .map { it.name },
+        )
+    }
+
     private fun recipe(name: String, dateAdded: String?): RecipeSummaryEntity =
         RecipeSummaryEntity(
             id = name,
