@@ -76,3 +76,22 @@ Status: not started.
 - [ ] Physical-device smoke test (Zenfone 10, Mi Pad 4, Pixel 5)
 
 Status: not started.
+
+## SW-8: Configurable bottom nav bar
+
+- [ ] Persisted, ordered list of nav-bar item keys (Recipes/Meal Plan/Shopping Lists/Cookbooks,
+      +Settings if desired) plus a hidden-set, stored via `SettingsRepository`/DataStore - mirror
+      the pattern in the sibling nyetbox (`data/repository/SettingsRepository.kt`'s
+      `NavBarItem`/`navBarItems`) and jollyfin (`NavigationBarOrder.kt` +
+      `AppPreferences.navigationBarOrder`/`navigationBarHiddenItems`) apps: a
+      `resolveNavBarOrder(natural, persisted, hidden)`-style function merging the persisted
+      order/hidden-set against the app's current natural item set at render time, so adding a new
+      destination later doesn't require a migration.
+- [ ] Settings sub-screen to reorder (up/down buttons, same as both sibling apps - no true
+      drag-and-drop) and show/hide each item; keep at least one item pinned/always-visible
+      (nyetbox pins nothing but caps at 5 items, jollyfin pins Home - decide which makes sense once
+      Settings/SW-2 exists)
+- [ ] Wire the resolved list into `SyncwichNavHost`'s `NavigationBar` (currently a hardcoded
+      `topLevelNavItems` list)
+
+Status: not started.
