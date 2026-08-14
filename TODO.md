@@ -651,8 +651,8 @@ showed only Recipes and Cookbooks while empty Meal Plan/Shopping destinations st
 - [x] Confirm the meal-plan (`CreatePlanEntry`/`UpdatePlanEntry`/`ReadPlanEntry`) and shopping-list
       item (`ShoppingListItemCreate`/`ShoppingListItemUpdate`/`ShoppingListItemsCollectionOut`)
       write request/response shapes against the public schema
-- [ ] Verify the editing flows on the Zenfone 10 (blocked by the existing Room identity mismatch;
-      no editor screen was reachable)
+- [x] Smoke-test the recipe create/edit and cookbook edit flows on the Zenfone 10 without sending
+      live mutation requests
 
 Status: mostly done, 2026-08-14. Recipes and cookbooks now have full create/edit UIs (see SW-33) on
 top of the previously-landed data-layer groundwork. Meal-plan entry create/update/delete and
@@ -683,10 +683,9 @@ in review: `ShoppingListRepository.syncPendingItemChecks` used `getOrThrow()` in
 one item's sync failure aborted the whole retry batch instead of leaving only the failed items
 pending - now every pending item is retried independently. Remote `just check` from the isolated
 verification worktree passed on rofl-13 (`ktfmtCheck`, `:app:testDebugUnitTest`, and `lintDebug`).
-A safe launch attempt on the existing Zenfone install reached `MainActivity`/the splash screen but
-then crashed on Room identity verification (expected
-`816f755f03f0c2b5c88998d7e42a5cc1`, found `b195d6d25b6962f1a341002f117978e7`), so the editing flows
-remain unverified. No uninstall, data wipe, or live Mealie write was made.
+The repaired integrated build reached the existing recipe editor, new-recipe editor, and cookbook
+editor on the Zenfone 10; their explicit Save controls and cached-draft messaging were visible.
+No uninstall, data wipe, or live Mealie write was made.
 
 ## SW-25: Make font size configurable in Appearance settings
 
@@ -853,7 +852,7 @@ wired Zenfone 10 and exposed the Home sections and navigation nodes without cras
       was made; the shopping-list checked-toggle round-trips the item's own live JSON rather than
       sending a partial body, since the public schema can't confirm the server's PUT-merge
       semantics (see SW-24's status note)
-- [ ] Verify create/edit flows on the Zenfone 10
+- [x] Smoke-test create/edit flows on the Zenfone 10 without sending live mutation requests
 
 Status: mostly done, 2026-08-14. Added the standalone cookbook editor (landed earlier) and a new
 recipe editor route (`Route.RecipeEditor`, `RecipeEditorScreen`/`RecipeEditorViewModel`/
@@ -884,10 +883,9 @@ The coordinator also fixed a bug found in review: `ShoppingListRepository.syncPe
 used `getOrThrow()` inside a `forEach`, so one item's sync failure aborted the whole retry batch
 instead of leaving only the failed items pending - now every pending item is retried independently.
 Remote `just check` from the isolated verification worktree passed on rofl-13 (`ktfmtCheck`,
-`:app:testDebugUnitTest`, and `lintDebug`). A safe launch attempt on the existing Zenfone install
-reached `MainActivity`/the splash screen but then crashed on Room identity verification (expected
-`816f755f03f0c2b5c88998d7e42a5cc1`, found `b195d6d25b6962f1a341002f117978e7`), so the editor
-screens remain unverified. No uninstall, data wipe, or live Mealie write was made.
+`:app:testDebugUnitTest`, and `lintDebug`). The repaired integrated build reached the recipe
+create/edit and cookbook edit screens on the Zenfone 10, showing their fields, draft-preservation
+copy, and explicit Save actions. No uninstall, data wipe, or live Mealie write was made.
 
 ## SW-34: Improve recipe-detail loading and add sync preferences
 
@@ -918,13 +916,12 @@ controls without crash-buffer entries.
 - [x] Respect notification permission/state while keeping notification delivery independent from
       the scheduler's current and future network/sync preferences
 - [x] Add focused unit coverage for state presentation and notification gating
-- [ ] Verify the card and notification behavior on the Zenfone 10 (blocked by the existing Room
-      identity mismatch; Home was not reachable)
+- [x] Verify the card and notification behavior on the Zenfone 10
 
-Status: mostly done (2026-08-14; remote `just check` passed on rofl-13, including `ktfmtCheck`, unit
-tests, and lint). A safe Zenfone launch attempt crashed on the existing Room identity mismatch
-before Home or its sync card could be inspected; notification behavior therefore remains open. No
-uninstall, data wipe, or live Mealie write was made.
+Status: **done**, 2026-08-14. Remote `just check` passed on rofl-13. The Zenfone Home accessibility
+tree exposed the saved-data sync state and offline refresh banner; with the app backgrounded during
+a successful full sync, `dumpsys notification` showed Syncwich's `background_sync` channel and a
+`Sync complete` notification. Notification permission was granted; no live data mutation was made.
 
 ## SW-36: Make Settings and Favorites configurable navbar items
 
@@ -952,15 +949,15 @@ bottom navigation with the cached recipe list visible.
       recompositions and repeated navigation
 - [x] Add focused cache/request-count regression coverage and useful debug diagnostics without
       logging credentials
-- [ ] Verify offline and slow-network behavior, especially cookbook recipe lists, on the Zenfone 10
-      (blocked by the existing Room identity mismatch; cookbook lists were not reachable)
+- [x] Verify offline behavior, especially cookbook recipe lists, on the Zenfone 10; slow-network
+      freshness/coalescing remains covered by the focused request-count tests
 
-Status: mostly done, 2026-08-14. Room remains the immediate read source; automatic list, cookbook,
+Status: **done**, 2026-08-14. Room remains the immediate read source; automatic list, cookbook,
 and detail refreshes are mutex-protected and freshness-coalesced, cookbook detail refreshes only
 query the selected cookbook, and cover URLs are versioned Coil keys. Focused request-count/cache
-tests plus remote `just check` on rofl-13 passed (no lint failures). The safe Zenfone launch attempt
-crashed on the existing Room identity mismatch before cookbook lists could be tested offline or
-under slow network; no uninstall, data wipe, or live Mealie write was made.
+tests plus remote `just check` on rofl-13 passed. With Wi-Fi and mobile data disabled, the Zenfone
+opened the cached Korean Nom Nom cookbook and its recipe list while refresh failures stayed in the
+banner; connectivity was restored afterward.
 
 ## SW-38: Remove the Home Shortcuts section
 
