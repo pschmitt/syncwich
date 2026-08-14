@@ -363,3 +363,18 @@ Status: not started.
       rather than assuming unlimited local storage
 
 Status: not started.
+
+## SW-15: Initial sync progress screen after first login
+
+- [ ] After onboarding successfully connects (server URL + token validated), show a blocking
+      initial-sync progress screen instead of dropping straight into a Recipes screen that's still
+      empty while `SyncWorker`'s startup sync populates Room for the first time - mirror the
+      pattern used in the sibling nyetbox app (check its equivalent post-login sync screen for the
+      exact UX: progress indicator, what it reports per stage, whether it's skippable/cancelable)
+- [ ] Needs some observable progress signal out of the sync path (recipe/category/tag/meal-plan/
+      shopping-list/cookbook counts as they land, or at least a per-entity-type "syncing X" label)
+      rather than a single opaque spinner, if nyetbox's version has that granularity
+- [ ] Subsequent app launches (already-synced) skip this and go straight to Recipes as today - this
+      is specifically a first-run experience, not something shown on every 6h background resync
+
+Status: not started.
