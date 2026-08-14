@@ -666,3 +666,14 @@ Status: not started.
 - [ ] Reuse the offline image cache and verify the gallery on the Zenfone 10
 
 Status: not started.
+
+## SW-30: Add recipe actions and rating controls
+
+- [ ] Add a favorite action with cache-first state and Mealie synchronization when supported
+- [ ] Add an “I made this” action and persist or synchronize the cooking event
+- [ ] Add a 1–5 star rating control with accessible labels and offline-safe state
+- [ ] Add an “Open timeline” action, keeping the timeline destination explicitly marked as pending
+- [ ] Confirm all write API shapes against the real Mealie instance before implementing mutations
+- [ ] Verify the actions and rating UI on the Zenfone 10
+
+Status: not started.
