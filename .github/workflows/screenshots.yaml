@@ -1,0 +1,228 @@
+name: Screenshots
+
+# Screenshot capture is intentionally manual, mirroring the sibling nyetbox/jollyfin/augh
+# projects' own Screenshots workflow. It drives the app via fastlane screengrab (see
+# fastlane/Screengrabfile and app/src/androidTest/kotlin/.../ScreenshotTest.kt) on disposable
+# GitHub-hosted emulators, then uploads the reviewed images as a build artifact (or, with
+# open_pr, commits them straight to a PR for review there instead).
+on:
+  workflow_dispatch:
+    inputs:
+      open_pr:
+        description: Open a PR with the captured screenshots committed, instead of only uploading a build artifact
+        type: boolean
+        default: false
+
+concurrency:
+  group: screenshots-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - device_type: phone
+            profile: pixel_2
+            folder: phoneScreenshots
+          - device_type: sevenInch
+            profile: Nexus 7
+            folder: sevenInchScreenshots
+          - device_type: tenInch
+            profile: medium_tablet
+            folder: tenInchScreenshots
+    name: Capture ${{ matrix.device_type }} screenshots
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21.0.11'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Set up Ruby and fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+      - name: Install fastlane
+        run: gem install fastlane --no-document
+
+      # Build before the emulator starts, not while it's running: screengrab only installs/drives
+      # prebuilt APKs over adb, and compiling concurrently with a booted emulator starves it of
+      # CPU until it drops off adb entirely (confirmed in the sibling nyetbox/jollyfin/augh
+      # projects' own screenshot CI).
+      - name: Build the debug and androidTest APKs
+        run: |
+          ./gradlew assembleDebug assembleDebugAndroidTest --stacktrace
+          mkdir -p dist
+          cp app/build/outputs/apk/debug/app-debug.apk dist/
+          cp app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk dist/
+
+      # GitHub-hosted runners ship /dev/kvm but don't grant the job user access to it, so the
+      # emulator silently falls back to software-only emulation and takes ~15+ minutes to boot.
+      # This grants real KVM access.
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Capture screenshots in a ${{ matrix.device_type }} emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: ${{ matrix.profile }}
+          target: google_apis
+          force-avd-creation: true
+          emulator-boot-timeout: 1800
+          disable-animations: true
+          emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
+          # android-emulator-runner runs each line of this script as its own separate `sh -c`
+          # process, so a shell variable set on one line is gone by the next - the serial capture,
+          # install, and the fastlane invocation that needs the serial must all stay on one line.
+          # `install -g` grants every runtime permission declared in the manifest at install time.
+          # Retries the reinstall+capture (not the whole job) up to twice - cheap versus the full
+          # rebuild+reboot, and each attempt starts from a clean reinstall.
+          script: |
+            attempt=0; until [ "$attempt" -ge 2 ]; do attempt=$((attempt + 1)); serial="$(adb devices | awk '$2 == "device" { print $1; exit }')"; if [ -n "$serial" ] && adb -s "$serial" install -r -g -t dist/app-debug.apk && SCREENGRAB_DEVICE_TYPE=${{ matrix.device_type }} SCREENGRAB_SPECIFIC_DEVICE="$serial" fastlane screenshots; then exit 0; fi; echo "Attempt $attempt/2 failed" >&2; sleep 5; done; exit 1
+
+      - name: Upload screenshot artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: syncwich-${{ matrix.device_type }}-screenshots-${{ github.run_id }}
+          if-no-files-found: warn
+          path: |
+            fastlane/metadata/android/en-US/images/${{ matrix.folder }}/
+            app/build/reports/androidTests/
+
+  open-pr:
+    name: Open PR with updated screenshots
+    needs: capture
+    if: ${{ !cancelled() && !failure() && inputs.open_pr }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          token: ${{ secrets.WORKFLOW_PUSH_TOKEN || github.token }}
+
+      - name: Download phone screenshots
+        uses: actions/download-artifact@v8
+        with:
+          name: syncwich-phone-screenshots-${{ github.run_id }}
+          path: fastlane/metadata/android/en-US/images/phoneScreenshots
+
+      - name: Download sevenInch screenshots
+        uses: actions/download-artifact@v8
+        with:
+          name: syncwich-sevenInch-screenshots-${{ github.run_id }}
+          path: fastlane/metadata/android/en-US/images/sevenInchScreenshots
+
+      - name: Download tenInch screenshots
+        uses: actions/download-artifact@v8
+        with:
+          name: syncwich-tenInch-screenshots-${{ github.run_id }}
+          path: fastlane/metadata/android/en-US/images/tenInchScreenshots
+
+      - name: Flatten downloaded artifacts to just the screenshots
+        run: |
+          for device_type in phone sevenInch tenInch; do
+            dir="fastlane/metadata/android/en-US/images/${device_type}Screenshots"
+            find "$dir" -mindepth 2 -iname '*.png' -exec mv {} "$dir/" \;
+            find "$dir" -mindepth 1 -type d -exec rm -rf {} +
+          done
+
+      - name: Check for changes
+        id: diff
+        run: |
+          git add fastlane/metadata/android/en-US/images
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit and force-push
+        if: ${{ steps.diff.outputs.changed == 'true' }}
+        id: commit
+        run: |
+          branch="screenshots/update"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git commit -m "chore: update Play Store screenshots (phone, 7in, 10in tablet)"
+          git push --force origin "$branch"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Build inline image gallery
+        if: ${{ steps.diff.outputs.changed == 'true' }}
+        id: gallery
+        run: |
+          sha="${{ steps.commit.outputs.sha }}"
+          gallery_file="$(mktemp)"
+          for device_type in phone sevenInch tenInch; do
+            dir="fastlane/metadata/android/en-US/images/${device_type}Screenshots"
+            shopt -s nullglob
+            files=("$dir"/*.png)
+            [ ${#files[@]} -eq 0 ] && continue
+            {
+              echo "<details open>"
+              echo "<summary><strong>${device_type}</strong> (${#files[@]} images)</summary>"
+              echo
+              for f in "${files[@]}"; do
+                name="$(basename "$f")"
+                url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${sha}/${f}"
+                printf '<img src="%s" width="200" alt="%s" title="%s">\n' "$url" "$name" "$name"
+              done
+              echo
+              echo "</details>"
+              echo
+            } >> "$gallery_file"
+          done
+          echo "path=$gallery_file" >> "$GITHUB_OUTPUT"
+
+      - name: Open or update the PR
+        if: ${{ steps.diff.outputs.changed == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.WORKFLOW_PUSH_TOKEN || github.token }}
+          BRANCH: ${{ steps.commit.outputs.branch }}
+          GALLERY_FILE: ${{ steps.gallery.outputs.path }}
+        run: |
+          existing_pr="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')"
+          body_file="$(mktemp)"
+          if [ -n "$existing_pr" ]; then
+            {
+              echo "Updated with fresh screenshots from run ${{ github.run_id }}."
+              echo
+              cat "$GALLERY_FILE"
+            } > "$body_file"
+            gh pr comment "$existing_pr" --body-file "$body_file"
+          else
+            {
+              echo "Automated screenshot refresh from the \`Screenshots\` workflow (run ${{ github.run_id }}). Review the images below before merging. Re-running this workflow with \`open_pr\` updates this same PR instead of opening a new one."
+              echo
+              echo "Merging this PR uploads the updated images to the Play Console listing automatically (see \`play-store-images.yaml\`)."
+              echo
+              cat "$GALLERY_FILE"
+            } > "$body_file"
+            gh pr create --title "Update screenshots" --body-file "$body_file" --head "$BRANCH" --base "${{ github.ref_name }}"
+          fi
+
+# vim: set ft=yaml et ts=2 sw=2 :

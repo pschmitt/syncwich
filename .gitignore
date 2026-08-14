@@ -1,0 +1,29 @@
+# Gradle / Android build output
+.gradle/
+build/
+*.apk
+*.aab
+local.properties
+.kotlin/
+captures/
+.cxx/
+
+# Fetched build artifacts (see justfile); never committed per AGENTS.md.
+/dist/
+
+# fastlane/screengrab regenerates these on every run; the actual listing content
+# (fastlane/metadata/) is tracked so screenshots.yaml/play-store-images.yaml can review and
+# publish it like the sibling nyetbox/jollyfin/augh projects do.
+/fastlane/report.xml
+/fastlane/README.md
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Nix / pre-commit
+.pre-commit-config.yaml
+
+# Claude Code session/worktree metadata
+/.claude/

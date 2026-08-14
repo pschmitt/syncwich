@@ -1,0 +1,20 @@
+# en-US only for now. Add locales here if/when other languages are needed.
+locales(["en-US"])
+
+app_package_name("dev.pschmitt.syncwich.debug")
+tests_package_name("dev.pschmitt.syncwich.debug.test")
+use_tests_in_classes(["dev.pschmitt.syncwich.ScreenshotTest"])
+
+# Built by CI (see .github/workflows/screenshots.yaml); screengrab only installs/drives them over adb.
+app_apk_path("dist/app-debug.apk")
+tests_apk_path("dist/app-debug-androidTest.apk")
+
+output_directory("fastlane/metadata/android")
+
+device_type(ENV.fetch("SCREENGRAB_DEVICE_TYPE", "phone"))
+
+# Screengrab's `adb root`-dependent tricks (status bar clearing, demo mode) need a rooted
+# device/emulator, which real (non-rooted) devices don't have. Defaults to false, correct for
+# those; flip to true when capturing on a rooted emulator.
+reinstall_app(true)
+skip_open_summary(true)

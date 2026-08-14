@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Periodic full-cache sync runs as a WorkManager foreground service while backgrounded. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- API 33+ runtime permission, requested at first launch, needed to post the background-
+         sync-failure notification. Sync itself never depends on this being granted. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:name=".SyncwichApp"
+        android:allowBackup="false"
+        tools:ignore="DataExtractionRules"
+        android:enableOnBackInvokedCallback="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Syncwich"
+        android:usesCleartextTraffic="true"
+        tools:targetApi="34">
+
+        <!-- usesCleartextTraffic=true: self-hosted Mealie instances are frequently plain HTTP on
+             a local network (this app's whole audience is homelab/self-hosted Mealie users). -->
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.Syncwich.Splash"
+            android:windowSoftInputMode="adjustResize">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- TODO(SW-2): once the WorkManager sync worker lands, disable ContentProvider auto-init
+             here and initialize WorkManager manually in SyncwichApp (Configuration.Provider) with
+             a Hilt-injected HiltWorkerFactory - same pattern as the sibling nyetbox app. Left as
+             plain auto-init for now since nothing uses WorkManager yet. -->
+    </application>
+
+</manifest>

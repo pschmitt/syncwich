@@ -1,0 +1,8 @@
+default_platform(:android)
+
+platform :android do
+  desc "Capture Play Store screenshots (en-US) from the prebuilt debug + debug-androidTest APKs"
+  lane :screenshots do
+    capture_android_screenshots
+  end
+end

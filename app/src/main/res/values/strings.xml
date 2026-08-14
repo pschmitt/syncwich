@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Syncwich</string>
+
+    <string name="nav_recipes">Recipes</string>
+    <string name="nav_meal_plan">Meal Plan</string>
+    <string name="nav_shopping_lists">Shopping Lists</string>
+    <string name="nav_cookbooks">Cookbooks</string>
+    <string name="nav_settings">Settings</string>
+
+    <string name="onboarding_title">Connect to Mealie</string>
+    <string name="onboarding_subtitle">Syncwich is a beautiful, offline-first client for your own Mealie server. Nothing is sent anywhere else.</string>
+    <string name="onboarding_server_url_label">Server URL</string>
+    <string name="onboarding_server_url_placeholder">https://mealie.example.com</string>
+    <string name="onboarding_api_token_label">API token</string>
+    <string name="onboarding_api_token_help">Generate a long-lived token in Mealie under Profile → API Tokens, then paste it here. Syncwich never stores your password.</string>
+    <string name="onboarding_connect">Connect</string>
+</resources>

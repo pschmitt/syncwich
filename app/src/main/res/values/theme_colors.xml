@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brief native window/splash background shown before Compose (ui/theme/Theme.kt) takes
+         over with full Material You dynamic color. Kept in its own file, separate from
+         colors.xml, so it never collides with the generated launcher-icon color resources. -->
+    <color name="splash_background">#E4572E</color>
+</resources>

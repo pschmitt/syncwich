@@ -1,0 +1,17 @@
+Syncwich is a beautiful, Material You client for your own self-hosted Mealie recipe manager,
+built offline-first from the ground up.
+
+Connect it to your Mealie server with a long-lived API token (generated in Mealie itself - your
+password is never stored on-device), and Syncwich syncs your recipes, meal plans, shopping lists,
+and cookbooks for fully offline browsing. No account, no ads, no tracking - your data stays
+between your phone and your own server.
+
+Features:
+• Browse and search your recipes, with category and tag filters
+• Rich recipe detail: ingredients, steps, images, and nutrition
+• View your household's meal plan calendar
+• View shopping lists and their items
+• Browse cookbooks and their recipe collections
+• Everything works fully offline once synced
+
+Syncwich is not affiliated with the Mealie project.
