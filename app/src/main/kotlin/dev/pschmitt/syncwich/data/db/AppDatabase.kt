@@ -46,6 +46,9 @@ import dev.pschmitt.syncwich.data.db.entity.TagEntity
             MealPlanEntryEntity::class,
             RecipeCookbookCrossRef::class,
         ],
+    // v7: SW-24/SW-33 add meal-plan-entry groupId/userId (needed to build the mealplan PUT route's
+    // required UpdatePlanEntry body) and a durable shopping-list-item checkedPending flag (the
+    // same optimistic-update-with-retry shape as recipe favorites/ratings).
     // v6: SW-33 keeps cookbook mutation fields in the offline cache so an edit does not clear
     // server-owned visibility or recipe-filter state.
     // v5: SW-24/SW-30 add durable per-user favorite/rating action state.
@@ -53,7 +56,7 @@ import dev.pschmitt.syncwich.data.db.entity.TagEntity
     // this pre-1.0, in their own worktrees, to different version numbers with different entities;
     // reconciled to v4 on merge. No migration path exists yet - see DatabaseModule's
     // fallbackToDestructiveMigration().
-    version = 6,
+    version = 7,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {

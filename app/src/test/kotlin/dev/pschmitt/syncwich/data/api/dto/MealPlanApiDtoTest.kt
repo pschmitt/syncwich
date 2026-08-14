@@ -1,6 +1,7 @@
 package dev.pschmitt.syncwich.data.api.dto
 
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -60,6 +61,40 @@ class MealPlanApiDtoTest {
         assertEquals("448f77cd-cc5b-4099-9074-86ae78ee348b", entry.recipeId)
         assertEquals("test-cake", entry.recipe?.slug)
         assertEquals("Test Cake", entry.recipe?.name)
+        assertEquals("a205f72f-dbc1-4cf1-88b4-02cc034abba8", entry.groupId)
+        assertEquals("bcb7a427-b4c5-48d5-aee1-b190f888303e", entry.userId)
+    }
+
+    @Test
+    fun `encodes a create-entry request with only date required`() {
+        // The app's Json config (like Mealie's own schema defaults) does not encode a property
+        // still at its default value, so a bare CreatePlanEntryDto(date) round-trips to just the
+        // date - the server applies its own "breakfast"/""/"" defaults for the rest.
+        val encoded = json.encodeToString(CreatePlanEntryDto(date = "2026-08-11"))
+
+        assertEquals("""{"date":"2026-08-11"}""", encoded)
+
+        val withEntryType =
+            json.encodeToString(CreatePlanEntryDto(date = "2026-08-11", entryType = "dinner"))
+        assertTrue(withEntryType.contains("\"entryType\":\"dinner\""))
+    }
+
+    @Test
+    fun `encodes an update-entry request carrying its cached groupId and userId`() {
+        val encoded =
+            json.encodeToString(
+                UpdatePlanEntryDto(
+                    date = "2026-08-11",
+                    entryType = "dinner",
+                    id = 42,
+                    groupId = "a205f72f-dbc1-4cf1-88b4-02cc034abba8",
+                    userId = "bcb7a427-b4c5-48d5-aee1-b190f888303e",
+                )
+            )
+
+        assertTrue(encoded.contains("\"id\":42"))
+        assertTrue(encoded.contains("\"groupId\":\"a205f72f-dbc1-4cf1-88b4-02cc034abba8\""))
+        assertTrue(encoded.contains("\"userId\":\"bcb7a427-b4c5-48d5-aee1-b190f888303e\""))
     }
 
     @Test

@@ -9,7 +9,9 @@ import androidx.room.PrimaryKey
  * against `RecipeSummaryEntity` - a meal-plan entry can reference a recipe the recipe cache hasn't
  * (re)synced yet, and a join that silently drops such an entry would be worse than just showing
  * these directly-stored fields. `date` is the server's `YYYY-MM-DD` string, which sorts and range-
- * filters correctly as plain text.
+ * filters correctly as plain text. `groupId`/`userId` (SW-24/SW-33) are cached straight from
+ * `ReadPlanEntry` so [dev.pschmitt.syncwich.data.repository.MealPlanRepository.updateEntry] can
+ * build the server's required `UpdatePlanEntry` body without a separate lookup.
  */
 @Entity(tableName = "meal_plan_entries")
 data class MealPlanEntryEntity(
@@ -22,4 +24,6 @@ data class MealPlanEntryEntity(
     val recipeName: String?,
     val recipeSlug: String?,
     val recipeImage: String?,
+    val groupId: String = "",
+    val userId: String = "",
 )

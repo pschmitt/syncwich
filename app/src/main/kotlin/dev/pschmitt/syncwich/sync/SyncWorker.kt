@@ -67,6 +67,9 @@ constructor(
                     categoryRepository.refreshCategories(),
                     tagRepository.refreshTags(),
                     shoppingListRepository.refreshLists(),
+                    // No request is made when there are no pending offline checked-state changes;
+                    // mirrors recipeActionRepository.syncPendingActions() above.
+                    shoppingListRepository.syncPendingItemChecks(),
                     cookbookRepository.refreshCookbooks(),
                     mealPlanRepository.refreshMealPlan(mealPlanStart, mealPlanEnd),
                 )

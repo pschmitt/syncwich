@@ -20,6 +20,12 @@ interface ShoppingListDao {
     @Query("SELECT * FROM shopping_list_items WHERE shoppingListId = :listId ORDER BY position ASC")
     fun observeItems(listId: String): Flow<List<ShoppingListItemEntity>>
 
+    @Query("SELECT * FROM shopping_list_items WHERE id = :itemId")
+    suspend fun getItem(itemId: String): ShoppingListItemEntity?
+
+    @Query("SELECT * FROM shopping_list_items WHERE checkedPending = 1")
+    suspend fun getPendingCheckedItems(): List<ShoppingListItemEntity>
+
     @Upsert suspend fun upsertLists(lists: List<ShoppingListEntity>)
 
     @Upsert suspend fun upsertItems(items: List<ShoppingListItemEntity>)
@@ -31,6 +37,9 @@ interface ShoppingListDao {
 
     @Query("DELETE FROM shopping_list_items WHERE shoppingListId = :listId")
     suspend fun deleteItems(listId: String)
+
+    @Query("DELETE FROM shopping_list_items WHERE id = :itemId")
+    suspend fun deleteItem(itemId: String)
 
     /**
      * Upserts the current list-of-lists and removes only lists no longer returned by the server -

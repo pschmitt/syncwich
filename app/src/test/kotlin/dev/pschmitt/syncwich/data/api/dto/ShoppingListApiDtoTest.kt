@@ -1,6 +1,7 @@
 package dev.pschmitt.syncwich.data.api.dto
 
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -101,5 +102,38 @@ class ShoppingListApiDtoTest {
         assertEquals("2 apples", decoded.display)
         assertEquals("ripe ones", decoded.note)
         assertEquals("5aa52dd6", decoded.shoppingListId)
+    }
+
+    @Test
+    fun `encodes a create-item request with only shoppingListId required`() {
+        val encoded =
+            json.encodeToString(
+                CreateShoppingListItemDto(shoppingListId = "5aa52dd6", display = "2 apples")
+            )
+
+        assertTrue(encoded.contains("\"shoppingListId\":\"5aa52dd6\""))
+        assertTrue(encoded.contains("\"display\":\"2 apples\""))
+    }
+
+    @Test
+    fun `decodes a create-item response's createdItems`() {
+        val body =
+            """
+            {"createdItems":[
+              {"quantity":1.0,"unit":null,"food":null,"referencedRecipe":null,"note":"",
+               "display":"2 apples","shoppingListId":"5aa52dd6","checked":false,"position":0,
+               "foodId":null,"labelId":null,"unitId":null,"extras":{},"id":"item-3",
+               "groupId":"a205f72f","householdId":"ba99bf35","label":null,"recipeReferences":[],
+               "createdAt":"2026-08-14T00:00:00Z","updatedAt":"2026-08-14T00:00:00Z"}
+            ],"updatedItems":[],"deletedItems":[]}
+            """
+                .trimIndent()
+
+        val decoded = json.decodeFromString<ShoppingListItemsCollectionDto>(body)
+
+        val created = decoded.createdItems.single()
+        assertEquals("item-3", created.id)
+        assertEquals("2 apples", created.display)
+        assertFalse(created.checked)
     }
 }

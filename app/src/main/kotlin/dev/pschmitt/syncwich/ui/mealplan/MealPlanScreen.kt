@@ -12,14 +12,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Cookie
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DinnerDining
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FreeBreakfast
 import androidx.compose.material.icons.filled.Icecream
 import androidx.compose.material.icons.filled.LocalBar
@@ -28,15 +32,19 @@ import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tapas
 import androidx.compose.material.icons.filled.Today
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -64,6 +72,19 @@ fun MealPlanScreen(
     viewModel: MealPlanViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val editorState by viewModel.editorState.collectAsStateWithLifecycle()
+
+    if (editorState.isOpen) {
+        MealPlanEntryEditorDialog(
+            state = editorState,
+            onEntryTypeChange = viewModel::onEntryTypeChange,
+            onTitleChange = viewModel::onTitleChange,
+            onTextChange = viewModel::onTextChange,
+            onSave = viewModel::saveEntry,
+            onDelete = viewModel::deleteEntry,
+            onDismiss = viewModel::dismissEditor,
+        )
+    }
 
     Scaffold(
         modifier = modifier,
@@ -125,6 +146,8 @@ fun MealPlanScreen(
                                 day = day,
                                 entries = entriesByDate[day.toString()].orEmpty(),
                                 onRecipeClick = onRecipeClick,
+                                onAddEntry = { viewModel.startAddEntry(day) },
+                                onEditEntry = viewModel::startEditEntry,
                             )
                         }
                     }
@@ -180,22 +203,35 @@ private fun DayCard(
     day: LocalDate,
     entries: List<MealPlanEntryEntity>,
     onRecipeClick: (String, String) -> Unit,
+    onAddEntry: () -> Unit,
+    onEditEntry: (MealPlanEntryEntity) -> Unit,
 ) {
     // Reads through LocalConfiguration (observable, recomposes on a config change) rather than
     // java.util.Locale.getDefault() - see Android Lint's NonObservableLocale check.
     val locale = LocalConfiguration.current.locales[0]
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = day.dayOfWeek.getDisplayName(TextStyle.FULL, locale),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            Text(
-                text = day.format(DateTimeFormatter.ofPattern("MMMM d")),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column {
+                    Text(
+                        text = day.dayOfWeek.getDisplayName(TextStyle.FULL, locale),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(
+                        text = day.format(DateTimeFormatter.ofPattern("MMMM d")),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                IconButton(onClick = onAddEntry) {
+                    Icon(Icons.Filled.Add, contentDescription = "Add meal plan entry")
+                }
+            }
             if (entries.isEmpty()) {
                 Text(
                     text = "Nothing planned",
@@ -208,7 +244,9 @@ private fun DayCard(
                     modifier = Modifier.padding(top = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    entries.forEach { entry -> MealPlanEntryRow(entry, onRecipeClick) }
+                    entries.forEach { entry ->
+                        MealPlanEntryRow(entry, onRecipeClick, onEditEntry)
+                    }
                 }
             }
         }
@@ -216,7 +254,11 @@ private fun DayCard(
 }
 
 @Composable
-private fun MealPlanEntryRow(entry: MealPlanEntryEntity, onRecipeClick: (String, String) -> Unit) {
+private fun MealPlanEntryRow(
+    entry: MealPlanEntryEntity,
+    onRecipeClick: (String, String) -> Unit,
+    onEditEntry: (MealPlanEntryEntity) -> Unit,
+) {
     val clickableModifier =
         if (entry.recipeId != null && entry.recipeSlug != null) {
             Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button) {
@@ -226,33 +268,42 @@ private fun MealPlanEntryRow(entry: MealPlanEntryEntity, onRecipeClick: (String,
             Modifier
         }
     Row(
-        modifier = Modifier.fillMaxWidth().then(clickableModifier),
+        modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier =
-                Modifier.size(32.dp)
-                    .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
-            contentAlignment = Alignment.Center,
+        Row(
+            modifier = Modifier.weight(1f).then(clickableModifier),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                imageVector = entryTypeIcon(entry.entryType),
-                contentDescription = entry.entryType,
-                tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                modifier = Modifier.size(18.dp),
-            )
+            Box(
+                modifier =
+                    Modifier.size(32.dp)
+                        .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = entryTypeIcon(entry.entryType),
+                    contentDescription = entry.entryType,
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+            Column(modifier = Modifier.padding(start = 12.dp)) {
+                Text(
+                    text = entry.entryType.replaceFirstChar { it.uppercase() },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text =
+                        entry.recipeName
+                            ?: entry.title.ifBlank { entry.text.ifBlank { "Untitled" } },
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+            }
         }
-        Column(modifier = Modifier.padding(start = 12.dp)) {
-            Text(
-                text = entry.entryType.replaceFirstChar { it.uppercase() },
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text =
-                    entry.recipeName ?: entry.title.ifBlank { entry.text.ifBlank { "Untitled" } },
-                style = MaterialTheme.typography.bodyLarge,
-            )
+        IconButton(onClick = { onEditEntry(entry) }) {
+            Icon(Icons.Filled.Edit, contentDescription = "Edit meal plan entry")
         }
     }
 }
@@ -268,3 +319,98 @@ private fun entryTypeIcon(entryType: String): ImageVector =
         "dessert" -> Icons.Filled.Icecream
         else -> Icons.Filled.Restaurant
     }
+
+private val ENTRY_TYPES =
+    listOf("breakfast", "lunch", "dinner", "side", "snack", "drink", "dessert")
+
+/**
+ * Add/edit dialog for one meal-plan entry (SW-24/SW-33). Only freeform title/note fields are
+ * editable here - attaching an existing recipe would need a full recipe picker, out of scope for
+ * this minimal add/edit flow; a recipe-linked entry synced from Mealie can still be deleted here,
+ * it just can't be re-linked to a different recipe.
+ */
+@Composable
+private fun MealPlanEntryEditorDialog(
+    state: MealPlanEditorState,
+    onEntryTypeChange: (String) -> Unit,
+    onTitleChange: (String) -> Unit,
+    onTextChange: (String) -> Unit,
+    onSave: () -> Unit,
+    onDelete: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                if (state.isEditing) "Edit meal plan entry"
+                else "Add meal plan entry for ${state.date.format(DateTimeFormatter.ofPattern("MMM d"))}"
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(ENTRY_TYPES) { type ->
+                        FilterChip(
+                            selected = state.entryType == type,
+                            onClick = { onEntryTypeChange(type) },
+                            enabled = !state.isSaving,
+                            label = { Text(type.replaceFirstChar { it.uppercase() }) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = entryTypeIcon(type),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            },
+                        )
+                    }
+                }
+                OutlinedTextField(
+                    value = state.title,
+                    onValueChange = onTitleChange,
+                    label = { Text("Title") },
+                    singleLine = true,
+                    enabled = !state.isSaving,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = state.text,
+                    onValueChange = onTextChange,
+                    label = { Text("Note") },
+                    minLines = 2,
+                    maxLines = 4,
+                    enabled = !state.isSaving,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (state.errorMessage != null) {
+                    Text(
+                        text = state.errorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onSave, enabled = !state.isSaving) {
+                if (state.isSaving) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                } else {
+                    Text("Save")
+                }
+            }
+        },
+        dismissButton = {
+            Row {
+                if (state.isEditing) {
+                    TextButton(onClick = onDelete, enabled = !state.isSaving) {
+                        Icon(Icons.Filled.Delete, contentDescription = null)
+                        Text("Delete", modifier = Modifier.padding(start = 4.dp))
+                    }
+                }
+                TextButton(onClick = onDismiss, enabled = !state.isSaving) { Text("Cancel") }
+            }
+        },
+    )
+}
