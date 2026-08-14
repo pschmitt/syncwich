@@ -1249,6 +1249,15 @@ Status: not started, 2026-08-14.
 
 Status: not started, 2026-08-14.
 
+## SW-61: Add a “sync on app start” setting
+
+- [ ] Add a clearly named setting to enable or disable synchronization on app start
+- [ ] Default the setting to enabled for existing and new installations
+- [ ] Persist the preference and ensure disabling it does not block cached/offline content
+- [ ] Add focused settings/sync coverage and verify it on the Zenfone 10
+
+Status: not started, 2026-08-14.
+
 ## SW-62: Make synchronization change-aware
 
 - [ ] Identify reliable Mealie change markers or conditional-request support for recipes,
@@ -1259,11 +1268,11 @@ Status: not started, 2026-08-14.
 
 Status: not started, 2026-08-14.
 
-## SW-61: Add a “sync on app start” setting
+## SW-63: Add a full-screen steps view
 
-- [ ] Add a clearly named setting to enable or disable synchronization on app start
-- [ ] Default the setting to enabled for existing and new installations
-- [ ] Persist the preference and ensure disabling it does not block cached/offline content
-- [ ] Add focused settings/sync coverage and verify it on the Zenfone 10
+- [ ] Add an obvious action on the recipe view to open steps in a focused full-screen mode
+- [ ] Keep step content, embedded images, and navigation accessible in the full-screen view
+- [ ] Provide a clear way to exit and return to the same recipe position
+- [ ] Add focused UI coverage and verify it on the Zenfone 10
 
 Status: not started, 2026-08-14.
