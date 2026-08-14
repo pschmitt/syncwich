@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
@@ -16,6 +17,7 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -25,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -44,9 +47,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.pschmitt.syncwich.R
 
 /**
- * First-run connection setup: server URL + long-lived Mealie API token, validated against
- * `/api/users/self` before being saved (see [OnboardingViewModel]). No password is ever entered or
- * stored here - see AGENTS.md for why.
+ * First-run connection setup. Users can paste a long-lived Mealie API token or sign in once with
+ * a username and password to mint one; only the resulting token is saved (see
+ * [OnboardingViewModel]).
  */
 @Composable
 fun OnboardingScreen(
@@ -56,14 +59,22 @@ fun OnboardingScreen(
 ) {
     var serverUrl by rememberSaveable { mutableStateOf("") }
     var apiToken by rememberSaveable { mutableStateOf("") }
+    var username by rememberSaveable { mutableStateOf("") }
+    var passwordMode by rememberSaveable { mutableStateOf(false) }
+    var password by remember { mutableStateOf("") }
     var tokenVisible by rememberSaveable { mutableStateOf(false) }
+    var passwordVisible by rememberSaveable { mutableStateOf(false) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isValidating = uiState is OnboardingUiState.Validating
     val keyboardController = LocalSoftwareKeyboardController.current
 
     fun submit() {
         keyboardController?.hide()
-        viewModel.connect(serverUrl, apiToken)
+        if (passwordMode) {
+            viewModel.connectWithPassword(serverUrl, username, password)
+        } else {
+            viewModel.connect(serverUrl, apiToken)
+        }
     }
 
     LaunchedEffect(uiState) {
@@ -114,37 +125,101 @@ fun OnboardingScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            OutlinedTextField(
-                value = apiToken,
-                onValueChange = { apiToken = it },
-                label = { Text(stringResource(R.string.onboarding_api_token_label)) },
-                singleLine = true,
-                enabled = !isValidating,
-                visualTransformation =
-                    if (tokenVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions =
-                    KeyboardOptions(
-                        keyboardType = KeyboardType.Password,
-                        imeAction = ImeAction.Done,
-                    ),
-                keyboardActions = KeyboardActions(onDone = { submit() }),
-                trailingIcon = {
-                    IconButton(onClick = { tokenVisible = !tokenVisible }) {
-                        Icon(
-                            imageVector =
-                                if (tokenVisible) Icons.Filled.VisibilityOff
-                                else Icons.Filled.Visibility,
-                            contentDescription = null,
-                        )
-                    }
-                },
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-            )
-            Text(
-                text = stringResource(R.string.onboarding_api_token_help),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                FilterChip(
+                    selected = !passwordMode,
+                    onClick = { passwordMode = false },
+                    label = { Text(stringResource(R.string.onboarding_mode_token)) },
+                    modifier = Modifier.weight(1f),
+                )
+                FilterChip(
+                    selected = passwordMode,
+                    onClick = { passwordMode = true },
+                    label = { Text(stringResource(R.string.onboarding_mode_password)) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+
+            if (passwordMode) {
+                OutlinedTextField(
+                    value = username,
+                    onValueChange = { username = it },
+                    label = { Text(stringResource(R.string.onboarding_username_label)) },
+                    singleLine = true,
+                    enabled = !isValidating,
+                    keyboardOptions =
+                        KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text(stringResource(R.string.onboarding_password_label)) },
+                    singleLine = true,
+                    enabled = !isValidating,
+                    visualTransformation =
+                        if (passwordVisible) VisualTransformation.None
+                        else PasswordVisualTransformation(),
+                    keyboardOptions =
+                        KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done,
+                        ),
+                    keyboardActions = KeyboardActions(onDone = { submit() }),
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector =
+                                    if (passwordVisible) Icons.Filled.VisibilityOff
+                                    else Icons.Filled.Visibility,
+                                contentDescription = null,
+                            )
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Text(
+                    text = stringResource(R.string.onboarding_password_help),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                OutlinedTextField(
+                    value = apiToken,
+                    onValueChange = { apiToken = it },
+                    label = { Text(stringResource(R.string.onboarding_api_token_label)) },
+                    singleLine = true,
+                    enabled = !isValidating,
+                    visualTransformation =
+                        if (tokenVisible) VisualTransformation.None
+                        else PasswordVisualTransformation(),
+                    keyboardOptions =
+                        KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done,
+                        ),
+                    keyboardActions = KeyboardActions(onDone = { submit() }),
+                    trailingIcon = {
+                        IconButton(onClick = { tokenVisible = !tokenVisible }) {
+                            Icon(
+                                imageVector =
+                                    if (tokenVisible) Icons.Filled.VisibilityOff
+                                    else Icons.Filled.Visibility,
+                                contentDescription = null,
+                            )
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Text(
+                    text = stringResource(R.string.onboarding_api_token_help),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
 
             if (uiState is OnboardingUiState.Error) {
                 Text(

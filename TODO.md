@@ -401,25 +401,31 @@ test asserted the old placeholder string.
 
 ## SW-13: Support username/password login alongside API token entry
 
-- [ ] Add a second onboarding path: username + password, which calls Mealie's password-login
+- [x] Add a second onboarding path: username + password, which calls Mealie's password-login
       endpoint (`/api/auth/token`) and then mints a real long-lived API token on the user's behalf
       (Mealie's token-creation endpoint, under the freshly-obtained JWT) rather than storing the
       short-lived JWT itself - preserves AGENTS.md's existing "Auth is a pasted long-lived API
       token, not username/password" architecture decision (JWTs expire in ~48h, a bad fit for an
       app that may go days offline) while removing the friction of the user having to go find
       Mealie's own Profile -> API Tokens page first
-- [ ] Keep the existing direct-token-paste path as the other option - a toggle/tab between "Sign in
+- [x] Keep the existing direct-token-paste path as the other option - a toggle/tab between "Sign in
       with username & password" and "Paste an API token" on the same onboarding screen
-- [ ] The generated token needs a clear, identifiable name (e.g. "Syncwich (<device model>)") so a
+- [x] The generated token needs a clear, identifiable name (e.g. "Syncwich (<device model>)") so a
       user auditing their Mealie account's API Tokens page can recognize and revoke it later
       independently of Syncwich
-- [ ] Only the resulting long-lived token is ever persisted via `SettingsRepository` - the
+- [x] Only the resulting long-lived token is ever persisted via `SettingsRepository` - the
       password/JWT must never be written to encrypted storage, only held in memory for the single
       token-minting request
 - [ ] Verify Mealie's token-creation endpoint's exact request/response shape against the real
       server first (rbw "Mealie (AI Agent)"), same as every other endpoint in this app
 
-Status: not started.
+Status: in progress, 2026-08-14. Added the two onboarding modes, a per-call Retrofit auth client,
+and MockWebServer coverage proving the form-login JWT is exchanged for the returned token and that
+an unauthorized login never reaches token creation. The password is held only in the in-memory
+Compose state for the active form and request chain; only the resulting token is passed to
+`SettingsRepository`. Live endpoint verification and real-device sign-in remain pending because
+the configured verification host currently serves the Mealie frontend but returns 404 for its API
+routes; retry against the live API before marking this entry done.
 
 ## SW-14: Proactively cache all recipe images for true offline use
 
