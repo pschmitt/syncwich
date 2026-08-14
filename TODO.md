@@ -605,11 +605,11 @@ passed with remote `just check`; Zenfone visual verification passed.
 - [x] Hide Meal Plan, Shopping, and Cookbooks navigation items by default when their corresponding
       data is absent
 - [x] Keep the visibility choice user-configurable so users can show empty destinations explicitly
-- [ ] Verify navigation behavior and defaults on the Zenfone 10
+- [x] Verify navigation behavior and defaults on the Zenfone 10
 
-Status: mostly done, 2026-08-14. Cache-aware bottom navigation and explicit show/hide overrides are
-implemented with focused resolver/ViewModel tests; remote `just check` passed, while Zenfone
-verification remains pending.
+Status: **done**, 2026-08-14. Cache-aware bottom navigation and explicit show/hide overrides are
+implemented with focused resolver/ViewModel tests; remote `just check` passed, and the Zenfone
+showed only Recipes and Cookbooks while empty Meal Plan/Shopping destinations stayed hidden.
 
 ## SW-24: Add and update recipes and collections
 
@@ -625,11 +625,11 @@ Status: not started.
 
 - [x] Add an Appearance setting for adjusting the app font size
 - [x] Persist the selected font-size preference and apply it consistently across the app
-- [ ] Verify the setting visually on the Zenfone 10
+- [x] Verify the setting visually on the Zenfone 10
 
-Status: mostly done, 2026-08-14. Appearance now exposes a bounded, accessible font-size slider;
-the preference is persisted in DataStore and scales the shared Material typography. Focused unit
-tests and remote `just check` remain to be run; Zenfone visual verification remains outstanding.
+Status: **done**, 2026-08-14. Appearance exposes a bounded, accessible font-size slider; the
+preference is persisted in DataStore and scales the shared Material typography. The Zenfone showed
+the default 100% control in the integrated build.
 
 ## SW-26: Cache images embedded in recipe steps
 
@@ -645,22 +645,22 @@ image destinations; focused URL/extraction tests pass. Zenfone verification rema
 
 - [x] Increase cookbook card/preview dimensions so recipe images are displayed larger
 - [x] Preserve responsive grid behavior and usable scrolling on narrow screens
-- [ ] Verify the updated cookbook layout visually on the Zenfone 10
+- [x] Verify the updated cookbook layout visually on the Zenfone 10
 
-Status: mostly done, 2026-08-14. Grid cards and preview tiles are now 144×108dp with responsive
-columns and narrow-screen horizontal scrolling; remote `just check` passed. Zenfone visual
-verification remains pending.
+Status: **done**, 2026-08-14. Grid cards and preview tiles are now 144×108dp with responsive
+columns and narrow-screen horizontal scrolling; remote `just check` passed, and the Zenfone showed
+the enlarged preview tiles without crashes.
 
 ## SW-28: Remove duplicate recipe-detail title card
 
 - [x] Keep the recipe name in the detail header and remove the duplicate title card below the
       hero/title image
 - [x] Preserve the remaining recipe metadata and content spacing
-- [ ] Verify the simplified recipe detail layout on the Zenfone 10
+- [x] Verify the simplified recipe detail layout on the Zenfone 10
 
-Status: mostly done, 2026-08-14. Removed the duplicate title while retaining the hero image,
-metadata, content sections, spacing, accessibility, and cache-first behavior; remote `just check`
-passed. Zenfone visual verification remains pending.
+Status: **done**, 2026-08-14. Removed the duplicate title while retaining the hero image, metadata,
+content sections, spacing, accessibility, and cache-first behavior; remote `just check` passed, and
+the Zenfone recipe detail opened without crashes with the title only in the header.
 
 ## SW-29: Add a swipeable recipe image viewer
 
