@@ -27,6 +27,7 @@ import androidx.compose.material.icons.automirrored.filled.StickyNote2
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.LocalFireDepartment
@@ -86,11 +87,13 @@ import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
 fun RecipeDetailScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onEditClick: (recipeId: String, slug: String) -> Unit = { _, _ -> },
     viewModel: RecipeDetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val refreshState by viewModel.refreshState.collectAsStateWithLifecycle()
-    val title = (uiState as? RecipeDetailUiState.Loaded)?.recipe?.name ?: "Recipe"
+    val loadedState = uiState as? RecipeDetailUiState.Loaded
+    val title = loadedState?.recipe?.name ?: "Recipe"
 
     Scaffold(
         modifier = modifier,
@@ -100,6 +103,17 @@ fun RecipeDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    if (loadedState != null) {
+                        IconButton(
+                            onClick = {
+                                onEditClick(loadedState.recipe.id, loadedState.recipe.slug)
+                            }
+                        ) {
+                            Icon(Icons.Filled.Edit, contentDescription = "Edit recipe")
+                        }
                     }
                 },
             )
