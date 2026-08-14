@@ -8,8 +8,8 @@ import org.junit.Test
 /**
  * Regression test pinning [CookbookDto] to the *actual* Mealie v3.22.0 response shape confirmed
  * live during SW-6 (`GET /api/households/cookbooks`, verification account) - not the public docs.
- * The fixture keeps `queryFilterString`/`queryFilter`/`household` (unmodeled, dropped by
- * `ignoreUnknownKeys`) to prove real extra fields don't break decoding.
+ * The fixture keeps `queryFilter`/`household` (unmodeled, dropped by `ignoreUnknownKeys`) to prove
+ * real extra fields don't break decoding.
  */
 class CookbookApiDtoTest {
 
@@ -57,5 +57,9 @@ class CookbookApiDtoTest {
         assertEquals("chinese-nom-nom", cookbook.slug)
         assertEquals(1, cookbook.position)
         assertFalse(cookbook.public)
+        assertEquals(
+            "recipe_category.id IN [\"51912eb6-80bf-4cbb-8fad-bde0bad6535d\"]",
+            cookbook.queryFilterString,
+        )
     }
 }

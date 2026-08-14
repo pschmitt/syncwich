@@ -46,12 +46,14 @@ import dev.pschmitt.syncwich.data.db.entity.TagEntity
             MealPlanEntryEntity::class,
             RecipeCookbookCrossRef::class,
         ],
+    // v6: SW-33 keeps cookbook mutation fields in the offline cache so an edit does not clear
+    // server-owned visibility or recipe-filter state.
     // v5: SW-24/SW-30 add durable per-user favorite/rating action state.
     // v4: SW-5 (shopping lists), SW-4 (meal plan), and SW-6 (cookbooks) each independently bumped
     // this pre-1.0, in their own worktrees, to different version numbers with different entities;
     // reconciled to v4 on merge. No migration path exists yet - see DatabaseModule's
     // fallbackToDestructiveMigration().
-    version = 5,
+    version = 6,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {

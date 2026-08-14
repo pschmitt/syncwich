@@ -110,6 +110,8 @@ constructor(
             slug = slug,
             description = description.orEmpty(),
             position = position,
+            public = public,
+            queryFilterString = queryFilterString.orEmpty(),
         )
 
     private suspend fun mutateCookbook(

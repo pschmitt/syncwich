@@ -28,6 +28,9 @@ sealed interface Route {
 
     @Serializable data class CookbookDetail(val cookbookId: String) : Route
 
+    /** Empty [cookbookId] opens a create draft; a cached id opens an edit draft. */
+    @Serializable data class CookbookEditor(val cookbookId: String = "") : Route
+
     @Serializable data object Settings : Route
 
     @Serializable

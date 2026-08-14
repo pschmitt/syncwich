@@ -37,6 +37,62 @@ import org.junit.Test
 class CookbookRepositoryTest {
 
     @Test
+    fun `successful cookbook create caches the complete returned entity`() = runTest {
+        val cookbookDao = FakeCookbookDao()
+        val created =
+            CookbookDto(
+                id = "created-1",
+                name = "Quick dinners",
+                slug = "quick-dinners",
+                description = "Fast meals",
+                position = 3,
+                public = true,
+                queryFilterString = "tags.id IN [\"quick\"]",
+            )
+        val repository =
+            CookbookRepository(
+                FakeCookbooksApi(createResponse = created),
+                FakeRecipesApi(),
+                cookbookDao,
+                FakeRecipeDao(),
+            )
+
+        val result = repository.createCookbook(CreateCookbookDto("Quick dinners"))
+
+        assertTrue(result.isSuccess)
+        assertEquals(
+            CookbookEntity(
+                id = "created-1",
+                name = "Quick dinners",
+                slug = "quick-dinners",
+                description = "Fast meals",
+                position = 3,
+                public = true,
+                queryFilterString = "tags.id IN [\"quick\"]",
+            ),
+            cookbookDao.observeAll().first().single(),
+        )
+    }
+
+    @Test
+    fun `failed cookbook create leaves the existing cache untouched`() = runTest {
+        val cached = CookbookEntity("keep-1", "Keep me", "keep-me", "", 0)
+        val cookbookDao = FakeCookbookDao(seed = listOf(cached))
+        val repository =
+            CookbookRepository(
+                FakeCookbooksApi(mutationFailure = IOException("offline")),
+                FakeRecipesApi(),
+                cookbookDao,
+                FakeRecipeDao(),
+            )
+
+        val result = repository.createCookbook(CreateCookbookDto("New cookbook"))
+
+        assertTrue(result.isFailure)
+        assertEquals(listOf(cached), cookbookDao.observeAll().first())
+    }
+
+    @Test
     fun `refreshCookbooks replaces the cookbook and recipe-membership cache on success`() =
         runTest {
             val cookbookDao =
@@ -185,14 +241,22 @@ class CookbookRepositoryTest {
     private class FakeCookbooksApi(
         private val cookbooks: List<CookbookDto> = emptyList(),
         private val failure: Throwable? = null,
+        private val createResponse: CookbookDto? = null,
+        private val updateResponse: CookbookDto? = null,
+        private val mutationFailure: Throwable? = null,
     ) : CookbooksApi {
         override suspend fun createCookbook(request: CreateCookbookDto): CookbookDto =
-            error("not used by CookbookRepositoryTest")
+            mutationFailure?.let { throw it }
+                ?: createResponse
+                ?: error("not used by CookbookRepositoryTest")
 
         override suspend fun updateCookbook(
             itemId: String,
             request: CreateCookbookDto,
-        ): CookbookDto = error("not used by CookbookRepositoryTest")
+        ): CookbookDto =
+            mutationFailure?.let { throw it }
+                ?: updateResponse
+                ?: error("not used by CookbookRepositoryTest")
 
         override suspend fun getCookbooks(page: Int, perPage: Int): PagedResponseDto<CookbookDto> {
             failure?.let { throw it }

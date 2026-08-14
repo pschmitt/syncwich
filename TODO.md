@@ -729,10 +729,15 @@ wired Zenfone 10 and exposed the Home sections and navigation nodes without cras
 
 ## SW-33: Add and edit recipes and collections
 
-- [ ] Add recipe and cookbook creation flows
-- [ ] Add editing flows for recipes, cookbooks, meal plans, and shopping lists
-- [ ] Preserve offline drafts/cache-first reads and synchronize mutations safely when supported
-- [ ] Confirm Mealie write API shapes before implementing network mutations
+- [x] Add a bounded cookbook create/edit flow with an explicit save action and validation
+- [ ] Add recipe creation/editing and editing flows for meal plans and shopping lists
+- [x] Preserve the in-session draft on validation/network failure, read cached cookbook edits from
+      Room first, and retain cookbook visibility/filter fields in the cache
+- [x] Reuse the already-confirmed Mealie cookbook write shape; no live write was made
 - [ ] Verify create/edit flows on the Zenfone 10
 
-Status: not started.
+Status: in progress, 2026-08-14. Added the standalone cookbook editor route for create and cached
+edit flows, with draft validation, explicit save, cache-safe repository mutations, and an offline
+error that keeps the draft. Focused draft/repository/DTO tests and remote `just check` passed. No
+meal-plan, shopping-list, or recipe editor was claimed, no live instance was contacted, and
+Zenfone verification remains pending.

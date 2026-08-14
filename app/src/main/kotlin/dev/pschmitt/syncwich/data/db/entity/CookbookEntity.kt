@@ -14,4 +14,6 @@ data class CookbookEntity(
     val slug: String,
     val description: String,
     val position: Int,
+    val public: Boolean = false,
+    val queryFilterString: String = "",
 )

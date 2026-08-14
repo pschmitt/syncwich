@@ -8,10 +8,10 @@ import kotlinx.serialization.Serializable
  * "public":false,"queryFilterString":"recipe_category.id IN [\"...\"]","groupId":"...",
  * "householdId":"...","queryFilter":{...},"household":{...}}`, wrapped in the same
  * `PagedResponseDto` envelope as the plain recipe and organizer lists. A cookbook is a saved
- * recipe-category/tag filter, not an embedded list of recipes - `queryFilterString`/`queryFilter`/
- * `household` aren't modeled since the app's lenient `Json` config drops them and nothing here needs
- * to re-evaluate the filter client-side; its matching recipes are instead fetched live via `GET
- * /api/recipes?cookbook={id}` (also confirmed live), which returns the same
+ * recipe-category/tag filter, not an embedded list of recipes - `queryFilter`/`household` aren't
+ * modeled since the app's lenient `Json` config drops them and nothing here needs to re-evaluate the
+ * filter client-side; its matching recipes are instead fetched live via `GET /api/recipes?cookbook={id}`
+ * (also confirmed live), which returns the same
  * `PagedResponseDto<RecipeSummaryDto>` envelope as the plain recipe list - see
  * [dev.pschmitt.syncwich.data.api.RecipesApi.getRecipesByCookbook].
  */
@@ -23,4 +23,5 @@ data class CookbookDto(
     val description: String? = null,
     val position: Int = 0,
     val public: Boolean = false,
+    val queryFilterString: String? = null,
 )
