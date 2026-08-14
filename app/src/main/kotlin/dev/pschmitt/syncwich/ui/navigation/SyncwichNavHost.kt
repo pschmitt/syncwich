@@ -26,6 +26,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import dev.pschmitt.syncwich.data.settings.NavigationBarItemKeys
 import dev.pschmitt.syncwich.data.settings.resolveNavBarOrder
 import dev.pschmitt.syncwich.ui.cookbooks.CookbookDetailScreen
@@ -36,6 +37,8 @@ import dev.pschmitt.syncwich.ui.onboarding.OnboardingScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipeDetailScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipesScreen
 import dev.pschmitt.syncwich.ui.settings.SettingsScreen
+import dev.pschmitt.syncwich.ui.settings.ConnectionSettingsScreen
+import dev.pschmitt.syncwich.ui.settings.SettingsCategoryScreen
 import dev.pschmitt.syncwich.ui.settings.SettingsViewModel
 import dev.pschmitt.syncwich.ui.shoppinglists.ShoppingListDetailScreen
 import dev.pschmitt.syncwich.ui.shoppinglists.ShoppingListsScreen
@@ -194,7 +197,34 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
                     onBack = { navController.popBackStack() },
                 )
             }
-            composable<Route.Settings> { SettingsScreen() }
+            composable<Route.Settings> {
+                SettingsScreen(
+                    onBack = { navController.popBackStack() },
+                    onCategoryClick = { category ->
+                        navController.navigate(Route.SettingsCategory(category))
+                    },
+                )
+            }
+            composable<Route.SettingsCategory> { backStackEntry ->
+                val route = backStackEntry.toRoute<Route.SettingsCategory>()
+                SettingsCategoryScreen(
+                    category = route.category,
+                    onBack = { navController.popBackStack() },
+                    onChangeConnection = { navController.navigate(Route.SettingsConnection) },
+                    onSignedOut = {
+                        navController.navigate(Route.Onboarding) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
+                )
+            }
+            composable<Route.SettingsConnection> {
+                ConnectionSettingsScreen(
+                    onBack = { navController.popBackStack() },
+                    onSaved = { navController.popBackStack() },
+                    viewModel = hiltViewModel(),
+                )
+            }
             composable<Route.RecipeDetail> {
                 RecipeDetailScreen(onBack = { navController.popBackStack() })
             }

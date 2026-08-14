@@ -1,18 +1,20 @@
 package dev.pschmitt.syncwich.ui.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -22,8 +24,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -35,20 +41,116 @@ import dev.pschmitt.syncwich.ui.navigation.TopLevelDestination
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    onBack: () -> Unit,
+    onCategoryClick: (SettingsCategory) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = { Text("Settings") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+            )
+        },
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            item {
+                Text(
+                    "Choose a settings category",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+            }
+            items(SettingsCategory.entries, key = { it.name }) { category ->
+                SettingsCategoryRow(category = category, onClick = onCategoryClick)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsCategoryRow(
+    category: SettingsCategory,
+    onClick: (SettingsCategory) -> Unit,
+) {
+    ListItem(
+        modifier =
+            Modifier.fillMaxWidth().clickable(role = Role.Button) { onClick(category) }.semantics {
+                contentDescription = "${category.title}: ${category.subtitle}"
+                role = Role.Button
+            },
+        leadingContent = { Icon(category.icon, contentDescription = null) },
+        headlineContent = { Text(category.title) },
+        supportingContent = { Text(category.subtitle) },
+        trailingContent = {
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
+        },
+    )
+}
+
+@Composable
+fun SettingsCategoryScreen(
+    category: SettingsCategory,
+    onBack: () -> Unit,
+    onChangeConnection: () -> Unit,
+    onSignedOut: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
+) {
+    when (category) {
+        SettingsCategory.Server ->
+            ServerSettingsScreen(
+                onBack = onBack,
+                onChangeConnection = onChangeConnection,
+                onSignedOut = onSignedOut,
+                modifier = modifier,
+                viewModel = viewModel,
+            )
+        SettingsCategory.Appearance ->
+            AppearanceSettingsScreen(
+                onBack = onBack,
+                modifier = modifier,
+                viewModel = viewModel,
+            )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AppearanceSettingsScreen(
+    onBack: () -> Unit,
+    modifier: Modifier,
+    viewModel: SettingsViewModel,
 ) {
     val persistedOrder by viewModel.navigationBarOrder.collectAsStateWithLifecycle()
     val hiddenItems by viewModel.navigationBarHiddenItems.collectAsStateWithLifecycle()
     val naturalKeys = TopLevelDestination.entries.map { it.key }
     val orderedKeys = resolveNavBarOrder(naturalKeys, persistedOrder, emptySet())
-    val orderedDestinations = orderedKeys.mapNotNull { key ->
-        TopLevelDestination.entries.firstOrNull { it.key == key }
-    }
+    val orderedDestinations =
+        orderedKeys.mapNotNull { key -> TopLevelDestination.entries.firstOrNull { it.key == key } }
 
     Scaffold(
         modifier = modifier,
-        topBar = { TopAppBar(title = { Text("Settings") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Appearance") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+            )
+        },
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding),

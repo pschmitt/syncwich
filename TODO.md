@@ -567,18 +567,21 @@ instrumentation regression and a live debug install/screenshot on the Zenfone 10
 
 ## SW-21: Reorganize Settings into top-level categories
 
-- [ ] Review nyetbox's Settings architecture and adapt it to Syncwich's existing Compose/navigation
+- [x] Review nyetbox's Settings architecture and adapt it to Syncwich's existing Compose/navigation
       patterns
-- [ ] Make the Settings destination a top-level menu with clear category rows and navigation into
+- [x] Make the Settings destination a top-level menu with clear category rows and navigation into
       submenus rather than one flat screen
-- [ ] Add a Server submenu for connection details, logout/sign-out, changing the server URL, and
+- [x] Add a Server submenu for connection details, logout/sign-out, changing the server URL, and
       replacing or managing the API token/username-password connection
-- [ ] Add an Appearance submenu and move configurable bottom-navigation settings under it
-- [ ] Preserve accessible labels, back navigation, offline-safe behavior, and existing settings
+- [x] Add an Appearance submenu and move configurable bottom-navigation settings under it
+- [x] Preserve accessible labels, back navigation, offline-safe behavior, and existing settings
       persistence while reorganizing the UI
 - [ ] Verify the new settings hierarchy visually on the Zenfone 10
 
-Status: not started.
+Status: mostly done, 2026-08-14. Settings now opens a category menu with Server and Appearance
+submenus; connection changes and sign-out are wired to existing validation/credential persistence,
+and bottom-navigation controls live under Appearance. Remote `just check` passed with 63 tests;
+Zenfone visual verification remains to be repeated after final integration.
 
 ## SW-22: Hide cookbook preview placeholders for image-less recipes
 

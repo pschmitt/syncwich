@@ -27,6 +27,13 @@ sealed interface Route {
     @Serializable data class CookbookDetail(val cookbookId: String) : Route
 
     @Serializable data object Settings : Route
+
+    @Serializable
+    data class SettingsCategory(
+        val category: dev.pschmitt.syncwich.ui.settings.SettingsCategory
+    ) : Route
+
+    @Serializable data object SettingsConnection : Route
 }
 
 /** The four bottom-navigation destinations, in display order. */
