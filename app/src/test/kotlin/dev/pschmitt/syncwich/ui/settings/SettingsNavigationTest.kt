@@ -15,6 +15,7 @@ class SettingsNavigationTest {
                 SettingsCategory.Server,
                 SettingsCategory.Appearance,
                 SettingsCategory.Sync,
+                SettingsCategory.Backup,
                 SettingsCategory.About,
             ),
             SettingsCategory.entries,
