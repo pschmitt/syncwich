@@ -575,3 +575,13 @@ Status: not started.
 - [ ] Verify the new settings hierarchy visually on the Zenfone 10
 
 Status: not started.
+
+## SW-22: Hide cookbook preview placeholders for image-less recipes
+
+- [ ] In cookbook recipe-preview carousels, omit recipes whose title image is missing or unusable
+      instead of rendering a placeholder restaurant icon
+- [ ] Keep cookbook cards and carousels visually balanced when all preview images are unavailable
+- [ ] Add focused coverage for filtering image-less recipes and verify the result visually on the
+      Zenfone 10
+
+Status: not started.
