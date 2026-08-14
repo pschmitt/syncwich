@@ -8,15 +8,17 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dev.pschmitt.syncwich.data.repository.CategoryRepository
 import dev.pschmitt.syncwich.data.repository.RecipeRepository
+import dev.pschmitt.syncwich.data.repository.ShoppingListRepository
 import dev.pschmitt.syncwich.data.repository.TagRepository
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import timber.log.Timber
 
 /**
- * Refreshes the offline recipe cache in the background: recipe list + category/tag dictionaries.
- * Never wipes or blocks what's already cached on failure - each repository's own `refresh*`
- * function already logs and swallows its own errors (see [RecipeRepository.refreshRecipes]'s kdoc),
- * so a bad run here only means "still showing what was last cached", never a blank screen.
+ * Refreshes the offline recipe cache in the background: recipe list + category/tag dictionaries +
+ * the shopping list-of-lists. Never wipes or blocks what's already cached on failure - each
+ * repository's own `refresh*` function already logs and swallows its own errors (see
+ * [RecipeRepository.refreshRecipes]'s kdoc), so a bad run here only means "still showing what was
+ * last cached", never a blank screen.
  *
  * Deliberately does *not* bulk-fetch every recipe's full detail - that's comparatively expensive
  * (one request per recipe) and detail is instead refreshed lazily by
@@ -31,6 +33,7 @@ constructor(
     private val recipeRepository: RecipeRepository,
     private val categoryRepository: CategoryRepository,
     private val tagRepository: TagRepository,
+    private val shoppingListRepository: ShoppingListRepository,
     private val settingsRepository: SettingsRepository,
 ) : CoroutineWorker(context, params) {
 
@@ -42,6 +45,7 @@ constructor(
                     recipeRepository.refreshRecipes(),
                     categoryRepository.refreshCategories(),
                     tagRepository.refreshTags(),
+                    shoppingListRepository.refreshLists(),
                 )
                 .mapNotNull { it.exceptionOrNull() }
 
