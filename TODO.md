@@ -621,11 +621,13 @@ Status: not started.
 
 ## SW-25: Make font size configurable in Appearance settings
 
-- [ ] Add an Appearance setting for adjusting the app font size
-- [ ] Persist the selected font-size preference and apply it consistently across the app
+- [x] Add an Appearance setting for adjusting the app font size
+- [x] Persist the selected font-size preference and apply it consistently across the app
 - [ ] Verify the setting visually on the Zenfone 10
 
-Status: not started.
+Status: mostly done, 2026-08-14. Appearance now exposes a bounded, accessible font-size slider;
+the preference is persisted in DataStore and scales the shared Material typography. Focused unit
+tests and remote `just check` remain to be run; Zenfone visual verification remains outstanding.
 
 ## SW-26: Cache images embedded in recipe steps
 

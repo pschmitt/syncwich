@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
+import dev.pschmitt.syncwich.data.settings.DEFAULT_FONT_SCALE
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import dev.pschmitt.syncwich.ui.navigation.Route
 import dev.pschmitt.syncwich.ui.navigation.SyncwichNavHost
@@ -31,7 +32,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            SyncwichTheme {
+            val fontScale by
+                settingsRepository.fontScale.collectAsStateWithLifecycle(
+                    initialValue = DEFAULT_FONT_SCALE
+                )
+            SyncwichTheme(fontScale = fontScale) {
                 val initialSyncCompleted by
                     settingsRepository.initialSyncCompleted.collectAsStateWithLifecycle(
                         initialValue = null

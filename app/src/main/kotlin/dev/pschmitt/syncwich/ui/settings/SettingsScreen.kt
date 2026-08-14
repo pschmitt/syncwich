@@ -21,6 +21,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -34,6 +35,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.pschmitt.syncwich.data.settings.FONT_SCALE_STEPS
+import dev.pschmitt.syncwich.data.settings.MAX_FONT_SCALE
+import dev.pschmitt.syncwich.data.settings.MIN_FONT_SCALE
 import dev.pschmitt.syncwich.data.settings.NavigationBarItemKeys
 import dev.pschmitt.syncwich.data.settings.resolveNavBarOrder
 import dev.pschmitt.syncwich.ui.navigation.TopLevelDestination
@@ -134,6 +138,7 @@ private fun AppearanceSettingsScreen(
 ) {
     val persistedOrder by viewModel.navigationBarOrder.collectAsStateWithLifecycle()
     val hiddenItems by viewModel.navigationBarHiddenItems.collectAsStateWithLifecycle()
+    val fontScale by viewModel.fontScale.collectAsStateWithLifecycle()
     val naturalKeys = TopLevelDestination.entries.map { it.key }
     val orderedKeys = resolveNavBarOrder(naturalKeys, persistedOrder, emptySet())
     val orderedDestinations =
@@ -157,6 +162,32 @@ private fun AppearanceSettingsScreen(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            item {
+                Column(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                    Text("Font size", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Adjust text size throughout the app.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = "${(fontScale * 100).toInt()}%",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                    Slider(
+                        value = fontScale,
+                        onValueChange = viewModel::saveFontScale,
+                        valueRange = MIN_FONT_SCALE..MAX_FONT_SCALE,
+                        steps = FONT_SCALE_STEPS,
+                        modifier =
+                            Modifier.fillMaxWidth().semantics {
+                                contentDescription =
+                                    "Font size, ${(fontScale * 100).toInt()} percent"
+                            },
+                    )
+                }
+            }
             item {
                 Column(modifier = Modifier.padding(bottom = 8.dp)) {
                     Text("Bottom navigation", style = MaterialTheme.typography.titleMedium)

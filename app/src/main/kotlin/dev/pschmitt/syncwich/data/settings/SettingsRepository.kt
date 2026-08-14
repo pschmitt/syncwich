@@ -76,6 +76,12 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         context.syncwichDataStore.data
             .map { navigationBarOrderFromString(it[KEY_NAV_BAR_HIDDEN_ITEMS]).toSet() }
 
+    /** The user's preferred app text scale, defaulting to the current Material typography size. */
+    val fontScale: Flow<Float> =
+        context.syncwichDataStore.data.map {
+            sanitizeFontScale(it[KEY_FONT_SCALE] ?: DEFAULT_FONT_SCALE)
+        }
+
     /** True after the first complete foreground sync has populated the offline cache. */
     val initialSyncCompleted: Flow<Boolean> =
         context.syncwichDataStore.data.map { it[KEY_INITIAL_SYNC_COMPLETED] ?: false }
@@ -128,6 +134,12 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         }
     }
 
+    suspend fun saveFontScale(scale: Float) {
+        context.syncwichDataStore.edit { prefs ->
+            prefs[KEY_FONT_SCALE] = sanitizeFontScale(scale)
+        }
+    }
+
     /** Atomically records the first sync as complete and updates the ordinary sync metadata. */
     suspend fun recordInitialSyncSuccess() {
         context.syncwichDataStore.edit { prefs ->
@@ -158,6 +170,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         const val MAX_SYNC_ERROR_LENGTH = 500
         val KEY_NAV_BAR_ORDER = stringPreferencesKey("navigation_bar_order")
         val KEY_NAV_BAR_HIDDEN_ITEMS = stringPreferencesKey("navigation_bar_hidden_items")
+        val KEY_FONT_SCALE = androidx.datastore.preferences.core.floatPreferencesKey("font_scale")
         val KEY_INITIAL_SYNC_COMPLETED = booleanPreferencesKey("initial_sync_completed")
         val KEY_LAST_SYNC_AT = longPreferencesKey("last_sync_at")
         val KEY_LAST_SYNC_ERROR = stringPreferencesKey("last_sync_error")

@@ -11,6 +11,7 @@ import dev.pschmitt.syncwich.data.onboarding.PasswordTokenMinter
 import dev.pschmitt.syncwich.data.repository.AccountRepository
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import dev.pschmitt.syncwich.data.settings.MealieCredentials
+import dev.pschmitt.syncwich.data.settings.DEFAULT_FONT_SCALE
 import dev.pschmitt.syncwich.sync.SyncScheduler
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -65,12 +66,23 @@ constructor(
             emptySet(),
         )
 
+    val fontScale: StateFlow<Float> =
+        settingsRepository.fontScale.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
+            DEFAULT_FONT_SCALE,
+        )
+
     fun saveNavigationBarOrder(order: List<String>) {
         viewModelScope.launch { settingsRepository.saveNavigationBarOrder(order) }
     }
 
     fun setNavigationBarItemHidden(key: String, hidden: Boolean) {
         viewModelScope.launch { settingsRepository.setNavigationBarItemHidden(key, hidden) }
+    }
+
+    fun saveFontScale(scale: Float) {
+        viewModelScope.launch { settingsRepository.saveFontScale(scale) }
     }
 
     fun updateConnection(serverUrl: String, apiToken: String) {
