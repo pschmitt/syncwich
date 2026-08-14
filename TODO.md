@@ -652,3 +652,12 @@ Status: not started.
 - [ ] Verify the simplified recipe detail layout on the Zenfone 10
 
 Status: not started.
+
+## SW-29: Add a swipeable recipe image viewer
+
+- [ ] Make recipe images clickable and open a full-screen image viewer
+- [ ] Include all available recipe images, including step images, in the viewer
+- [ ] Support left/right swipe navigation with accessible descriptions and dismissal
+- [ ] Reuse the offline image cache and verify the gallery on the Zenfone 10
+
+Status: not started.
