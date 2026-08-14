@@ -793,3 +793,15 @@ Status: not started.
 - [ ] Add focused coverage and verify the card and notification behavior on the Zenfone 10
 
 Status: not started.
+
+## SW-36: Make Settings and Favorites configurable navbar items
+
+- [ ] Allow Settings to be added to and removed from the bottom navigation through navigation
+      preferences
+- [ ] Add a dedicated Favorites destination backed by cached recipe-action/favorite state
+- [ ] Allow Favorites to be added to and removed from the bottom navigation through navigation
+      preferences
+- [ ] Preserve sensible defaults, ordering, visibility rules, and accessibility for both items
+- [ ] Add focused coverage and verify configurable navbar behavior on the Zenfone 10
+
+Status: not started.
