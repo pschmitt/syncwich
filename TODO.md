@@ -741,3 +741,18 @@ edit flows, with draft validation, explicit save, cache-safe repository mutation
 error that keeps the draft. Focused draft/repository/DTO tests and remote `just check` passed. No
 meal-plan, shopping-list, or recipe editor was claimed, no live instance was contacted, and
 Zenfone verification remains pending.
+
+## SW-34: Improve recipe-detail loading and add sync preferences
+
+- [ ] Investigate why opening a cached recipe still shows a loading state; trace the detail route,
+      Room cache, JSON decode, and network refresh path, then keep cached content visible while a
+      best-effort refresh runs
+- [ ] Add regression coverage proving cached recipe details render without waiting for network
+      availability
+- [ ] Inspect nyetbox's sync settings and add equivalent Syncwich controls for Wi-Fi-only sync,
+      allowing sync while roaming, and configurable sync frequency
+- [ ] Persist the sync preferences and apply them to WorkManager constraints/scheduling without
+      weakening offline-first behavior or manual refresh
+- [ ] Verify the loading behavior and sync settings on the Zenfone 10
+
+Status: not started.
