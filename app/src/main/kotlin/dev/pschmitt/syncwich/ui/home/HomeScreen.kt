@@ -46,6 +46,8 @@ import dev.pschmitt.syncwich.data.api.recipeImageUrl
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
 import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
+import dev.pschmitt.syncwich.ui.common.NavigationTitle
+import dev.pschmitt.syncwich.ui.navigation.TopLevelDestination
 import dev.pschmitt.syncwich.ui.recipes.formatRating
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,12 +72,7 @@ fun HomeScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Filled.Home, contentDescription = null)
-                        Text("Home", modifier = Modifier.padding(start = 8.dp))
-                    }
-                },
+                title = { NavigationTitle(TopLevelDestination.HOME.icon, "Home") },
                 actions = {
                     IconButton(onClick = onSettingsClick) {
                         Icon(Icons.Filled.Settings, contentDescription = "Settings")

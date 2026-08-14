@@ -8,6 +8,7 @@ import dev.pschmitt.syncwich.data.db.dao.MealPlanDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeActionDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeTimelineEventDao
+import dev.pschmitt.syncwich.data.db.dao.RecipeStepProgressDao
 import dev.pschmitt.syncwich.data.db.dao.ShoppingListDao
 import dev.pschmitt.syncwich.data.db.dao.TagDao
 import dev.pschmitt.syncwich.data.db.entity.CategoryEntity
@@ -20,6 +21,7 @@ import dev.pschmitt.syncwich.data.db.entity.RecipeDetailEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeTagCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeTimelineEventEntity
+import dev.pschmitt.syncwich.data.db.entity.RecipeStepProgressEntity
 import dev.pschmitt.syncwich.data.db.entity.ShoppingListEntity
 import dev.pschmitt.syncwich.data.db.entity.ShoppingListItemEntity
 import dev.pschmitt.syncwich.data.db.entity.TagEntity
@@ -39,6 +41,7 @@ import dev.pschmitt.syncwich.data.db.entity.TagEntity
             RecipeDetailEntity::class,
             RecipeActionEntity::class,
             RecipeTimelineEventEntity::class,
+            RecipeStepProgressEntity::class,
             CategoryEntity::class,
             TagEntity::class,
             CookbookEntity::class,
@@ -49,6 +52,7 @@ import dev.pschmitt.syncwich.data.db.entity.TagEntity
             MealPlanEntryEntity::class,
             RecipeCookbookCrossRef::class,
         ],
+    // v10: SW-72 adds durable local completion state for recipe steps.
     // v9: Recover installs that were created with a conflicting v8 schema identity. The cache is
     // intentionally rebuildable, so the existing destructive-migration policy recreates it and
     // lets the next sync repopulate the database instead of crashing during Room initialization.
@@ -65,7 +69,7 @@ import dev.pschmitt.syncwich.data.db.entity.TagEntity
     // this pre-1.0, in their own worktrees, to different version numbers with different entities;
     // reconciled to v4 on merge. No migration path exists yet - see DatabaseModule's
     // fallbackToDestructiveMigration().
-    version = 9,
+    version = 10,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -74,6 +78,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun recipeActionDao(): RecipeActionDao
 
     abstract fun recipeTimelineEventDao(): RecipeTimelineEventDao
+
+    abstract fun recipeStepProgressDao(): RecipeStepProgressDao
 
     abstract fun categoryDao(): CategoryDao
 
@@ -86,6 +92,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun cookbookDao(): CookbookDao
 
     companion object {
-        const val SCHEMA_VERSION = 9
+        const val SCHEMA_VERSION = 10
     }
 }

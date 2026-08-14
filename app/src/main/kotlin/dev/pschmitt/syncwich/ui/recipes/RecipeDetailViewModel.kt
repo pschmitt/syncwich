@@ -12,6 +12,7 @@ import dev.pschmitt.syncwich.data.image.RecipeImageReference
 import dev.pschmitt.syncwich.data.image.extractRecipeImageReferences
 import dev.pschmitt.syncwich.data.repository.RecipeActionRepository
 import dev.pschmitt.syncwich.data.repository.RecipeRepository
+import dev.pschmitt.syncwich.data.repository.RecipeStepProgressRepository
 import dev.pschmitt.syncwich.data.repository.RecipeTimelineRepository
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import dev.pschmitt.syncwich.ui.common.RefreshState
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -45,6 +47,7 @@ sealed interface RecipeDetailUiState {
         val serverUrl: String,
         val imageIndex: RecipeImageIndex = RecipeImageIndex.EMPTY,
         val actions: RecipeActionUiState = RecipeActionUiState(),
+        val completedStepIndexes: Set<Int> = emptySet(),
         val ingredientChecklistEnabled: Boolean = false,
         val refreshError: String? = null,
     ) : RecipeDetailUiState
@@ -101,6 +104,7 @@ constructor(
     private val recipeRepository: RecipeRepository,
     private val recipeActionRepository: RecipeActionRepository,
     private val recipeTimelineRepository: RecipeTimelineRepository,
+    private val stepProgressRepository: RecipeStepProgressRepository,
     settingsRepository: SettingsRepository,
     private val json: Json,
 ) : ViewModel() {
@@ -153,6 +157,12 @@ constructor(
     private val ingredientChecklistEnabled =
         settingsRepository.ingredientChecklistEnabled.distinctUntilChanged()
 
+    private val completedStepIndexes: Flow<Set<Int>> =
+        effectiveRecipeId.flatMapLatest { recipeId ->
+            if (recipeId.isBlank()) flowOf(emptySet())
+            else stepProgressRepository.observeCompleted(recipeId)
+        }
+
     private val actions: Flow<RecipeActionUiState> =
         effectiveRecipeId
             .flatMapLatest { recipeId ->
@@ -169,15 +179,17 @@ constructor(
         combine(
                 recipePresentation,
                 actions,
+                completedStepIndexes,
                 refreshState,
                 ingredientChecklistEnabled,
-            ) { presentation, recipeActions, refresh, checklistEnabled ->
+            ) { presentation, recipeActions, completedSteps, refresh, checklistEnabled ->
                 recipeDetailUiState(
                     recipe = presentation?.recipe,
                     actions = recipeActions,
                     serverUrl = presentation?.serverUrl.orEmpty(),
                     refresh = refresh,
                     imageIndex = presentation?.imageIndex,
+                    completedStepIndexes = completedSteps,
                     ingredientChecklistEnabled = checklistEnabled,
                 )
             }
@@ -227,6 +239,13 @@ constructor(
         }
     }
 
+    fun setStepCompleted(stepIndex: Int, completed: Boolean) {
+        require(stepIndex >= 0) { "Recipe step index must not be negative" }
+        viewModelScope.launch {
+            stepProgressRepository.setCompleted(effectiveRecipeId.value, stepIndex, completed)
+        }
+    }
+
     fun deleteRecipe(recipeId: String, slug: String) {
         if (_deleteState.value is RecipeDeleteUiState.Deleting) return
         lastDeleteTarget = recipeId to slug
@@ -271,6 +290,7 @@ internal fun recipeDetailUiState(
     serverUrl: String,
     refresh: RefreshState,
     imageIndex: RecipeImageIndex? = null,
+    completedStepIndexes: Set<Int> = emptySet(),
     ingredientChecklistEnabled: Boolean = false,
 ): RecipeDetailUiState =
     when {
@@ -280,6 +300,7 @@ internal fun recipeDetailUiState(
                 serverUrl = serverUrl,
                 imageIndex = imageIndex ?: recipeImageIndex(serverUrl, recipe),
                 actions = actions,
+                completedStepIndexes = completedStepIndexes,
                 ingredientChecklistEnabled = ingredientChecklistEnabled,
                 refreshError = refresh.errorMessage,
             )

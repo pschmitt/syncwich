@@ -28,6 +28,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.pschmitt.syncwich.data.db.entity.ShoppingListEntity
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
 import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
+import dev.pschmitt.syncwich.ui.common.NavigationTitle
+import dev.pschmitt.syncwich.ui.navigation.TopLevelDestination
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,7 +46,7 @@ fun ShoppingListsScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Shopping Lists") },
+                title = { NavigationTitle(TopLevelDestination.SHOPPING_LISTS.icon, "Shopping Lists") },
                 actions = {
                     IconButton(onClick = onSettingsClick) {
                         Icon(Icons.Filled.Settings, contentDescription = "Settings")

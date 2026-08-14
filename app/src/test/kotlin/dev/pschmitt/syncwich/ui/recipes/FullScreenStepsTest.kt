@@ -25,4 +25,11 @@ class FullScreenStepsTest {
             fullScreenStepImageUrls(references),
         )
     }
+
+    @Test
+    fun `transient step font scale stays within accessible bounds`() {
+        assertEquals(0.8f, adjustStepFontScale(0.8f, -0.1f))
+        assertEquals(1.1f, adjustStepFontScale(1.0f, 0.1f))
+        assertEquals(1.6f, adjustStepFontScale(1.6f, 0.1f))
+    }
 }

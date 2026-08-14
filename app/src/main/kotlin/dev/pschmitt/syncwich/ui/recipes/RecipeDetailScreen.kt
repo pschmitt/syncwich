@@ -22,8 +22,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -50,6 +52,8 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.Timeline
+import androidx.compose.material.icons.filled.TextDecrease
+import androidx.compose.material.icons.filled.TextIncrease
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -58,6 +62,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -74,6 +79,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -82,6 +88,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
@@ -93,11 +101,12 @@ import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -132,7 +141,7 @@ fun RecipeDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val refreshState by viewModel.refreshState.collectAsStateWithLifecycle()
-    val deleteState by viewModel.deleteState.collectAsStateWithLifecycle()
+            val deleteState by viewModel.deleteState.collectAsStateWithLifecycle()
     val loadedState = uiState as? RecipeDetailUiState.Loaded
     val title = loadedState?.recipe?.name ?: "Recipe"
     var overflowExpanded by remember { mutableStateOf(false) }
@@ -243,8 +252,10 @@ fun RecipeDetailScreen(
                             recipe = state.recipe,
                             imageIndex = state.imageIndex,
                             actions = state.actions,
+                            completedStepIndexes = state.completedStepIndexes,
                             ingredientChecklistEnabled = state.ingredientChecklistEnabled,
                             onRatingSelected = viewModel::setRating,
+                            onStepCompleted = viewModel::setStepCompleted,
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
@@ -346,8 +357,10 @@ private fun RecipeDetailContent(
     recipe: RecipeDetailDto,
     imageIndex: RecipeImageIndex,
     actions: RecipeActionUiState,
+    completedStepIndexes: Set<Int>,
     ingredientChecklistEnabled: Boolean,
     onRatingSelected: (Int) -> Unit,
+    onStepCompleted: (Int, Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val imageUrl = imageIndex.coverUrl
@@ -355,7 +368,12 @@ private fun RecipeDetailContent(
     var viewerPage by rememberSaveable { mutableStateOf<Int?>(null) }
     var stepsFullScreen by rememberSaveable { mutableStateOf(false) }
 
-    LazyColumn(modifier = modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
+    val listState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
+    LazyColumn(
+        state = listState,
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 24.dp),
+    ) {
         if (imageUrl != null) {
             item {
                 AsyncImage(
@@ -433,8 +451,10 @@ private fun RecipeDetailContent(
             itemsIndexed(recipe.recipeInstructions) { index, instruction ->
                 InstructionRow(
                     number = index + 1,
+                    completed = index in completedStepIndexes,
                     instruction = instruction,
                     imageReferences = imageIndex.instructionReferences.getOrNull(index).orEmpty(),
+                    onCompletedChange = { onStepCompleted(index, it) },
                     onImageClick = {
                         viewerPage = viewerImages.indexOfFirst { image -> image.url == it }.coerceAtLeast(0)
                     },
@@ -477,6 +497,8 @@ private fun RecipeDetailContent(
             recipeName = recipe.name,
             instructions = recipe.recipeInstructions,
             imageReferences = imageIndex.instructionReferences,
+            completedStepIndexes = completedStepIndexes,
+            onStepCompleted = onStepCompleted,
             onDismiss = { stepsFullScreen = false },
         )
     }
@@ -788,25 +810,43 @@ private fun IngredientRow(ingredient: RecipeIngredientDto, checklistEnabled: Boo
 }
 
 @Composable
-private fun InstructionRow(
+internal fun InstructionRow(
     number: Int,
     instruction: RecipeInstructionDto,
     imageReferences: List<RecipeImageReference>,
+    completed: Boolean = false,
+    onCompletedChange: (Boolean) -> Unit = {},
     onImageClick: (String) -> Unit,
 ) {
-    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Checkbox(
+            checked = completed,
+            onCheckedChange = onCompletedChange,
+            modifier = Modifier.semantics {
+                contentDescription =
+                    if (completed) "Mark step $number incomplete" else "Mark step $number complete"
+            },
+        )
         Text(
             text = "$number.",
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(end = 12.dp),
+            modifier = Modifier.padding(start = 4.dp, top = 12.dp, end = 12.dp),
         )
         Column(modifier = Modifier.fillMaxWidth()) {
             if (!instruction.title.isNullOrBlank()) {
-                Text(text = instruction.title, style = MaterialTheme.typography.titleSmall)
+                Text(
+                    text = instruction.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    textDecoration = if (completed) TextDecoration.LineThrough else null,
+                )
             }
+            val stepContent = stripRecipeImageSyntax(instruction.text)
             Markdown(
-                content = stripRecipeImageSyntax(instruction.text),
+                content = if (completed) "<del>$stepContent</del>" else stepContent,
                 imageTransformer = SafeRecipeImageTransformer,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -857,10 +897,21 @@ private fun FullScreenStepsDialog(
     recipeName: String,
     instructions: List<RecipeInstructionDto>,
     imageReferences: List<List<RecipeImageReference>>,
+    completedStepIndexes: Set<Int>,
+    onStepCompleted: (Int, Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val images = remember(recipeName, imageReferences) { stepViewerImages(recipeName, imageReferences) }
     var viewerPage by rememberSaveable { mutableStateOf<Int?>(null) }
+    var fontScale by rememberSaveable { mutableFloatStateOf(1f) }
+    var firstVisibleItemIndex by rememberSaveable { mutableStateOf(0) }
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = firstVisibleItemIndex)
+    val baseDensity = LocalDensity.current
+
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.firstVisibleItemIndex }
+            .collect { firstVisibleItemIndex = it }
+    }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -892,21 +943,41 @@ private fun FullScreenStepsDialog(
                 )
             },
         ) { innerPadding ->
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(innerPadding),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-            ) {
-                itemsIndexed(instructions) { index, instruction ->
-                    InstructionRow(
-                        number = index + 1,
-                        instruction = instruction,
-                        imageReferences = imageReferences.getOrNull(index).orEmpty(),
-                        onImageClick = { url ->
-                            val page = images.indexOfFirst { it.url == url }
-                            if (page >= 0) viewerPage = page
-                        },
-                    )
+            Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                androidx.compose.runtime.CompositionLocalProvider(
+                    androidx.compose.ui.platform.LocalDensity provides
+                        Density(
+                            density = baseDensity.density,
+                            fontScale = baseDensity.fontScale * fontScale,
+                        )
+                ) {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                    ) {
+                        itemsIndexed(instructions) { index, instruction ->
+                            InstructionRow(
+                                number = index + 1,
+                                instruction = instruction,
+                                completed = index in completedStepIndexes,
+                                onCompletedChange = { onStepCompleted(index, it) },
+                                imageReferences = imageReferences.getOrNull(index).orEmpty(),
+                                onImageClick = { url ->
+                                    val page = images.indexOfFirst { it.url == url }
+                                    if (page >= 0) viewerPage = page
+                                },
+                            )
+                        }
+                    }
                 }
+
+                StepFontSizeControls(
+                    fontScale = fontScale,
+                    onDecrease = { fontScale = adjustStepFontScale(fontScale, -0.1f) },
+                    onIncrease = { fontScale = adjustStepFontScale(fontScale, 0.1f) },
+                    modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+                )
             }
         }
     }
@@ -919,6 +990,41 @@ private fun FullScreenStepsDialog(
         )
     }
 }
+
+@Composable
+internal fun StepFontSizeControls(
+    fontScale: Float,
+    onDecrease: () -> Unit,
+    onIncrease: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        SmallFloatingActionButton(
+            onClick = { if (fontScale > 0.8f) onDecrease() },
+            modifier = Modifier.semantics { contentDescription = "Decrease step text size" },
+        ) {
+            Icon(Icons.Filled.TextDecrease, contentDescription = null)
+        }
+        Text(
+            text = "${(fontScale * 100).toInt()}%",
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer).padding(8.dp),
+        )
+        SmallFloatingActionButton(
+            onClick = { if (fontScale < 1.6f) onIncrease() },
+            modifier = Modifier.semantics { contentDescription = "Increase step text size" },
+        ) {
+            Icon(Icons.Filled.TextIncrease, contentDescription = null)
+        }
+    }
+}
+
+internal fun adjustStepFontScale(current: Float, delta: Float): Float =
+    (current + delta).coerceIn(0.8f, 1.6f)
 
 internal fun fullScreenStepImageUrls(
     imageReferences: List<List<RecipeImageReference>>,

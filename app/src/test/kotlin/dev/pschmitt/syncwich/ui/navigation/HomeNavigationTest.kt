@@ -12,4 +12,10 @@ class HomeNavigationTest {
         assertFalse(shouldResetHomeStack(TopLevelDestination.RECIPES))
         assertFalse(shouldResetHomeStack(TopLevelDestination.SETTINGS))
     }
+
+    @Test
+    fun `home tap is a no-op when home is already selected`() {
+        assertFalse(shouldNavigateToHome(isAlreadyOnHome = true))
+        assertTrue(shouldNavigateToHome(isAlreadyOnHome = false))
+    }
 }

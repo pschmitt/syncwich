@@ -14,6 +14,7 @@ import dev.pschmitt.syncwich.data.db.dao.MealPlanDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeActionDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeTimelineEventDao
+import dev.pschmitt.syncwich.data.db.dao.RecipeStepProgressDao
 import dev.pschmitt.syncwich.data.db.dao.ShoppingListDao
 import dev.pschmitt.syncwich.data.db.dao.TagDao
 import javax.inject.Singleton
@@ -40,6 +41,10 @@ object DatabaseModule {
     @Provides
     fun provideRecipeTimelineEventDao(database: AppDatabase): RecipeTimelineEventDao =
         database.recipeTimelineEventDao()
+
+    @Provides
+    fun provideRecipeStepProgressDao(database: AppDatabase): RecipeStepProgressDao =
+        database.recipeStepProgressDao()
 
     @Provides fun provideCategoryDao(database: AppDatabase): CategoryDao = database.categoryDao()
 

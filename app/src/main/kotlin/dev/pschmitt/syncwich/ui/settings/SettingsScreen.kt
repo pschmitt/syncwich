@@ -56,6 +56,7 @@ import dev.pschmitt.syncwich.data.settings.ThemeMode
 import dev.pschmitt.syncwich.data.settings.resolveNavBarOrder
 import dev.pschmitt.syncwich.ui.navigation.NavigationBarViewModel
 import dev.pschmitt.syncwich.ui.navigation.TopLevelDestination
+import dev.pschmitt.syncwich.ui.common.NavigationTitle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,7 +69,7 @@ fun SettingsScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { NavigationTitle(TopLevelDestination.SETTINGS.icon, "Settings") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")

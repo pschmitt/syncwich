@@ -1371,35 +1371,98 @@ compilation pass, and the build was deployed to all three attached devices.
 
 ## SW-71: Avoid redundant Home navigation reloads
 
-- [ ] Keep the current Home destination when the Home navbar button is tapped on Home
-- [ ] Avoid recreating or reloading the Home content for a no-op navigation event
-- [ ] Add focused navigation coverage and verify the behavior on the Zenfone 10
+- [x] Keep the current Home destination when the Home navbar button is tapped on Home
+- [x] Avoid recreating or reloading the Home content for a no-op navigation event
+- [x] Add focused navigation coverage and verify the behavior on the Zenfone 10
 
-Status: not started, 2026-08-14.
+Status: **done**, 2026-08-14. Home navigation now returns immediately when Home is already the
+selected destination, while still clearing child routes when Home is selected from a detail stack.
+Focused navigation tests pass and the verified build was deployed to the Zenfone 10.
 
 ## SW-72: Track completed recipe steps
 
-- [ ] Let users mark individual recipe steps as completed/crossed off
-- [ ] Persist step completion state per recipe for offline use
-- [ ] Restore the recipe steps scroll position when returning to the view
-- [ ] Add focused UI/state coverage and verify the behavior on the Zenfone 10
+- [x] Let users mark individual recipe steps as completed/crossed off
+- [x] Persist step completion state per recipe for offline use
+- [x] Restore the recipe steps scroll position when returning to the view
+- [x] Add focused UI/state coverage and verify the behavior on the Zenfone 10
 
-Status: not started, 2026-08-14.
+Status: **done**, 2026-08-14. Recipe step completion is stored in Room per recipe and included in
+cache backups; both the regular and full-screen step lists retain their visible position, and
+completed steps render crossed off. Focused JVM/Android tests pass and the build was deployed to
+the Zenfone 10.
 
 ## SW-73: Add transient font controls to full-screen steps
 
-- [ ] Add a floating control to increase and decrease full-screen step text size
-- [ ] Keep the full-screen adjustment independent from the global Appearance font setting
-- [ ] Preserve the chosen size while the full-screen view remains open
-- [ ] Add focused UI coverage and verify the controls on the Zenfone 10
+- [x] Add a floating control to increase and decrease full-screen step text size
+- [x] Keep the full-screen adjustment independent from the global Appearance font setting
+- [x] Preserve the chosen size while the full-screen view remains open
+- [x] Add focused UI coverage and verify the controls on the Zenfone 10
 
-Status: not started, 2026-08-14.
+Status: **done**, 2026-08-14. Full-screen steps expose transient 80–160% text-size controls and
+apply them only within the open dialog. The adjustment is independently saveable during the dialog
+and focused font-control tests pass; the verified build was deployed to the Zenfone 10.
 
 ## SW-74: Add current-view icons to screen headers
 
-- [ ] Include the active view icon in applicable screen headers
-- [ ] Reuse the same icon definitions shown in the navigation bar
-- [ ] Keep header icon placement and accessibility consistent across destinations
-- [ ] Add focused UI coverage and verify the headers on the Zenfone 10
+- [x] Include the active view icon in applicable screen headers
+- [x] Reuse the same icon definitions shown in the navigation bar
+- [x] Keep header icon placement and accessibility consistent across destinations
+- [x] Add focused UI coverage and verify the headers on the Zenfone 10
+
+Status: **done**, 2026-08-14. Top-level destinations now define one shared icon used by both the
+navigation bar and their screen title, with consistent decorative accessibility semantics. Remote
+checks, Android-test compilation, and the verified Zenfone build pass.
+
+## SW-75: Add a Libraries section to About
+
+- [ ] Add a Libraries section to the About page
+- [ ] Display the used libraries and their license information
+- [ ] Prefer a dynamically generated list when the build tooling makes that practical
+- [ ] Add focused UI coverage and verify the section on the Zenfone 10
+
+Status: not started, 2026-08-14.
+
+## SW-76: Add a server-credentials test action
+
+- [ ] Add a “Test credentials” button to Settings → Server
+- [ ] Show the authenticated user when the check succeeds
+- [ ] Show a clear error message when the check fails
+- [ ] Add focused UI/state coverage and verify it on the Zenfone 10
+
+Status: not started, 2026-08-14.
+
+## SW-77: Improve the recipes-list tag filter UX
+
+- [ ] Make the tag filter section collapsible or otherwise substantially more compact
+- [ ] Preserve access to all tags without letting the filter area dominate the sticky header
+- [ ] Keep the selected tag and search/filter state clear and accessible
+- [ ] Add focused UI coverage and verify the recipes list on the Zenfone 10
+
+Status: not started, 2026-08-14.
+
+## SW-78: Add clickable recipe metadata
+
+- [ ] Show recipe metadata such as tags and cookbook membership on the recipe view
+- [ ] Make cookbook metadata open the corresponding cookbook
+- [ ] Make tags open the recipes list filtered to the selected tag
+- [ ] Add focused navigation/UI coverage and verify it on the Zenfone 10
+
+Status: not started, 2026-08-14.
+
+## SW-79: Use cards in recipe and cookbook views
+
+- [ ] Identify the recipe and cookbook detail groups that benefit from Material 3 cards
+- [ ] Apply a consistent card-based layout without hiding or duplicating content
+- [ ] Preserve existing actions, image interactions, and offline-first behavior
+- [ ] Add focused UI coverage and verify the detail views on the Zenfone 10
+
+Status: not started, 2026-08-14.
+
+## SW-80: Apply Material 3 Expressive design
+
+- [ ] Audit the app against the Material 3 Expressive guidance
+- [ ] Refresh color, typography, shapes, components, motion, and layout hierarchy where useful
+- [ ] Preserve accessibility, offline-first behavior, and existing task flows during the overhaul
+- [ ] Add focused UI coverage and verify the redesigned app on the Zenfone 10
 
 Status: not started, 2026-08-14.

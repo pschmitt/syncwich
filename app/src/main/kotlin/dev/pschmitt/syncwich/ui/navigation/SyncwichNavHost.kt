@@ -4,13 +4,6 @@ import android.content.Intent
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -23,7 +16,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -54,26 +46,23 @@ import dev.pschmitt.syncwich.ui.shoppinglists.ShoppingListsScreen
 
 private data class TopLevelNavItem(
     val destination: TopLevelDestination,
-    val icon: ImageVector,
     val label: String,
 )
 
 internal fun shouldResetHomeStack(destination: TopLevelDestination): Boolean =
     destination == TopLevelDestination.HOME
 
+internal fun shouldNavigateToHome(isAlreadyOnHome: Boolean): Boolean = !isAlreadyOnHome
+
 private val topLevelNavItems =
     listOf(
-        TopLevelNavItem(TopLevelDestination.HOME, Icons.Filled.Home, "Home"),
-        TopLevelNavItem(TopLevelDestination.RECIPES, Icons.Filled.Restaurant, "Recipes"),
-        TopLevelNavItem(TopLevelDestination.FAVORITES, Icons.Filled.Favorite, "Favorites"),
-        TopLevelNavItem(TopLevelDestination.MEAL_PLAN, Icons.Filled.CalendarMonth, "Meal Plan"),
-        TopLevelNavItem(TopLevelDestination.SHOPPING_LISTS, Icons.Filled.ShoppingCart, "Shopping"),
-        TopLevelNavItem(
-            TopLevelDestination.COOKBOOKS,
-            Icons.AutoMirrored.Filled.MenuBook,
-            "Cookbooks",
-        ),
-        TopLevelNavItem(TopLevelDestination.SETTINGS, Icons.Filled.Settings, "Settings"),
+        TopLevelNavItem(TopLevelDestination.HOME, "Home"),
+        TopLevelNavItem(TopLevelDestination.RECIPES, "Recipes"),
+        TopLevelNavItem(TopLevelDestination.FAVORITES, "Favorites"),
+        TopLevelNavItem(TopLevelDestination.MEAL_PLAN, "Meal Plan"),
+        TopLevelNavItem(TopLevelDestination.SHOPPING_LISTS, "Shopping"),
+        TopLevelNavItem(TopLevelDestination.COOKBOOKS, "Cookbooks"),
+        TopLevelNavItem(TopLevelDestination.SETTINGS, "Settings"),
     )
 
 /**
@@ -162,6 +151,9 @@ fun SyncwichNavHost(
                             selected = selected,
                             onClick = {
                                 if (shouldResetHomeStack(item.destination)) {
+                                    if (!shouldNavigateToHome(currentDestination?.hasRoute(Route.Home::class) == true)) {
+                                        return@NavigationBarItem
+                                    }
                                     // Home is a reset point: selecting it from a recipe/detail
                                     // stack must never restore stale child content or leave the
                                     // user one back press away from the same page again.
@@ -182,7 +174,7 @@ fun SyncwichNavHost(
                                     }
                                 }
                             },
-                            icon = { Icon(item.icon, contentDescription = item.label) },
+                            icon = { Icon(item.destination.icon, contentDescription = item.label) },
                             label = { Text(item.label) },
                         )
                     }

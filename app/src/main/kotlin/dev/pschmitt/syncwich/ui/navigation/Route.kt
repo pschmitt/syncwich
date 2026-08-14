@@ -1,5 +1,14 @@
 package dev.pschmitt.syncwich.ui.navigation
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.ui.graphics.vector.ImageVector
 import dev.pschmitt.syncwich.data.settings.NavigationBarItemKeys
 import kotlinx.serialization.Serializable
 
@@ -51,12 +60,32 @@ sealed interface Route {
 }
 
 /** The five bottom-navigation destinations, in display order. */
-enum class TopLevelDestination(val key: String, val route: Route, val label: String) {
-    HOME(NavigationBarItemKeys.HOME, Route.Home, "Home"),
-    RECIPES(NavigationBarItemKeys.RECIPES, Route.Recipes, "Recipes"),
-    FAVORITES(NavigationBarItemKeys.FAVORITES, Route.Favorites, "Favorites"),
-    MEAL_PLAN(NavigationBarItemKeys.MEAL_PLAN, Route.MealPlan, "Meal Plan"),
-    SHOPPING_LISTS(NavigationBarItemKeys.SHOPPING_LISTS, Route.ShoppingLists, "Shopping"),
-    COOKBOOKS(NavigationBarItemKeys.COOKBOOKS, Route.Cookbooks, "Cookbooks"),
-    SETTINGS(NavigationBarItemKeys.SETTINGS, Route.Settings, "Settings"),
+enum class TopLevelDestination(
+    val key: String,
+    val route: Route,
+    val label: String,
+    val icon: ImageVector,
+) {
+    HOME(NavigationBarItemKeys.HOME, Route.Home, "Home", Icons.Filled.Home),
+    RECIPES(NavigationBarItemKeys.RECIPES, Route.Recipes, "Recipes", Icons.Filled.Restaurant),
+    FAVORITES(NavigationBarItemKeys.FAVORITES, Route.Favorites, "Favorites", Icons.Filled.Favorite),
+    MEAL_PLAN(
+        NavigationBarItemKeys.MEAL_PLAN,
+        Route.MealPlan,
+        "Meal Plan",
+        Icons.Filled.CalendarMonth,
+    ),
+    SHOPPING_LISTS(
+        NavigationBarItemKeys.SHOPPING_LISTS,
+        Route.ShoppingLists,
+        "Shopping",
+        Icons.Filled.ShoppingCart,
+    ),
+    COOKBOOKS(
+        NavigationBarItemKeys.COOKBOOKS,
+        Route.Cookbooks,
+        "Cookbooks",
+        Icons.AutoMirrored.Filled.MenuBook,
+    ),
+    SETTINGS(NavigationBarItemKeys.SETTINGS, Route.Settings, "Settings", Icons.Filled.Settings),
 }

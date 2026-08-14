@@ -59,6 +59,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.pschmitt.syncwich.data.db.entity.MealPlanEntryEntity
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
 import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
+import dev.pschmitt.syncwich.ui.common.NavigationTitle
+import dev.pschmitt.syncwich.ui.navigation.TopLevelDestination
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -90,7 +92,7 @@ fun MealPlanScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Meal Plan") },
+                title = { NavigationTitle(TopLevelDestination.MEAL_PLAN.icon, "Meal Plan") },
                 actions = {
                     IconButton(onClick = onSettingsClick) {
                         Icon(Icons.Filled.Settings, contentDescription = "Settings")

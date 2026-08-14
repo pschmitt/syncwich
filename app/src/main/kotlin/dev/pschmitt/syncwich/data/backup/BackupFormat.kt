@@ -395,6 +395,7 @@ constructor(
                 "recipe_details",
                 "recipe_actions",
                 "recipe_timeline_events",
+                "recipe_step_progress",
                 "categories",
                 "tags",
                 "cookbooks",

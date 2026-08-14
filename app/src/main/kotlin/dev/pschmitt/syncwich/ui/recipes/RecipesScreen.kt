@@ -48,6 +48,8 @@ import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
 import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
 import dev.pschmitt.syncwich.ui.common.SearchField
+import dev.pschmitt.syncwich.ui.common.NavigationTitle
+import dev.pschmitt.syncwich.ui.navigation.TopLevelDestination
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,7 +66,7 @@ fun RecipesScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Recipes") },
+                title = { NavigationTitle(TopLevelDestination.RECIPES.icon, "Recipes") },
                 actions = {
                     IconButton(onClick = onSettingsClick) {
                         Icon(Icons.Filled.Settings, contentDescription = "Settings")

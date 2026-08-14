@@ -13,6 +13,7 @@ import dev.pschmitt.syncwich.data.api.dto.RecipeSummaryDto
 import dev.pschmitt.syncwich.data.db.AppDatabase
 import dev.pschmitt.syncwich.data.db.dao.RecipeActionDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeDao
+import dev.pschmitt.syncwich.data.db.dao.RecipeStepProgressDao
 import dev.pschmitt.syncwich.data.db.entity.CategoryEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeCategoryCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeDetailEntity
@@ -53,6 +54,7 @@ constructor(
     private val recipesApi: RecipesApi,
     private val recipeDao: RecipeDao,
     private val recipeActionDao: RecipeActionDao,
+    private val recipeStepProgressDao: RecipeStepProgressDao,
     private val database: AppDatabase,
     private val json: Json,
 ) {
@@ -103,6 +105,7 @@ constructor(
                 recipesApi.deleteRecipe(slug).use {}
                 recipeDao.deleteRecipeCache(recipeId)
                 recipeActionDao.delete(recipeId)
+                recipeStepProgressDao.deleteForRecipe(recipeId)
             }
                 .onFailure {
                     Timber.w(it, "Recipe deletion failed for '$slug'; keeping cached data")
