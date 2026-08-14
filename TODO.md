@@ -537,11 +537,14 @@ Status: mostly done, 2026-08-14.
 
 ## SW-18: Equalize onboarding authentication mode controls
 
-- [ ] Make the “API token” and “Username & password” mode buttons/chips use the same height and
+- [x] Make the “API token” and “Username & password” mode buttons/chips use the same height and
       aligned vertical content so the pair looks intentional on narrow and large screens
-- [ ] Verify the corrected layout visually on the Zenfone 10
+- [x] Add focused UI coverage for equal bounds when the password label wraps
+- [x] Verify the corrected layout on the Zenfone 10 with the focused Compose instrumentation test
+      at the narrow 312 dp layout width
 
-Status: not started.
+Status: **done**, 2026-08-14; remote `just check` passed, the Android-test APK compiled, and the
+focused Zenfone instrumentation test passed.
 
 ## SW-19: Match default accent to launcher icon background
 

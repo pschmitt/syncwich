@@ -2,8 +2,11 @@ package dev.pschmitt.syncwich.ui.onboarding
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
@@ -36,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -125,23 +129,10 @@ fun OnboardingScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                FilterChip(
-                    selected = !passwordMode,
-                    onClick = { passwordMode = false },
-                    label = { Text(stringResource(R.string.onboarding_mode_token)) },
-                    modifier = Modifier.weight(1f),
-                )
-                FilterChip(
-                    selected = passwordMode,
-                    onClick = { passwordMode = true },
-                    label = { Text(stringResource(R.string.onboarding_mode_password)) },
-                    modifier = Modifier.weight(1f),
-                )
-            }
+            OnboardingModeControls(
+                passwordMode = passwordMode,
+                onPasswordModeChange = { passwordMode = it },
+            )
 
             if (passwordMode) {
                 OutlinedTextField(
@@ -247,5 +238,32 @@ fun OnboardingScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun OnboardingModeControls(
+    passwordMode: Boolean,
+    onPasswordModeChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth().height(IntrinsicSize.Min),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        FilterChip(
+            selected = !passwordMode,
+            onClick = { onPasswordModeChange(false) },
+            label = { Text(stringResource(R.string.onboarding_mode_token)) },
+            modifier =
+                Modifier.weight(1f).fillMaxHeight().testTag("onboarding-mode-token"),
+        )
+        FilterChip(
+            selected = passwordMode,
+            onClick = { onPasswordModeChange(true) },
+            label = { Text(stringResource(R.string.onboarding_mode_password)) },
+            modifier =
+                Modifier.weight(1f).fillMaxHeight().testTag("onboarding-mode-password"),
+        )
     }
 }
