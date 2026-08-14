@@ -542,3 +542,12 @@ Status: mostly done, 2026-08-14.
 - [ ] Verify the corrected layout visually on the Zenfone 10
 
 Status: not started.
+
+## SW-19: Match default accent to launcher icon background
+
+- [ ] Adjust the default hand-picked accent/primary palette so it matches the background color used
+      by the Syncwich launcher icon
+- [ ] Verify the resulting color relationship in both light and dark themes, including onboarding
+      and the main app shell
+
+Status: not started.
