@@ -1230,3 +1230,12 @@ missing-class failure.
 Status: not started, 2026-08-14. The first post-signing-secrets release run reached `minifyReleaseWithR8`
 but failed because `com.google.crypto.tink` references missing Error Prone annotations. Signing,
 keystore decoding, and unit tests passed before that unrelated build failure.
+
+## SW-59: Add an About page
+
+- [ ] Add a dedicated About destination modeled after the nyetbox and jollyfin implementations
+- [ ] Show app name, version/build information, licensing, and project/source links
+- [ ] Keep the page accessible from Settings and usable offline
+- [ ] Add focused UI coverage and verify it on the Zenfone 10
+
+Status: not started, 2026-08-14.
