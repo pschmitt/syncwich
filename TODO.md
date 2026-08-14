@@ -1004,3 +1004,12 @@ Status: not started.
 - [ ] Add focused ordering/history coverage and verify the section on the Zenfone 10
 
 Status: not started.
+
+## SW-43: Recover from the startup Room schema mismatch
+
+- [ ] Bump the cache schema version so installs with the conflicting v8 identity can recreate it
+- [ ] Verify the existing Zenfone 10 install upgrades without uninstalling or crashing at startup
+- [ ] Run the remote checks and record the device verification result
+
+Status: in progress, 2026-08-14. The wired Zenfone 10 reports a Room identity-hash mismatch before
+the first screen can render.

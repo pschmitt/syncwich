@@ -49,6 +49,9 @@ import dev.pschmitt.syncwich.data.db.entity.TagEntity
             MealPlanEntryEntity::class,
             RecipeCookbookCrossRef::class,
         ],
+    // v9: Recover installs that were created with a conflicting v8 schema identity. The cache is
+    // intentionally rebuildable, so the existing destructive-migration policy recreates it and
+    // lets the next sync repopulate the database instead of crashing during Room initialization.
     // v8: SW-30 adds a durable local cache of confirmed cooking-event timeline entries ("I made
     // this"), mirroring RecipeActionEntity's pending-sync pattern. Reconciled on merge with v7
     // below, which independently bumped from the same base in a parallel worktree.
@@ -62,7 +65,7 @@ import dev.pschmitt.syncwich.data.db.entity.TagEntity
     // this pre-1.0, in their own worktrees, to different version numbers with different entities;
     // reconciled to v4 on merge. No migration path exists yet - see DatabaseModule's
     // fallbackToDestructiveMigration().
-    version = 8,
+    version = 9,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
