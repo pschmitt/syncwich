@@ -664,12 +664,15 @@ the Zenfone recipe detail opened without crashes with the title only in the head
 
 ## SW-29: Add a swipeable recipe image viewer
 
-- [ ] Make recipe images clickable and open a full-screen image viewer
-- [ ] Include all available recipe images, including step images, in the viewer
-- [ ] Support left/right swipe navigation with accessible descriptions and dismissal
-- [ ] Reuse the offline image cache and verify the gallery on the Zenfone 10
+- [x] Make recipe images clickable and open a full-screen image viewer
+- [x] Include all available recipe images, including step images, in the viewer
+- [x] Support left/right swipe navigation with accessible descriptions and dismissal
+- [x] Reuse the offline image cache
+- [ ] Verify the gallery on the Zenfone 10
 
-Status: not started.
+Status: mostly done, 2026-08-14. The cover and safe HTTP(S) step-image URLs open in a full-screen
+HorizontalPager with accessible dismissal/page descriptions and reuse Coil's disk cache; focused
+gallery URL tests and integrated remote `just check` pass. Zenfone gallery verification remains.
 
 ## SW-30: Add recipe actions and rating controls
 
