@@ -63,7 +63,7 @@ constructor(
             is OnboardingValidationException ->
                 when (error) {
                     OnboardingError.MalformedUrl ->
-                        "Enter a valid server URL, e.g. https://mealie.example.com"
+                        "Enter a valid server URL, e.g. https://demo.mealie.io"
                     OnboardingError.Unauthorized ->
                         "That server rejected the API token. Generate a new long-lived token in " +
                             "Mealie under Profile → API Tokens and try again."

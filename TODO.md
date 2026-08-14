@@ -368,11 +368,13 @@ Status: not started.
 
 ## SW-12: Fix onboarding server URL placeholder
 
-- [ ] `OnboardingScreen`'s server URL field placeholder currently reads `mealie.example.com` -
+- [x] `OnboardingScreen`'s server URL field placeholder currently reads `mealie.example.com` -
       change it to `https://demo.mealie.io` (a real, well-known public Mealie demo instance, more
       meaningful to a new user than a made-up example domain)
 
-Status: not started.
+Status: **done**, 2026-08-14. Updated `strings.xml`'s `onboarding_server_url_placeholder` and the
+matching malformed-URL error example in `OnboardingViewModel`. `just check` green on rofl-13; no
+test asserted the old placeholder string.
 
 ## SW-13: Support username/password login alongside API token entry
 
