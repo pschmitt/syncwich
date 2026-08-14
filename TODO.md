@@ -435,19 +435,19 @@ its API routes; retry against the live API before marking this entry done.
 
 ## SW-14: Proactively cache all recipe images for true offline use
 
-- [ ] Today, per AGENTS.md, recipe images are cached via Coil's disk cache - but that's only
+- [x] Today, per AGENTS.md, recipe images are cached via Coil's disk cache - but that's only
       populated lazily, on-demand, the moment a screen actually renders an `AsyncImage`. A recipe
       never opened while online has no cached cover image, and cover images are the only images
       handled at all right now - inline images referenced from a recipe's step-by-step instructions
       (Markdown image references in `RecipeDetailDto`'s instructions) aren't fetched or displayed
       anywhere yet
-- [ ] Extend `SyncWorker`'s background sync to proactively prefetch every recipe's cover image into
+- [x] Extend `SyncWorker`'s background sync to proactively prefetch every recipe's cover image into
       Coil's disk cache (not just the currently-visible ones), so the app is fully usable with zero
       connectivity for anything already synced, per AGENTS.md's offline-first requirement
-- [ ] Parse and render inline images from recipe instructions' Markdown, and prefetch those the same
-      way - this needs the Markdown image URLs extracted from `RecipeDetailEntity`'s cached
-      `detailJson`, not just the top-level cover image
-- [ ] Consider Coil disk cache size limits/eviction policy - prefetching every recipe's images for a
+- [x] Parse inline image URLs from recipe instructions' Markdown and prefetch those the same way -
+      this uses the Markdown image URLs extracted from `RecipeDetailEntity`'s cached `detailJson`,
+      not just the top-level cover image; malformed/relative/non-HTTP destinations are skipped
+- [x] Consider Coil disk cache size limits/eviction policy - prefetching every recipe's images for a
       large Mealie library could be a lot of data; decide on a sane cap or user-configurable setting
       rather than assuming unlimited local storage
 

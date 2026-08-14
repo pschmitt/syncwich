@@ -131,6 +131,10 @@ class CookbookRepositoryTest {
         override fun observeDetail(id: String): Flow<RecipeDetailEntity?> =
             error("not used by CookbookRepository")
 
+        override suspend fun getAll(): List<RecipeSummaryEntity> = recipes.value.values.toList()
+
+        override suspend fun getAllDetails(): List<RecipeDetailEntity> = emptyList()
+
         override fun observeByCookbook(cookbookId: String): Flow<List<RecipeSummaryEntity>> =
             combine(cookbookRefs, recipes) { refs, recipesById ->
                 refs.filter { it.cookbookId == cookbookId }.mapNotNull { recipesById[it.recipeId] }

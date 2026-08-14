@@ -6,11 +6,13 @@ import androidx.work.Configuration
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
+import coil3.disk.DiskCache
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import dagger.hilt.android.HiltAndroidApp
 import dev.pschmitt.syncwich.sync.SyncScheduler
 import javax.inject.Inject
 import okhttp3.OkHttpClient
+import okio.Path.Companion.toOkioPath
 import timber.log.Timber
 
 @HiltAndroidApp
@@ -29,7 +31,20 @@ class SyncwichApp : Application(), Configuration.Provider, SingletonImageLoader.
     override fun newImageLoader(context: PlatformContext): ImageLoader =
         ImageLoader.Builder(context)
             .components { add(OkHttpNetworkFetcherFactory(callFactory = { okHttpClient })) }
+            .diskCache {
+                DiskCache.Builder()
+                    .directory(context.cacheDir.resolve("recipe_images").toOkioPath())
+                    .maxSizeBytes(MAX_IMAGE_CACHE_BYTES)
+                    .build()
+            }
             .build()
+
+    private companion object {
+        // Covers and inline Markdown images share this cache. Coil evicts least-recently-used
+        // entries when this bound is reached, so a large library cannot grow cache storage without
+        // limit while still retaining recently viewed/prefetched images for offline use.
+        const val MAX_IMAGE_CACHE_BYTES = 256L * 1024L * 1024L
+    }
 
     override fun onCreate() {
         super.onCreate()

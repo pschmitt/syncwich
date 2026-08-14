@@ -12,6 +12,7 @@ import dev.pschmitt.syncwich.data.db.entity.RecipeDetailEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeTagCrossRef
 import dev.pschmitt.syncwich.data.db.entity.TagEntity
+import dev.pschmitt.syncwich.data.image.selectRecipeImagePrefetchUrls
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -43,6 +44,18 @@ constructor(
     /** The full recipe, decoded lazily by the caller - see [RecipeDetailEntity]'s kdoc. */
     fun observeRecipeDetail(recipeId: String): Flow<RecipeDetailEntity?> =
         recipeDao.observeDetail(recipeId)
+
+    /** Returns prefetch candidates from Room without making any network request. */
+    suspend fun cachedRecipeImagePrefetchUrls(
+        serverUrl: String,
+        json: kotlinx.serialization.json.Json,
+    ): List<String> =
+        selectRecipeImagePrefetchUrls(
+            serverUrl = serverUrl,
+            recipes = recipeDao.getAll(),
+            details = recipeDao.getAllDetails(),
+            json = json,
+        )
 
     /**
      * Fetches every page of `/api/recipes` and replaces the cached list + category/tag associations
