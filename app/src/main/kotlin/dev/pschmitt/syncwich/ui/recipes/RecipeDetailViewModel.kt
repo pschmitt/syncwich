@@ -86,11 +86,6 @@ constructor(
                     refresh.isRefreshing -> RecipeDetailUiState.Loading
                     else -> RecipeDetailUiState.Unavailable(refresh.errorMessage)
                 }
-=======
-            ) { recipe, credentials ->
-                if (recipe != null) RecipeDetailUiState.Loaded(recipe, credentials.serverUrl)
-                else RecipeDetailUiState.Loading
->>>>>>> ead399e (perf: move refresh and cache transforms off main)
             }
             .stateIn(
                 viewModelScope,
