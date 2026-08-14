@@ -1029,9 +1029,11 @@ Status: not started.
 
 ## SW-43: Recover from the startup Room schema mismatch
 
-- [ ] Bump the cache schema version so installs with the conflicting v8 identity can recreate it
-- [ ] Verify the existing Zenfone 10 install upgrades without uninstalling or crashing at startup
-- [ ] Run the remote checks and record the device verification result
+- [x] Bump the cache schema version so installs with the conflicting v8 identity can recreate it
+- [x] Verify the existing Zenfone 10 install upgrades without uninstalling or crashing at startup
+- [x] Run the remote checks and record the device verification result
 
-Status: in progress, 2026-08-14. The wired Zenfone 10 reports a Room identity-hash mismatch before
-the first screen can render.
+Status: **done**, 2026-08-14. Remote `just check` passed on rofl-13. The v9 debug APK installed
+in-place on the wired Zenfone 10, Room recreated the conflicting cache, and `MainActivity` reached
+the focused window with no crash-buffer entries or Room errors. No uninstall or live Mealie write
+was made.
