@@ -32,4 +32,9 @@ class FullScreenStepsTest {
         assertEquals(1.1f, adjustStepFontScale(1.0f, 0.1f))
         assertEquals(1.6f, adjustStepFontScale(1.6f, 0.1f))
     }
+
+    @Test
+    fun `full screen steps leave room for the floating controls`() {
+        assertEquals(96, FULL_SCREEN_STEPS_BOTTOM_PADDING_DP)
+    }
 }

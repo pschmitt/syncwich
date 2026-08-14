@@ -5,10 +5,13 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.pschmitt.syncwich.data.api.dto.OrganizerDto
+import dev.pschmitt.syncwich.data.api.dto.RecipeDetailDto
 import dev.pschmitt.syncwich.data.db.entity.CookbookEntity
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -45,12 +48,71 @@ class RecipeMetadataTest {
         }
 
         composeTestRule.onAllNodesWithText("Recipe details").assertCountEquals(0)
-        composeTestRule.onNodeWithText("Tags").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Cookbooks").assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("Tags").assertCountEquals(0)
+        composeTestRule.onAllNodesWithText("Cookbooks").assertCountEquals(0)
         composeTestRule.onNodeWithText("Quick").performClick()
         composeTestRule.onNodeWithText("Weeknights").performClick()
 
         assertEquals("tag-1", openedTag)
         assertEquals("book-1", openedCookbook)
+    }
+
+    @Test
+    fun ratingSharesDescriptionRowWhenRecipeHasNoTimingMetadata() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                RecipeDetailContent(
+                    recipe =
+                        RecipeDetailDto(
+                            id = "recipe-1",
+                            slug = "recipe-one",
+                            name = "Recipe One",
+                            description = "A quick recipe.",
+                        ),
+                    imageIndex = RecipeImageIndex.EMPTY,
+                    actions = RecipeActionUiState(),
+                    cookbooks = emptyList(),
+                    completedStepIndexes = emptySet(),
+                    ingredientChecklistEnabled = false,
+                    onRatingSelected = {},
+                    onStepCompleted = { _, _ -> },
+                    onOpenCookbook = {},
+                    onOpenTag = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithTag("recipe-description-rating-row").assertIsDisplayed()
+        composeTestRule.onAllNodesWithTag("recipe-timing-rating-row").assertCountEquals(0)
+    }
+
+    @Test
+    fun ratingStaysInTimingRowWhenTimingMetadataExists() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                RecipeDetailContent(
+                    recipe =
+                        RecipeDetailDto(
+                            id = "recipe-1",
+                            slug = "recipe-one",
+                            name = "Recipe One",
+                            prepTime = "10 min",
+                            description = "A quick recipe.",
+                        ),
+                    imageIndex = RecipeImageIndex.EMPTY,
+                    actions = RecipeActionUiState(),
+                    cookbooks = emptyList(),
+                    completedStepIndexes = emptySet(),
+                    ingredientChecklistEnabled = false,
+                    onRatingSelected = {},
+                    onStepCompleted = { _, _ -> },
+                    onOpenCookbook = {},
+                    onOpenTag = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithTag("recipe-timing-rating-row").assertIsDisplayed()
+        composeTestRule.onAllNodesWithTag("recipe-description-rating-row").assertCountEquals(0)
     }
 }

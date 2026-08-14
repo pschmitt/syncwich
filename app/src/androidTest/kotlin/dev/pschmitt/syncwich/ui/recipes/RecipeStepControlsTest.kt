@@ -4,6 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -54,6 +55,7 @@ class RecipeStepControlsTest {
             }
         }
 
+        composeTestRule.onNodeWithTag("step-font-size-controls").assertIsDisplayed()
         composeTestRule.onNodeWithText("100%").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Increase step text size").performClick()
     }

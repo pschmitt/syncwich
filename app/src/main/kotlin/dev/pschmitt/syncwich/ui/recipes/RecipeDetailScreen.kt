@@ -363,7 +363,7 @@ internal fun RecipeOverflowMenu(
 }
 
 @Composable
-private fun RecipeDetailContent(
+internal fun RecipeDetailContent(
     recipe: RecipeDetailDto,
     imageIndex: RecipeImageIndex,
     actions: RecipeActionUiState,
@@ -414,15 +414,18 @@ private fun RecipeDetailContent(
         item {
             Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        val times =
-                            listOfNotNull(
-                                recipe.prepTime?.let { "Prep" to it },
-                                recipe.cookTime?.let { "Cook" to it },
-                                recipe.performTime?.let { "Active" to it },
-                                recipe.totalTime?.let { "Total" to it },
-                            )
-                        if (times.isNotEmpty()) {
+                    val times =
+                        listOfNotNull(
+                            recipe.prepTime?.let { "Prep" to it },
+                            recipe.cookTime?.let { "Cook" to it },
+                            recipe.performTime?.let { "Active" to it },
+                            recipe.totalTime?.let { "Total" to it },
+                        )
+                    if (times.isNotEmpty()) {
+                        Box(
+                            modifier =
+                                Modifier.fillMaxWidth().testTag("recipe-timing-rating-row")
+                        ) {
                             Column(modifier = Modifier.padding(end = 52.dp)) {
                                 times.forEach { (label, value) ->
                                     LabeledRow(
@@ -432,20 +435,44 @@ private fun RecipeDetailContent(
                                     )
                                 }
                             }
+                            RecipeActionControls(
+                                actions = actions,
+                                globalRating = recipe.rating,
+                                onRatingSelected = onRatingSelected,
+                                compact = true,
+                                modifier = Modifier.align(Alignment.TopEnd),
+                            )
                         }
+                        if (!recipe.description.isNullOrBlank()) {
+                            Markdown(
+                                content = recipe.description,
+                                modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                            )
+                        }
+                    } else if (!recipe.description.isNullOrBlank()) {
+                        Row(
+                            modifier =
+                                Modifier.fillMaxWidth().testTag("recipe-description-rating-row"),
+                            verticalAlignment = Alignment.Top,
+                        ) {
+                            Markdown(
+                                content = recipe.description,
+                                modifier = Modifier.weight(1f).padding(top = 12.dp),
+                            )
+                            RecipeActionControls(
+                                actions = actions,
+                                globalRating = recipe.rating,
+                                onRatingSelected = onRatingSelected,
+                                compact = true,
+                                modifier = Modifier.padding(start = 8.dp),
+                            )
+                        }
+                    } else {
                         RecipeActionControls(
                             actions = actions,
                             globalRating = recipe.rating,
                             onRatingSelected = onRatingSelected,
                             compact = true,
-                            modifier = Modifier.align(Alignment.TopEnd),
-                        )
-                    }
-
-                    if (!recipe.description.isNullOrBlank()) {
-                        Markdown(
-                            content = recipe.description,
-                            modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
                         )
                     }
                 }
@@ -600,7 +627,6 @@ internal fun RecipeMetadataCard(
     Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (tags.isNotEmpty()) {
-                MetadataLabel(icon = Icons.AutoMirrored.Filled.Label, text = "Tags")
                 Row(
                     modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -609,12 +635,18 @@ internal fun RecipeMetadataCard(
                         AssistChip(
                             onClick = { onOpenTag(tag.id) },
                             label = { Text(tag.name) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.Label,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            },
                         )
                     }
                 }
             }
             if (cookbooks.isNotEmpty()) {
-                MetadataLabel(icon = Icons.AutoMirrored.Filled.MenuBook, text = "Cookbooks")
                 Row(
                     modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -623,28 +655,18 @@ internal fun RecipeMetadataCard(
                         AssistChip(
                             onClick = { onOpenCookbook(cookbook.id) },
                             label = { Text(cookbook.name) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            },
                         )
                     }
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun MetadataLabel(icon: ImageVector, text: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(18.dp),
-        )
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.padding(start = 8.dp),
-        )
     }
 }
 
@@ -1106,7 +1128,12 @@ private fun FullScreenStepsDialog(
                     LazyColumn(
                         state = listState,
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                        contentPadding = PaddingValues(
+                            start = 16.dp,
+                            top = 12.dp,
+                            end = 16.dp,
+                            bottom = FULL_SCREEN_STEPS_BOTTOM_PADDING_DP.dp,
+                        ),
                     ) {
                         itemsIndexed(instructions) { index, instruction ->
                             InstructionRow(
@@ -1151,29 +1178,42 @@ internal fun StepFontSizeControls(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier,
+        modifier =
+            modifier
+                .testTag("step-font-size-controls")
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    shape = MaterialTheme.shapes.medium,
+                )
+                .padding(4.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         SmallFloatingActionButton(
             onClick = { if (fontScale > 0.8f) onDecrease() },
-            modifier = Modifier.semantics { contentDescription = "Decrease step text size" },
+            modifier =
+                Modifier.size(36.dp)
+                    .semantics { contentDescription = "Decrease step text size" },
         ) {
-            Icon(Icons.Filled.TextDecrease, contentDescription = null)
+            Icon(Icons.Filled.TextDecrease, contentDescription = null, modifier = Modifier.size(18.dp))
         }
         Text(
             text = "${(fontScale * 100).toInt()}%",
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer).padding(8.dp),
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
         )
         SmallFloatingActionButton(
             onClick = { if (fontScale < 1.6f) onIncrease() },
-            modifier = Modifier.semantics { contentDescription = "Increase step text size" },
+            modifier =
+                Modifier.size(36.dp)
+                    .semantics { contentDescription = "Increase step text size" },
         ) {
-            Icon(Icons.Filled.TextIncrease, contentDescription = null)
+            Icon(Icons.Filled.TextIncrease, contentDescription = null, modifier = Modifier.size(18.dp))
         }
     }
 }
+
+internal const val FULL_SCREEN_STEPS_BOTTOM_PADDING_DP = 96
 
 internal fun adjustStepFontScale(current: Float, delta: Float): Float =
     (current + delta).coerceIn(0.8f, 1.6f)

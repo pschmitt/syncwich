@@ -1652,28 +1652,51 @@ actions while retaining the license list.
 
 ## SW-97: Keep ratings beside descriptions without timing metadata
 
-- [ ] Avoid rendering an empty timing row when prep/cook/total time metadata is absent
-- [ ] Place the rating star beside the recipe description in that case
-- [ ] Preserve the existing top-right timing-card layout when timing metadata exists
-- [ ] Add focused layout coverage
+- [x] Avoid rendering an empty timing row when prep/cook/total time metadata is absent
+- [x] Place the rating star beside the recipe description in that case
+- [x] Preserve the existing top-right timing-card layout when timing metadata exists
+- [x] Add focused layout coverage
 
-Status: not started.
+Status: **done**, 2026-08-15. Recipe detail now places the compact rating beside the description
+when no timing metadata exists and retains the timing-row placement otherwise; focused Android
+layout tests cover both branches.
 
 ## SW-98: Compact the full-screen steps font widget
 
-- [ ] Make the floating font-size controls more compact
-- [ ] Add sufficient bottom content padding beneath the final step
-- [ ] Preserve readable step content and both font-size actions
-- [ ] Add focused layout coverage
+- [x] Make the floating font-size controls more compact
+- [x] Add sufficient bottom content padding beneath the final step
+- [x] Preserve readable step content and both font-size actions
+- [x] Add focused layout coverage
 
-Status: not started.
+Status: **done**, 2026-08-15. Full-screen steps use compact grouped controls and reserve 96dp of
+bottom content space so the final instruction remains readable above the overlay; unit and
+focused Android control tests pass.
 
 ## SW-99: Compact recipe cookbook and tag metadata rows
 
-- [ ] Remove the standalone “Cookbooks” and “Tags” section titles
-- [ ] Render cookbooks and tags as labeled rows of buttons
-- [ ] Put the relevant cookbook/tag icon inside each button before its label
-- [ ] Preserve navigation to cookbook and tag-filter views
-- [ ] Add focused layout and interaction coverage
+- [x] Remove the standalone “Cookbooks” and “Tags” section titles
+- [x] Render cookbooks and tags as labeled rows of buttons
+- [x] Put the relevant cookbook/tag icon inside each button before its label
+- [x] Preserve navigation to cookbook and tag-filter views
+- [x] Add focused layout and interaction coverage
+
+Status: **done**, 2026-08-15. Recipe metadata now presents icon-led cookbook and tag chips without
+redundant headings while retaining their existing navigation callbacks; focused Android coverage
+verifies the compact layout and click behavior.
+
+## SW-100: Add tag icons to recipe-search tag buttons
+
+- [ ] Add the tag icon inside each tag filter button
+- [ ] Preserve selected/unselected filter states and accessible labels
+- [ ] Add focused UI coverage
+
+Status: not started.
+
+## SW-101: Make cold-start synchronization feel natural
+
+- [ ] Avoid reporting “not synced yet” when usable cached data already exists
+- [ ] Defer nonessential cold-start refresh briefly when cache data is available
+- [ ] Keep immediate synchronization for an empty cache
+- [ ] Add focused sync-state and startup timing coverage
 
 Status: not started.
