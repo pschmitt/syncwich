@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -34,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
@@ -48,31 +50,68 @@ private const val SPONSORS_URL = "https://github.com/sponsors/pschmitt"
 private const val PRIVACY_URL = "https://github.com/pschmitt/syncwich/blob/main/PRIVACY.md"
 private const val LICENSE_URL = "https://github.com/pschmitt/syncwich/blob/main/LICENSE"
 
-private data class Library(val name: String, val license: String)
+private data class Library(val name: String, val license: String, val url: String)
 
 // Keep this list in sync with the libraries used by the app's runtime dependencies.
 private val LIBRARIES =
     listOf(
-        Library("AndroidX", "Apache License 2.0"),
-        Library("Jetpack Compose", "Apache License 2.0"),
-        Library("Material 3", "Apache License 2.0"),
-        Library("Coil", "Apache License 2.0"),
-        Library("Hilt", "Apache License 2.0"),
-        Library("Kotlin", "Apache License 2.0"),
-        Library("kotlinx.coroutines", "Apache License 2.0"),
-        Library("kotlinx.datetime", "Apache License 2.0"),
-        Library("kotlinx.serialization", "Apache License 2.0"),
-        Library("Multiplatform Markdown Renderer", "Apache License 2.0"),
-        Library("OkHttp", "Apache License 2.0"),
-        Library("Retrofit", "Apache License 2.0"),
-        Library("Room", "Apache License 2.0"),
-        Library("WorkManager", "Apache License 2.0"),
-        Library("Timber", "Apache License 2.0"),
+        Library("AndroidX", "Apache License 2.0", "https://github.com/androidx/androidx"),
+        Library(
+            "Jetpack Compose",
+            "Apache License 2.0",
+            "https://github.com/androidx/androidx/tree/androidx-main/compose",
+        ),
+        Library(
+            "Material 3",
+            "Apache License 2.0",
+            "https://github.com/androidx/androidx/tree/androidx-main/compose/material3",
+        ),
+        Library("Coil", "Apache License 2.0", "https://github.com/coil-kt/coil"),
+        Library("Hilt", "Apache License 2.0", "https://github.com/google/dagger"),
+        Library("Kotlin", "Apache License 2.0", "https://github.com/JetBrains/kotlin"),
+        Library(
+            "kotlinx.coroutines",
+            "Apache License 2.0",
+            "https://github.com/Kotlin/kotlinx.coroutines",
+        ),
+        Library(
+            "kotlinx.datetime",
+            "Apache License 2.0",
+            "https://github.com/Kotlin/kotlinx-datetime",
+        ),
+        Library(
+            "kotlinx.serialization",
+            "Apache License 2.0",
+            "https://github.com/Kotlin/kotlinx.serialization",
+        ),
+        Library(
+            "Multiplatform Markdown Renderer",
+            "Apache License 2.0",
+            "https://github.com/mikepenz/multiplatform-markdown-renderer",
+        ),
+        Library("OkHttp", "Apache License 2.0", "https://github.com/square/okhttp"),
+        Library("Retrofit", "Apache License 2.0", "https://github.com/square/retrofit"),
+        Library(
+            "Room",
+            "Apache License 2.0",
+            "https://github.com/androidx/androidx/tree/androidx-main/room",
+        ),
+        Library(
+            "WorkManager",
+            "Apache License 2.0",
+            "https://github.com/androidx/androidx/tree/androidx-main/work",
+        ),
+        Library("Timber", "Apache License 2.0", "https://github.com/JakeWharton/timber"),
     )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AboutSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun AboutSettingsScreen(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    developerMode: Boolean = false,
+    onBuildTap: () -> Unit = {},
+) {
     val context = LocalContext.current
     Scaffold(
         modifier = modifier,
@@ -100,7 +139,7 @@ fun AboutSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         Image(
                             painter = painterResource(R.drawable.syncwich_icon),
                             contentDescription = "Syncwich app icon",
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(64.dp),
                         )
                     },
                 ) {
@@ -109,10 +148,11 @@ fun AboutSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         title = "Version",
                         subtitle = "${BuildConfig.VERSION_NAME} · GPL-3.0",
                     )
-                    AboutInfoRow(
-                        icon = Icons.Filled.Tag,
-                        title = "Build",
-                        subtitle = BuildConfig.GIT_REVISION,
+                    BuildInfoRow(
+                        context = context,
+                        revision = BuildConfig.GIT_REVISION,
+                        developerMode = developerMode,
+                        onBuildTap = onBuildTap,
                     )
                     AboutInfoRow(
                         icon = Icons.Filled.DateRange,
@@ -161,10 +201,12 @@ fun AboutSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     icon = Icons.AutoMirrored.Filled.LibraryBooks,
                 ) {
                     LIBRARIES.forEach { library ->
-                        AboutInfoRow(
-                            icon = Icons.AutoMirrored.Filled.LibraryBooks,
+                        ExternalLinkRow(
+                            context = context,
+                            url = library.url,
                             title = library.name,
                             subtitle = library.license,
+                            icon = Icons.AutoMirrored.Filled.LibraryBooks,
                         )
                     }
                 }
@@ -175,6 +217,58 @@ fun AboutSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
 internal fun aboutBuildTypeLabel(isDebug: Boolean): String =
     if (isDebug) "Debug build" else "Release build"
+
+internal fun githubCommitUrl(revision: String): String? {
+    val candidate = revision.trim().removeSuffix("-dirty")
+    val commit = Regex("(?i)(?:^|-)g?([0-9a-f]{7,40})$").find(candidate)?.groupValues?.get(1)
+    return commit?.let { "$REPOSITORY_URL/commit/$it" }
+}
+
+@Composable
+private fun BuildInfoRow(
+    context: Context,
+    revision: String,
+    developerMode: Boolean,
+    onBuildTap: () -> Unit,
+) {
+    val commitUrl = githubCommitUrl(revision)
+    SettingsListItem(
+        modifier =
+            Modifier.fillMaxWidth()
+                .clickable(role = Role.Button, onClick = onBuildTap)
+                .semantics {
+                    contentDescription =
+                        if (developerMode) "Build $revision, developer mode enabled"
+                        else "Build $revision"
+                    role = Role.Button
+                },
+        leadingContent = { Icon(Icons.Filled.Tag, contentDescription = null) },
+        headlineContent = { Text("Build") },
+        supportingContent = {
+            Text(if (developerMode) "$revision · Developer mode enabled" else revision)
+        },
+        trailingContent =
+            commitUrl?.let { url ->
+                {
+                    IconButton(
+                        onClick = {
+                            ContextCompat.startActivity(
+                                context,
+                                Intent(Intent.ACTION_VIEW, Uri.parse(url)),
+                                null,
+                            )
+                        },
+                        modifier = Modifier.semantics { contentDescription = "Open commit" },
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.OpenInNew,
+                            contentDescription = null,
+                        )
+                    }
+                }
+            },
+    )
+}
 
 @Composable
 private fun AboutInfoRow(

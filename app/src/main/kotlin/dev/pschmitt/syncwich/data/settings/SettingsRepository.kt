@@ -113,6 +113,10 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
     val ingredientChecklistEnabled: Flow<Boolean> =
         context.syncwichDataStore.data.map { it[KEY_INGREDIENT_CHECKLIST] ?: false }
 
+    /** Whether the local developer easter egg has been enabled. */
+    val developerMode: Flow<Boolean> =
+        context.syncwichDataStore.data.map { it[KEY_DEVELOPER_MODE] ?: false }
+
     val scheduledBackupEnabled: Flow<Boolean> =
         context.syncwichDataStore.data.map { it[KEY_BACKUP_ENABLED] ?: false }
 
@@ -230,6 +234,10 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
 
     suspend fun setIngredientChecklistEnabled(enabled: Boolean) {
         context.syncwichDataStore.edit { prefs -> prefs[KEY_INGREDIENT_CHECKLIST] = enabled }
+    }
+
+    suspend fun setDeveloperMode(enabled: Boolean) {
+        context.syncwichDataStore.edit { prefs -> prefs[KEY_DEVELOPER_MODE] = enabled }
     }
 
     suspend fun setScheduledBackupEnabled(enabled: Boolean) {
@@ -370,6 +378,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         val KEY_FONT_SCALE = androidx.datastore.preferences.core.floatPreferencesKey("font_scale")
         val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
         val KEY_INGREDIENT_CHECKLIST = booleanPreferencesKey("ingredient_checklist")
+        val KEY_DEVELOPER_MODE = booleanPreferencesKey("developer_mode")
         val KEY_NAV_BAR_SHOWN_ITEMS = stringPreferencesKey("navigation_bar_shown_items")
         val KEY_INITIAL_SYNC_COMPLETED = booleanPreferencesKey("initial_sync_completed")
         val KEY_LAST_SYNC_AT = longPreferencesKey("last_sync_at")

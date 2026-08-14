@@ -1611,34 +1611,41 @@ text, Mealie deep-link exclusion, and non-URL text; remote check/lint passed.
 
 ## SW-93: Link the build version to its GitHub commit
 
-- [ ] Make the displayed build version link to the corresponding commit on the GitHub repository
-- [ ] Keep the link correct for local/debug and CI builds
-- [ ] Add focused coverage for the commit URL/version presentation
+- [x] Make the displayed build version link to the corresponding commit on the GitHub repository
+- [x] Keep the link correct for local/debug and CI builds
+- [x] Add focused coverage for the commit URL/version presentation
 
-Status: not started.
+Status: **done**, 2026-08-15. The build row derives a safe GitHub commit URL from local, CI, and
+dirty revision strings; the external-link icon opens that commit while the row remains reserved
+for the developer tap gesture. Unit coverage verifies valid, dirty, and unknown revisions.
 
 ## SW-94: Enlarge the app icon on the About page
 
-- [ ] Increase the displayed Syncwich app icon size in About
-- [ ] Preserve the surrounding layout and accessibility description
-- [ ] Add focused UI coverage and verify the updated About layout
+- [x] Increase the displayed Syncwich app icon size in About
+- [x] Preserve the surrounding layout and accessibility description
+- [x] Add focused UI coverage and verify the updated About layout
 
-Status: not started.
+Status: **done**, 2026-08-15. The About header now displays the real Syncwich icon at 64dp with
+its accessible description; the About UI suite covers the updated screen.
 
 ## SW-95: Add a seven-tap developer easter egg to the About build row
 
-- [ ] Add a seven-tap “become a developer” interaction to the build/version row
-- [ ] Keep the GitHub commit link as a distinct, discoverable action
-- [ ] Persist and expose developer-mode state safely with accessible feedback
-- [ ] Add focused interaction coverage
+- [x] Add a seven-tap “become a developer” interaction to the build/version row
+- [x] Keep the GitHub commit link as a distinct, discoverable action
+- [x] Persist and expose developer-mode state safely with accessible feedback
+- [x] Add focused interaction coverage
 
-Status: not started.
+Status: **done**, 2026-08-15. The build row counts seven taps within a bounded two-second window,
+persists developer mode in DataStore, and exposes the enabled state in the row’s supporting text
+and semantics. Focused About interaction coverage was added.
 
 ## SW-96: Link About-page libraries to their project homepages
 
-- [ ] Make each library item clickable
-- [ ] Open the library’s GitHub/project homepage externally
-- [ ] Preserve license text and accessible link semantics
-- [ ] Add focused interaction coverage
+- [x] Make each library item clickable
+- [x] Open the library’s GitHub/project homepage externally
+- [x] Preserve license text and accessible link semantics
+- [x] Add focused interaction coverage
 
-Status: not started.
+Status: **done**, 2026-08-15. Every listed dependency now carries its project homepage and uses
+the existing accessible external-link row; the About UI suite verifies library rows expose click
+actions while retaining the license list.
