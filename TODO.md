@@ -78,9 +78,59 @@ Status: not started.
 
 ## SW-4: Meal plan UI
 
-- [ ] Calendar/week view backed by the meal-plan repository
+- [x] `MealPlanApi`/`MealPlanEntryDto` (`GET /api/households/mealplans`, confirmed against the live
+      v3.22.0 instance's `/openapi.json`) + Room `MealPlanEntryEntity`/`MealPlanDao`
+      (`AppDatabase` bumped to v2, `DatabaseModule` now uses `fallbackToDestructiveMigration` -
+      no real `Migration` exists yet pre-1.0)
+- [x] `MealPlanRepository`, cache-first like `RecipeRepository`/`CategoryRepository`: reads scoped
+      to a date range `Flow` from Room, `refreshMealPlan(start, end)` only ever replaces that date
+      window (other cached weeks stay untouched) and never wipes the cache on failure
+      (`MealPlanRepositoryTest`)
+- [x] Week-view `MealPlanScreen`/`MealPlanViewModel`: prev/next/today navigation, entries grouped by
+      day with a type icon (breakfast/lunch/dinner/side/snack/drink/dessert), tapping an entry with
+      a `recipeId` navigates to `Route.RecipeDetail` (route already existed from SW-1; wired the nav
+      callback in the shared `SyncwichNavHost`)
 
-Status: not started.
+Status: **done**, 2026-08-14. Confirmed live API shape against the real Mealie v3.22.0 instance
+(rbw `"Mealie (AI Agent)"`, read-only): `GET /api/households/mealplans` takes `start_date`/
+`end_date`/`page`/`perPage` query params and returns the same `{page,per_page,total,total_pages,
+items,next,previous}` envelope as `/api/recipes`/`/api/organizers/*` (`PlanEntryPagination` in the
+server's `/openapi.json`); each item (`ReadPlanEntry`) has `id` (integer, unlike every other
+entity's string/uuid id), `date`, `entryType` (enum: breakfast/lunch/dinner/side/snack/drink/
+dessert), `title`, `text`, `recipeId` (nullable uuid), and an embedded `recipe` using the exact same
+`RecipeSummary` shape as `RecipeSummaryDto` - reused it directly instead of a second DTO. The
+verification household had zero meal-plan entries at confirmation time, so the envelope/pagination/
+query params were confirmed against a live (empty) response plus the server's own OpenAPI schema
+for the item shape, rather than a populated live payload - `MealPlanApiDtoTest`'s fixtures are
+schema-accurate, not captured live data (flagged in its own kdoc, mirroring how `RecipeApiDtoTest`
+flags the opposite). `just check` (ktfmtCheck, all unit tests incl. `MealPlanRepositoryTest`/
+`MealPlanApiDtoTest`, Android Lint) green on rofl-13.
+
+Verified end-to-end on a real Zenfone 10 against the verification Mealie instance: onboarding
+connected successfully, the Meal Plan tab fetched the real `/api/households/mealplans` endpoint
+(confirmed via OkHttp logs) for the correct Monday-Sunday date range, correctly rendered the
+"Nothing planned this week" empty state matching the real (empty) household data, and week
+navigation (prev/next/today) re-fetched and re-rendered correctly for a different week with no
+crash. A stray Mealie API token was created for this ("Syncwich SW-4 mealplan e2e test (agent,
+revoke after review)") and has since been revoked.
+
+Gotchas hit during implementation, for future reference:
+- A KDoc comment containing a literal `` `/api/organizers/*` `` silently broke the build: Kotlin
+  block comments nest, so that inner `/*` opened a second (never-closed) comment that swallowed the
+  entire rest of the file, including the `interface MealPlanApi` declaration itself. KSP/Hilt
+  reported this as `'MealPlanApi' could not be resolved` in every unrelated `@Provides` method in
+  `NetworkModule` rather than pointing at the actual file - very confusing to debug. Fix: never
+  write a literal `/*` inside a KDoc block; spell out both organizer endpoints instead of using a
+  `/api/organizers/*` wildcard in prose.
+- Android Lint's `NonObservableLocale` flags `Locale.getDefault()` inside a `@Composable` - use
+  `LocalConfiguration.current.locales[0]` instead so day-of-week names recompose on a locale change.
+- This physical Zenfone 10 is shared by all four parallel SW-N agents: another agent's concurrent
+  `adb install -r` mid-session silently replaced this worktree's APK, and two agents' independent
+  `AppDatabase` v2 schemas (different entities, same version number) triggered Room's
+  `IllegalStateException: Room cannot verify the data integrity` (identity-hash mismatch) crash-loop
+  on shared app data - not a bug in this branch's code, just a hazard of testing divergent branches
+  against one shared install slot before merge. Re-deploying this worktree's own build after the
+  human reviewer merges everyone's schema changes into one final `AppDatabase` version resolves it.
 
 ## SW-5: Shopping lists UI
 

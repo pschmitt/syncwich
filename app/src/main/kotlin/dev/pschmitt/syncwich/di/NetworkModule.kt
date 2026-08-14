@@ -8,6 +8,7 @@ import dagger.hilt.components.SingletonComponent
 import dev.pschmitt.syncwich.BuildConfig
 import dev.pschmitt.syncwich.data.api.AuthInterceptor
 import dev.pschmitt.syncwich.data.api.DynamicBaseUrlInterceptor
+import dev.pschmitt.syncwich.data.api.MealPlanApi
 import dev.pschmitt.syncwich.data.api.OrganizersApi
 import dev.pschmitt.syncwich.data.api.RecipesApi
 import dev.pschmitt.syncwich.data.api.UsersApi
@@ -107,4 +108,9 @@ object NetworkModule {
     @Singleton
     fun provideOrganizersApi(retrofit: Retrofit): OrganizersApi =
         retrofit.create(OrganizersApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideMealPlanApi(retrofit: Retrofit): MealPlanApi =
+        retrofit.create(MealPlanApi::class.java)
 }
