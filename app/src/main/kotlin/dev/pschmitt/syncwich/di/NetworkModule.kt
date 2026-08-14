@@ -10,6 +10,7 @@ import dev.pschmitt.syncwich.data.api.AuthInterceptor
 import dev.pschmitt.syncwich.data.api.DynamicBaseUrlInterceptor
 import dev.pschmitt.syncwich.data.api.OrganizersApi
 import dev.pschmitt.syncwich.data.api.RecipesApi
+import dev.pschmitt.syncwich.data.api.ShoppingListsApi
 import dev.pschmitt.syncwich.data.api.UsersApi
 import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
@@ -107,4 +108,9 @@ object NetworkModule {
     @Singleton
     fun provideOrganizersApi(retrofit: Retrofit): OrganizersApi =
         retrofit.create(OrganizersApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideShoppingListsApi(retrofit: Retrofit): ShoppingListsApi =
+        retrofit.create(ShoppingListsApi::class.java)
 }

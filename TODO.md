@@ -138,9 +138,63 @@ Status: not started.
 
 ## SW-5: Shopping lists UI
 
-- [ ] List-of-lists → list detail with items/checked state, view-only
+- [x] Shopping-list data layer built from scratch: `ShoppingListsApi` (`/api/households/shopping/lists`
+      + `/api/households/shopping/lists/{id}`), `ShoppingListSummaryDto`/`ShoppingListDto`/
+      `ShoppingListItemDto`, `ShoppingListEntity`/`ShoppingListItemEntity` (FK on `shoppingListId`,
+      `CASCADE`) + `ShoppingListDao`, `ShoppingListRepository` mirroring `RecipeRepository`'s
+      cache-first split (background-refreshed list-of-lists, lazily-refreshed-on-open detail);
+      `AppDatabase` bumped to version 2 (`fallbackToDestructiveMigration` - no migration path
+      existed yet to migrate from, see status note); wired into `SyncWorker`'s periodic sync
+- [x] List-of-lists screen (`ShoppingListsScreen`) and list-detail screen
+      (`ShoppingListDetailScreen`, new file) with items + checked state, both cache-first via
+      `ShoppingListsViewModel`/`ShoppingListDetailViewModel`; `Route.ShoppingListDetail` wired into
+      `SyncwichNavHost`
+- [x] View-only: checked state is displayed (disabled `Checkbox`, `onCheckedChange = null`) but
+      never togglable - no mutation code exists anywhere in this vertical
 
-Status: not started.
+Status: **done**, 2026-08-14. Confirmed live API shape against Mealie v3.22.0 before writing any
+DTO code (rbw `"Mealie (AI Agent)"`, password-login to get a short-lived JWT since that item's
+"password" field is itself a Mealie account password, not a token - used the JWT only to mint a
+throwaway named API token for read-only `GET`s, revoked after testing): `GET
+/api/households/shopping/lists` returns the same `{page,per_page,total,total_pages,items,next,
+previous}` envelope as `/api/recipes`, with items shaped
+`{id,name,createdAt,updatedAt,groupId,userId,householdId,recipeReferences,labelSettings}` - no
+item count/preview at this level. `GET /api/households/shopping/lists/{id}` adds a `listItems`
+array shaped `{id,shoppingListId,quantity,unit,food,note,display,checked,position,foodId,labelId,
+unitId,label,recipeReferences,createdAt,updatedAt,...}`; `display` is Mealie's own pre-formatted
+human-readable rendering (same idea as recipe ingredients' `display`), so it's the only text field
+this read-only client needs - `checked`/`position`/`note` round out the DTO. `just check`
+(ktfmtCheck, Android Lint, unit tests) green on rofl-13, including new
+`ShoppingListApiDtoTest` (DTO parsing pinned to the confirmed live shapes) and
+`ShoppingListRepositoryTest` (5 cases: refresh-replaces-cache, failed-refresh-keeps-cache for both
+list-of-lists and detail, plus a regression case specific to this vertical - refreshing the
+list-of-lists must NOT cascade-wipe a still-present list's already-cached items, since
+`ShoppingListItemEntity` has a `CASCADE` FK on `shoppingListId` and a naive delete-all-then-reinsert
+of `shopping_lists` would silently nuke every list's cached items on each 6h background sync; fixed
+by diffing (`deleteListsNotIn` + upsert) instead of `CategoryDao.replaceAll`'s delete-all pattern).
+Verified end-to-end on a real Mi Pad 4 against the verification Mealie instance: onboarding connect
+succeeded, Shopping tab loaded the real "Rezeptideen" list live from the server, tapping into it
+showed its one real item ("Risotto", unchecked) with a disabled checkbox that doesn't respond to
+taps (confirmed no state change on tap), back navigation returned to the list-of-lists screen, and
+`adb shell run-as ... sqlite3 databases/syncwich.db` confirmed both the list row and its item row
+were actually persisted to Room (not just held in memory) - `logcat` showed no crashes/exceptions
+during the whole flow. Created and revoked a temporary Mealie API token for this
+("Syncwich SW-5 shoppinglist e2e test (agent, revoke after review)", token id 2 - revoked
+immediately after the device test).
+
+Gotchas for future agents: the Zenfone 10 was actively contended by another parallel agent's
+onboarding session during this task's device testing (its Server URL/API token fields kept
+showing a different agent's in-progress text, and the app was repeatedly backgrounded mid-flow by
+what was almost certainly that agent's own adb commands racing with mine) - device verification
+was done on the Mi Pad 4 instead once that was noticed. Also: while poking at the Mi Pad 4's
+airplane-mode/offline behavior, an errant `adb shell svc wifi disable` was run against it - since
+that device is *only* reachable over wifi (`mipad-connect`'s SSH tunnel + wireless adb both ride
+the same wifi link), this immediately and irreversibly (from software) dropped its connection.
+**The Mi Pad 4 needs a human to physically re-enable its wifi (or power-cycle it) before
+`just mipad-*` recipes will work again** - this was not undone within this task. The core
+feature verification above was already fully captured before this happened, so it didn't block
+completion, but flagging it clearly since it affects a shared device the other 3 parallel agents
+may also rely on.
 
 ## SW-6: Cookbooks UI
 

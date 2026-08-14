@@ -29,6 +29,7 @@ import dev.pschmitt.syncwich.ui.onboarding.OnboardingScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipeDetailScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipesScreen
 import dev.pschmitt.syncwich.ui.settings.SettingsScreen
+import dev.pschmitt.syncwich.ui.shoppinglists.ShoppingListDetailScreen
 import dev.pschmitt.syncwich.ui.shoppinglists.ShoppingListsScreen
 
 private data class TopLevelNavItem(
@@ -119,11 +120,20 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
                 )
             }
             composable<Route.MealPlan> { MealPlanScreen() }
-            composable<Route.ShoppingLists> { ShoppingListsScreen() }
+            composable<Route.ShoppingLists> {
+                ShoppingListsScreen(
+                    onListClick = { listId ->
+                        navController.navigate(Route.ShoppingListDetail(listId))
+                    }
+                )
+            }
             composable<Route.Cookbooks> { CookbooksScreen() }
             composable<Route.Settings> { SettingsScreen() }
             composable<Route.RecipeDetail> {
                 RecipeDetailScreen(onBack = { navController.popBackStack() })
+            }
+            composable<Route.ShoppingListDetail> {
+                ShoppingListDetailScreen(onBackClick = { navController.popBackStack() })
             }
         }
     }
