@@ -467,17 +467,21 @@ Status: not started.
 
 ## SW-16: Cookbook grid recipe preview carousel + search
 
-- [ ] Each cookbook card in `CookbooksScreen`'s grid currently shows no indication of its contents -
+- [x] Each cookbook card in `CookbooksScreen`'s grid currently shows no indication of its contents -
       add a horizontally-scrolling carousel of that cookbook's recipes' cover images as a preview
       (a handful of thumbnails, e.g. via `CookbookRepository`/`RecipeDao.observeByCookbook`, which
       SW-6 already built) so a user can tell what's in a cookbook without opening it
-- [ ] Add a search field to `CookbooksScreen` (filtering the cookbook list by name/description) -
+- [x] Add a search field to `CookbooksScreen` (filtering the cookbook list by name/description) -
       once SW-9 lands, match its rounded search bar styling rather than inventing a new one
-- [ ] Consider whether the carousel needs its own lightweight query/cache path or can reuse
+- [x] Consider whether the carousel needs its own lightweight query/cache path or can reuse
       `CookbookRepository`'s existing per-cookbook recipe flow without triggering a full detail
       fetch for every card on screen at once
 
-Status: not started.
+Status: **done**, 2026-08-14. Added a lifecycle-aware grid preview carousel backed by cached
+recipe-summary flows (limited to five covers per card, with no full-detail fetches), rounded
+name/description search using `SearchField`, and focused search tests. Remote `just check` was
+run on an isolated build path; it reached SW-16 compilation but was blocked by unrelated
+concurrent changes in other screens and sync/image code.
 
 ## SW-17: Audit and optimize main-thread performance
 
