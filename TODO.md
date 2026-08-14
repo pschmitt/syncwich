@@ -699,6 +699,16 @@ write endpoint shapes; the configured verification host currently serves fronten
 
 Status: not started.
 
+## SW-33: Add and edit recipes and collections
+
+- [ ] Add recipe and cookbook creation flows
+- [ ] Add editing flows for recipes, cookbooks, meal plans, and shopping lists
+- [ ] Preserve offline drafts/cache-first reads and synchronize mutations safely when supported
+- [ ] Confirm Mealie write API shapes before implementing network mutations
+- [ ] Verify create/edit flows on the Zenfone 10
+
+Status: not started.
+
 ## SW-32: Add a home page dashboard
 
 - [ ] Add a Home destination inspired by nyetbox's dashboard structure
