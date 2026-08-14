@@ -45,9 +45,11 @@ fun HomeSyncStatusCard(
                 SyncStatusState.STALE,
                 SyncStatusState.NEVER_SYNCED ->
                     Icon(
-                        Icons.Filled.CloudOff,
+                        if (status.hasCachedData) Icons.Filled.CloudDone else Icons.Filled.CloudOff,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error,
+                        tint =
+                            if (status.hasCachedData) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(24.dp),
                     )
                 SyncStatusState.SYNCED ->
@@ -76,7 +78,8 @@ internal fun syncStatusHeadline(status: SyncStatus): String =
         SyncStatusState.SYNCING -> status.currentMessage ?: "Syncing recipes…"
         SyncStatusState.ERROR -> "Sync failed"
         SyncStatusState.STALE -> "Cache may be stale"
-        SyncStatusState.NEVER_SYNCED -> "Not synced yet"
+        SyncStatusState.NEVER_SYNCED ->
+            if (status.hasCachedData) "Saved recipes ready" else "Not synced yet"
         SyncStatusState.SYNCED -> "Recipes up to date"
     }
 
@@ -91,7 +94,11 @@ internal fun syncStatusDetails(
         SyncStatusState.STALE ->
             "${formatRelativeSyncTime(status.lastSyncAt, nowMillis)}. Sync when a connection is available."
         SyncStatusState.NEVER_SYNCED ->
-            "No successful sync yet. Cached content will stay available offline."
+            if (status.hasCachedData) {
+                "Showing saved recipes; updates will be checked in the background."
+            } else {
+                "No successful sync yet. Cached content will stay available offline."
+            }
         SyncStatusState.SYNCED -> formatRelativeSyncTime(status.lastSyncAt, nowMillis)
     }
 

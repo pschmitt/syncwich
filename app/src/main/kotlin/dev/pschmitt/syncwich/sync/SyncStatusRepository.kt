@@ -2,6 +2,7 @@ package dev.pschmitt.syncwich.sync
 
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import dev.pschmitt.syncwich.data.repository.RecipeRepository
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.flow.map
 
 /** The user-facing state of a cache refresh. */
 enum class SyncStatusState {
@@ -27,6 +29,7 @@ data class SyncStatus(
     val lastSyncAt: Long? = null,
     val errorMessage: String? = null,
     val currentMessage: String? = null,
+    val hasCachedData: Boolean = false,
 )
 
 /**
@@ -39,6 +42,7 @@ class SyncStatusRepository
 @Inject
 constructor(
     workManager: WorkManager,
+    recipeRepository: RecipeRepository,
     settingsRepository: SettingsRepository,
 ) {
 
@@ -51,23 +55,27 @@ constructor(
         }
 
     private val currentMessage = MutableStateFlow<String?>(null)
+    private val hasCachedRecipes = recipeRepository.observeRecipes().map { it.isNotEmpty() }
 
     val status: Flow<SyncStatus> =
         combine(
-            isSyncing,
-            settingsRepository.lastSyncAt,
-            settingsRepository.lastSyncError,
-            currentMessage,
-            statusClock,
-        ) { syncing, lastSyncAt, errorMessage, progress, nowMillis ->
-            resolveSyncStatus(
-                isSyncing = syncing,
-                lastSyncAt = lastSyncAt,
-                errorMessage = errorMessage,
-                nowMillis = nowMillis,
-                currentMessage = progress,
-            )
-        }
+                isSyncing,
+                settingsRepository.lastSyncAt,
+                settingsRepository.lastSyncError,
+                currentMessage,
+                statusClock,
+            ) { syncing, lastSyncAt, errorMessage, progress, nowMillis ->
+                resolveSyncStatus(
+                    isSyncing = syncing,
+                    lastSyncAt = lastSyncAt,
+                    errorMessage = errorMessage,
+                    nowMillis = nowMillis,
+                    currentMessage = progress,
+                )
+            }
+            .combine(hasCachedRecipes) { status, hasCachedData ->
+                status.copy(hasCachedData = hasCachedData)
+            }
 
     fun publishProgress(message: String) {
         currentMessage.value = message
@@ -96,6 +104,7 @@ internal fun resolveSyncStatus(
     nowMillis: Long,
     staleAfterMillis: Long = 12 * 60 * 60 * 1_000L,
     currentMessage: String? = null,
+    hasCachedData: Boolean = false,
 ): SyncStatus {
     val state =
         when {
@@ -110,5 +119,6 @@ internal fun resolveSyncStatus(
         lastSyncAt = lastSyncAt,
         errorMessage = errorMessage,
         currentMessage = currentMessage,
+        hasCachedData = hasCachedData,
     )
 }

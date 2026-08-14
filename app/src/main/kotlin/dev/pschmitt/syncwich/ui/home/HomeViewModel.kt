@@ -95,12 +95,6 @@ constructor(
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), HomeUiState())
 
-    init {
-        // Automatic startup sync is reported by HomeSyncStatusCard, not by the pull gesture's
-        // indicator. This avoids showing a second refresh icon while the app is opening.
-        syncScheduler.syncAll()
-    }
-
     fun refresh() {
         userRefreshRequested.value = true
         syncScheduler.syncAll()

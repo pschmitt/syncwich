@@ -1686,17 +1686,22 @@ verifies the compact layout and click behavior.
 
 ## SW-100: Add tag icons to recipe-search tag buttons
 
-- [ ] Add the tag icon inside each tag filter button
-- [ ] Preserve selected/unselected filter states and accessible labels
-- [ ] Add focused UI coverage
+- [x] Add the tag icon inside each tag filter button
+- [x] Preserve selected/unselected filter states and accessible labels
+- [x] Add focused UI coverage
 
-Status: not started.
+Status: **done**, 2026-08-15. Expanded and selected recipe-search tag chips now carry a leading
+tag icon while retaining their existing labels and selection behavior; focused Android coverage
+verifies both icons are present after expansion.
 
 ## SW-101: Make cold-start synchronization feel natural
 
-- [ ] Avoid reporting “not synced yet” when usable cached data already exists
-- [ ] Defer nonessential cold-start refresh briefly when cache data is available
-- [ ] Keep immediate synchronization for an empty cache
-- [ ] Add focused sync-state and startup timing coverage
+- [x] Avoid reporting “not synced yet” when usable cached data already exists
+- [x] Defer nonessential cold-start refresh briefly when cache data is available
+- [x] Keep immediate synchronization for an empty cache
+- [x] Add focused sync-state and startup timing coverage
 
-Status: not started.
+Status: **done**, 2026-08-15. Home no longer queues a duplicate startup pass; automatic refresh
+waits two seconds when Room already contains recipes, starts immediately for an empty cache, and
+the sync card reports cached readiness instead of “Not synced yet”. Remote unit/lint and Android
+test compilation pass.

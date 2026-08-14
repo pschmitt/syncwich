@@ -62,4 +62,22 @@ class SyncStatusTest {
         assertEquals("Last synced just now", formatRelativeSyncTime(9_500L, 10_000L))
         assertEquals("Last synced 2h ago", formatRelativeSyncTime(10_000L, 7_210_000L))
     }
+
+    @Test
+    fun `cached recipes do not present as not synced yet`() {
+        val status =
+            resolveSyncStatus(
+                isSyncing = false,
+                lastSyncAt = null,
+                errorMessage = null,
+                nowMillis = 10_000L,
+            )
+                .copy(hasCachedData = true)
+
+        assertEquals("Saved recipes ready", syncStatusHeadline(status))
+        assertEquals(
+            "Showing saved recipes; updates will be checked in the background.",
+            syncStatusDetails(status, nowMillis = 10_000L),
+        )
+    }
 }

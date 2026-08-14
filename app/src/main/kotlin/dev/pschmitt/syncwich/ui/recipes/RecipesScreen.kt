@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Link
@@ -49,6 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
@@ -270,6 +272,7 @@ internal fun TagFilterSection(
             label = { it.name },
             selectedId = selectedTagId,
             onSelected = onSelected,
+            leadingIcon = { TagFilterIcon() },
         )
     }
     AnimatedVisibility(visible = !expanded && selectedTag != null) {
@@ -283,11 +286,21 @@ internal fun TagFilterSection(
                         selected = true,
                         onClick = { onSelected(tag.id) },
                         label = { Text(tag.name) },
+                        leadingIcon = { TagFilterIcon() },
                     )
                 }
             }
         }
     }
+}
+
+@Composable
+private fun TagFilterIcon() {
+    Icon(
+        imageVector = Icons.AutoMirrored.Filled.Label,
+        contentDescription = null,
+        modifier = Modifier.size(18.dp).testTag("recipe-search-tag-icon"),
+    )
 }
 
 internal fun tagFilterToggleLabel(expanded: Boolean, count: Int): String =
@@ -300,6 +313,7 @@ private fun <T> FilterChipRow(
     label: (T) -> String,
     selectedId: String?,
     onSelected: (String) -> Unit,
+    leadingIcon: (@Composable () -> Unit)? = null,
 ) {
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -312,6 +326,7 @@ private fun <T> FilterChipRow(
                 selected = selectedId == id,
                 onClick = { onSelected(id) },
                 label = { Text(label(entry)) },
+                leadingIcon = leadingIcon,
             )
         }
     }

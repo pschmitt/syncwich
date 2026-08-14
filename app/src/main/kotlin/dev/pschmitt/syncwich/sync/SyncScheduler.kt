@@ -7,6 +7,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import dev.pschmitt.syncwich.data.repository.RecipeRepository
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import dev.pschmitt.syncwich.data.settings.SyncPreferences
 import java.util.concurrent.TimeUnit
@@ -15,6 +16,8 @@ import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -24,10 +27,12 @@ class SyncScheduler
 @Inject
 constructor(
     private val workManager: WorkManager,
+    private val recipeRepository: RecipeRepository,
     private val settingsRepository: SettingsRepository,
 ) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var startupJob: Job? = null
 
     fun schedulePeriodic() {
         scope.launch { enqueuePeriodic(settingsRepository.syncPreferences.first()) }
@@ -59,13 +64,19 @@ constructor(
      * onboarding succeeds (so the very first sync doesn't wait for the periodic schedule).
      */
     fun scheduleStartup() {
-        scope.launch { enqueueStartup(settingsRepository.syncPreferences.first()) }
+        startupJob?.cancel()
+        startupJob = scope.launch { enqueueStartup(settingsRepository.syncPreferences.first()) }
     }
 
     /** Enqueues the automatic process-start pass only when the user has enabled it. */
     fun scheduleStartupIfEnabled() {
-        scope.launch {
+        startupJob?.cancel()
+        startupJob = scope.launch {
             if (settingsRepository.syncOnAppStart.first()) {
+                val hasCachedData =
+                    recipeRepository.observeRecipes().first().isNotEmpty() ||
+                        settingsRepository.initialSyncCompleted.first()
+                delay(startupSyncDelayMillis(hasCachedData))
                 enqueueStartup(settingsRepository.syncPreferences.first())
             } else {
                 workManager.cancelUniqueWork(STARTUP_WORK_NAME)
@@ -93,6 +104,8 @@ constructor(
 
     /** Removes a queued startup pass when the first sync is being run in the foreground. */
     fun cancelStartup() {
+        startupJob?.cancel()
+        startupJob = null
         workManager.cancelUniqueWork(STARTUP_WORK_NAME)
     }
 
@@ -110,5 +123,9 @@ constructor(
         const val PERIODIC_WORK_NAME = "syncwich_periodic_sync"
         const val STARTUP_WORK_NAME = "syncwich_startup_sync"
         const val BACKOFF_DELAY_MINUTES = 15L
+        const val STARTUP_SYNC_DELAY_MILLIS = 2_000L
     }
 }
+
+internal fun startupSyncDelayMillis(hasCachedData: Boolean): Long =
+    if (hasCachedData) SyncScheduler.STARTUP_SYNC_DELAY_MILLIS else 0L

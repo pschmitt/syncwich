@@ -5,8 +5,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -43,5 +45,8 @@ class TagFilterSectionTest {
         composeTestRule.onNodeWithText("Quick").assertIsDisplayed()
         composeTestRule.onNodeWithText("Vegetarian").assertIsDisplayed()
         composeTestRule.onNodeWithText("Hide tags").assertIsDisplayed()
+        composeTestRule
+            .onAllNodesWithTag("recipe-search-tag-icon", useUnmergedTree = true)
+            .assertCountEquals(2)
     }
 }
