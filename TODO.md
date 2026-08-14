@@ -640,11 +640,13 @@ Status: not started.
 
 ## SW-27: Enlarge cookbook preview cards
 
-- [ ] Increase cookbook card/preview dimensions so recipe images are displayed larger
-- [ ] Preserve responsive grid behavior and usable scrolling on narrow screens
+- [x] Increase cookbook card/preview dimensions so recipe images are displayed larger
+- [x] Preserve responsive grid behavior and usable scrolling on narrow screens
 - [ ] Verify the updated cookbook layout visually on the Zenfone 10
 
-Status: not started.
+Status: mostly done, 2026-08-14. Grid cards and preview tiles are now 144×108dp with responsive
+columns and narrow-screen horizontal scrolling; remote `just check` passed. Zenfone visual
+verification remains pending.
 
 ## SW-28: Remove duplicate recipe-detail title card
 

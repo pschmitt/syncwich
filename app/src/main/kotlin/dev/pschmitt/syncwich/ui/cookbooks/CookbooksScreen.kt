@@ -2,6 +2,7 @@ package dev.pschmitt.syncwich.ui.cookbooks
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.background
@@ -108,20 +109,23 @@ fun CookbooksScreen(
                         onRetry = viewModel::refresh,
                     )
                 } else {
-                    LazyVerticalGrid(
-                        columns = GridCells.Adaptive(minSize = 160.dp),
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        items(cookbooks, key = { it.id }) { cookbook ->
-                            CookbookCard(
-                                cookbook = cookbook,
-                                recipes = recipePreviews[cookbook.id].orEmpty(),
-                                serverUrl = viewModel.serverUrl,
-                                onClick = { onCookbookClick(cookbook.id) },
-                            )
+                    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(cookbookGridColumnCount(maxWidth.value.toInt())),
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(COOKBOOK_GRID_PADDING_DP.dp),
+                            horizontalArrangement =
+                                Arrangement.spacedBy(COOKBOOK_GRID_SPACING_DP.dp),
+                            verticalArrangement = Arrangement.spacedBy(COOKBOOK_GRID_SPACING_DP.dp),
+                        ) {
+                            items(cookbooks, key = { it.id }) { cookbook ->
+                                CookbookCard(
+                                    cookbook = cookbook,
+                                    recipes = recipePreviews[cookbook.id].orEmpty(),
+                                    serverUrl = viewModel.serverUrl,
+                                    onClick = { onCookbookClick(cookbook.id) },
+                                )
+                            }
                         }
                     }
                 }
@@ -185,7 +189,10 @@ private fun CookbookPreviewCarousel(recipes: List<RecipeSummaryEntity>, serverUr
         items(recipes, key = { it.id }) { recipe ->
             Box(
                 modifier =
-                    Modifier.size(width = 96.dp, height = 76.dp)
+                    Modifier.size(
+                            width = COOKBOOK_PREVIEW_TILE_WIDTH_DP.dp,
+                            height = COOKBOOK_PREVIEW_TILE_HEIGHT_DP.dp,
+                        )
                         .clip(RoundedCornerShape(12.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center,
@@ -210,3 +217,14 @@ fun filterRecipePreviewsWithImages(
     recipes.filter { recipe -> recipeImageUrl(serverUrl, recipe.id, recipe.image) != null }
 
 private const val PREVIEW_RECIPE_LIMIT = 5
+
+internal const val COOKBOOK_GRID_MIN_CARD_WIDTH_DP = 220
+internal const val COOKBOOK_GRID_PADDING_DP = 16
+internal const val COOKBOOK_GRID_SPACING_DP = 12
+internal const val COOKBOOK_PREVIEW_TILE_WIDTH_DP = 144
+internal const val COOKBOOK_PREVIEW_TILE_HEIGHT_DP = 108
+
+internal fun cookbookGridColumnCount(availableWidthDp: Int): Int =
+    ((availableWidthDp - (2 * COOKBOOK_GRID_PADDING_DP) + COOKBOOK_GRID_SPACING_DP) /
+            (COOKBOOK_GRID_MIN_CARD_WIDTH_DP + COOKBOOK_GRID_SPACING_DP))
+        .coerceAtLeast(1)

@@ -2,9 +2,24 @@ package dev.pschmitt.syncwich.ui.cookbooks
 
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CookbookPreviewTest {
+
+    @Test
+    fun `cookbook grid keeps narrow screens to one column and grows responsively`() {
+        assertEquals(1, cookbookGridColumnCount(360))
+        assertEquals(2, cookbookGridColumnCount(512))
+        assertEquals(3, cookbookGridColumnCount(744))
+    }
+
+    @Test
+    fun `cookbook cards use materially larger dimensions`() {
+        assertTrue(COOKBOOK_GRID_MIN_CARD_WIDTH_DP > 160)
+        assertTrue(COOKBOOK_PREVIEW_TILE_WIDTH_DP > 96)
+        assertTrue(COOKBOOK_PREVIEW_TILE_HEIGHT_DP > 76)
+    }
 
     @Test
     fun `filters recipes without usable cover images`() {
