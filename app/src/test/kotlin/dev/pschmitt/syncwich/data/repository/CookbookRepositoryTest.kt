@@ -233,6 +233,9 @@ class CookbookRepositoryTest {
         override fun observeById(id: String): Flow<CookbookEntity?> =
             state.map { list -> list.find { it.id == id } }
 
+        override fun observeBySlug(slug: String): Flow<CookbookEntity?> =
+            state.map { list -> list.find { it.slug == slug } }
+
         override suspend fun upsertAll(cookbooks: List<CookbookEntity>) {
             val byId = state.value.associateBy { it.id }.toMutableMap()
             cookbooks.forEach { byId[it.id] = it }
@@ -261,6 +264,9 @@ class CookbookRepositoryTest {
             error("not used by CookbookRepository")
 
         override fun observeDetail(id: String): Flow<RecipeDetailEntity?> =
+            error("not used by CookbookRepository")
+
+        override fun observeDetailBySlug(slug: String): Flow<RecipeDetailEntity?> =
             error("not used by CookbookRepository")
 
         override suspend fun getAll(): List<RecipeSummaryEntity> = recipes.value.values.toList()
@@ -369,6 +375,24 @@ class CookbookRepositoryTest {
             error("not used by CookbookRepositoryTest")
 
         override suspend fun patchRecipe(slug: String, request: RecipeInputDto): ResponseBody =
+            error("not used by CookbookRepositoryTest")
+
+        override suspend fun updateRecipeImage(
+            slug: String,
+            image: okhttp3.MultipartBody.Part,
+            extension: okhttp3.RequestBody,
+        ): ResponseBody = error("not used by CookbookRepositoryTest")
+
+        override suspend fun deleteRecipeImage(slug: String): ResponseBody =
+            error("not used by CookbookRepositoryTest")
+
+        override suspend fun uploadRecipeAsset(
+            slug: String,
+            name: okhttp3.RequestBody,
+            icon: okhttp3.RequestBody,
+            extension: okhttp3.RequestBody,
+            file: okhttp3.MultipartBody.Part,
+        ): dev.pschmitt.syncwich.data.api.dto.RecipeAssetDto =
             error("not used by CookbookRepositoryTest")
 
         override suspend fun getRecipes(page: Int, perPage: Int): PagedResponseDto<RecipeSummaryDto> =

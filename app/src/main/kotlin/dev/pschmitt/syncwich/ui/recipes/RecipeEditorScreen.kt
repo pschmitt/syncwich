@@ -1,10 +1,14 @@
 package dev.pschmitt.syncwich.ui.recipes
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -13,7 +17,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -31,12 +38,20 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
+import dev.pschmitt.syncwich.ui.common.MarkdownEditor
 import dev.pschmitt.syncwich.ui.common.CenteredContent
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,6 +66,20 @@ fun RecipeEditorScreen(
     val saveState by viewModel.saveState.collectAsStateWithLifecycle()
     val isSaving = saveState is RecipeEditorSaveState.Saving
     val errorMessage = (saveState as? RecipeEditorSaveState.Error)?.message
+    var imageTarget by remember { mutableStateOf<RecipeEditorImageTarget?>(null) }
+    val imagePicker =
+        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            if (uri != null) {
+                when (val target = imageTarget) {
+                    RecipeEditorImageTarget.Cover -> viewModel.onCoverImage(uri.toString())
+                    RecipeEditorImageTarget.Description -> viewModel.onDescriptionImage(uri.toString())
+                    is RecipeEditorImageTarget.Instruction ->
+                        viewModel.onInstructionImage(target.index, uri.toString())
+                    null -> Unit
+                }
+            }
+            imageTarget = null
+        }
 
     LaunchedEffect(saveState) {
         if (saveState is RecipeEditorSaveState.Saved) onSaved()
@@ -99,15 +128,46 @@ fun RecipeEditorScreen(
                 enabled = !isSaving,
                 modifier = Modifier.fillMaxWidth(),
             )
-            OutlinedTextField(
+            MarkdownEditor(
                 value = draft.description,
                 onValueChange = viewModel::onDescriptionChange,
-                label = { Text("Description") },
-                minLines = 3,
-                maxLines = 6,
+                label = "Description",
                 enabled = !isSaving,
                 modifier = Modifier.fillMaxWidth(),
+                onAddImage = {
+                    imageTarget = RecipeEditorImageTarget.Description
+                    imagePicker.launch("image/*")
+                },
             )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = {
+                        imageTarget = RecipeEditorImageTarget.Cover
+                        imagePicker.launch("image/*")
+                    },
+                    enabled = !isSaving,
+                ) {
+                    Icon(Icons.Filled.Image, contentDescription = null)
+                    Text("Choose cover image", modifier = Modifier.padding(start = 8.dp))
+                }
+                if (viewModel.isEditing) {
+                    OutlinedButton(
+                        onClick = viewModel::onRemoveCoverImage,
+                        enabled = !isSaving,
+                    ) {
+                        Icon(Icons.Filled.Delete, contentDescription = null)
+                        Text("Remove cover", modifier = Modifier.padding(start = 8.dp))
+                    }
+                }
+            }
+            draft.coverImageUri?.let { uri ->
+                AsyncImage(
+                    model = Uri.parse(uri),
+                    contentDescription = "Selected cover image",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxWidth().height(180.dp),
+                )
+            }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -170,8 +230,13 @@ fun RecipeEditorScreen(
                 onValueChange = viewModel::onInstructionChange,
                 onAdd = viewModel::onInstructionAdd,
                 onRemove = viewModel::onInstructionRemove,
+                onMove = viewModel::onInstructionMove,
                 addLabel = "Add step",
                 singleLine = false,
+                onAddImage = { index ->
+                    imageTarget = RecipeEditorImageTarget.Instruction(index)
+                    imagePicker.launch("image/*")
+                },
             )
 
             if (errorMessage != null && errorMessage != "Enter a recipe name") {
@@ -218,6 +283,8 @@ private fun EditableTextList(
     onRemove: (Int) -> Unit,
     addLabel: String,
     singleLine: Boolean = true,
+    onAddImage: ((Int) -> Unit)? = null,
+    onMove: ((Int, Int) -> Unit)? = null,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(text = title, style = MaterialTheme.typography.titleMedium)
@@ -226,20 +293,65 @@ private fun EditableTextList(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                OutlinedTextField(
-                    value = value,
-                    onValueChange = { onValueChange(index, it) },
-                    label = { Text("$itemLabel ${index + 1}") },
-                    singleLine = singleLine,
-                    minLines = if (singleLine) 1 else 2,
-                    enabled = enabled,
-                    modifier = Modifier.weight(1f),
-                )
-                IconButton(onClick = { onRemove(index) }, enabled = enabled) {
-                    Icon(
-                        Icons.Filled.Delete,
-                        contentDescription = "Remove $itemLabel ${index + 1}",
+                if (singleLine) {
+                    OutlinedTextField(
+                        value = value,
+                        onValueChange = { onValueChange(index, it) },
+                        label = { Text("$itemLabel ${index + 1}") },
+                        singleLine = true,
+                        enabled = enabled,
+                        modifier = Modifier.weight(1f),
                     )
+                } else {
+                    MarkdownEditor(
+                        value = value,
+                        onValueChange = { onValueChange(index, it) },
+                        label = "$itemLabel ${index + 1}",
+                        enabled = enabled,
+                        modifier = Modifier.weight(1f),
+                        onAddImage = onAddImage?.let { add -> { add(index) } },
+                    )
+                }
+                if (onMove == null) {
+                    IconButton(
+                        onClick = { onRemove(index) },
+                        enabled = enabled,
+                        modifier = Modifier.semantics {
+                            contentDescription = "Remove $itemLabel ${index + 1}"
+                        },
+                    ) {
+                        Icon(Icons.Filled.Delete, contentDescription = null)
+                    }
+                } else {
+                    Column {
+                        IconButton(
+                            onClick = { onMove(index, index - 1) },
+                            enabled = enabled && index > 0,
+                            modifier = Modifier.semantics {
+                                contentDescription = "Move $itemLabel ${index + 1} up"
+                            },
+                        ) {
+                            Icon(Icons.Filled.ArrowUpward, contentDescription = null)
+                        }
+                        IconButton(
+                            onClick = { onMove(index, index + 1) },
+                            enabled = enabled && index < values.lastIndex,
+                            modifier = Modifier.semantics {
+                                contentDescription = "Move $itemLabel ${index + 1} down"
+                            },
+                        ) {
+                            Icon(Icons.Filled.ArrowDownward, contentDescription = null)
+                        }
+                        IconButton(
+                            onClick = { onRemove(index) },
+                            enabled = enabled,
+                            modifier = Modifier.semantics {
+                                contentDescription = "Remove $itemLabel ${index + 1}"
+                            },
+                        ) {
+                            Icon(Icons.Filled.Delete, contentDescription = null)
+                        }
+                    }
                 }
             }
         }
@@ -248,4 +360,12 @@ private fun EditableTextList(
             Text(addLabel, modifier = Modifier.padding(start = 8.dp))
         }
     }
+}
+
+private sealed interface RecipeEditorImageTarget {
+    data object Cover : RecipeEditorImageTarget
+
+    data object Description : RecipeEditorImageTarget
+
+    data class Instruction(val index: Int) : RecipeEditorImageTarget
 }

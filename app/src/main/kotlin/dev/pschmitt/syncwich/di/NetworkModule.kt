@@ -62,8 +62,8 @@ object NetworkModule {
                 redactHeader("Authorization")
             }
         return OkHttpClient.Builder()
-            // Rewrites scheme/host/path to the configured instance - added first so auth/logging
-            // see the real request.
+            // Rewrites Retrofit placeholder requests to the configured instance - added first so
+            // auth/logging see the real request. Absolute Coil URLs pass through unchanged.
             .addInterceptor(dynamicBaseUrlInterceptor)
             .addInterceptor(authInterceptor)
             .addInterceptor(logging)
@@ -92,7 +92,7 @@ object NetworkModule {
     @Singleton
     fun provideRetrofit(okHttpClient: OkHttpClient, json: Json): Retrofit =
         Retrofit.Builder()
-            // Placeholder - DynamicBaseUrlInterceptor rewrites every request to the configured
+            // Placeholder - DynamicBaseUrlInterceptor rewrites Retrofit requests to the configured
             // Mealie instance at request time, so this host is never actually contacted.
             .baseUrl("http://mealie.invalid/")
             .client(okHttpClient)

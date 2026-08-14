@@ -15,6 +15,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.Palette
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -49,6 +51,7 @@ import dev.pschmitt.syncwich.data.settings.FONT_SCALE_STEPS
 import dev.pschmitt.syncwich.data.settings.MAX_FONT_SCALE
 import dev.pschmitt.syncwich.data.settings.MIN_FONT_SCALE
 import dev.pschmitt.syncwich.data.settings.NavigationBarItemKeys
+import dev.pschmitt.syncwich.data.settings.ThemeMode
 import dev.pschmitt.syncwich.data.settings.resolveNavBarOrder
 import dev.pschmitt.syncwich.ui.navigation.TopLevelDestination
 import dev.pschmitt.syncwich.ui.navigation.NavigationBarViewModel
@@ -212,6 +215,8 @@ private fun AppearanceSettingsScreen(
 ) {
     val persistedOrder by viewModel.navigationBarOrder.collectAsStateWithLifecycle()
     val fontScale by viewModel.fontScale.collectAsStateWithLifecycle()
+    val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+    val ingredientChecklistEnabled by viewModel.ingredientChecklistEnabled.collectAsStateWithLifecycle()
     val visibleItems by navigationBarViewModel.visibleItemKeys.collectAsStateWithLifecycle()
     val naturalKeys = TopLevelDestination.entries.map { it.key }
     val orderedKeys = resolveNavBarOrder(naturalKeys, persistedOrder, emptySet())
@@ -262,6 +267,47 @@ private fun AppearanceSettingsScreen(
                                 },
                         )
                     }
+                }
+            }
+            item {
+                SettingsGroupCard(title = "Theme", icon = Icons.Filled.Palette) {
+                    ThemeMode.entries.forEach { mode ->
+                        SettingsListItem(
+                            modifier =
+                                Modifier.fillMaxWidth().clickable {
+                                    viewModel.saveThemeMode(mode)
+                                },
+                            headlineContent = { Text(mode.label) },
+                            supportingContent = {
+                                if (mode == ThemeMode.SYSTEM) {
+                                    Text("Follow the device appearance setting")
+                                }
+                            },
+                            trailingContent = {
+                                RadioButton(
+                                    selected = themeMode == mode,
+                                    onClick = { viewModel.saveThemeMode(mode) },
+                                )
+                            },
+                        )
+                    }
+                }
+            }
+            item {
+                SettingsGroupCard(title = "Recipe display", icon = Icons.Filled.Checklist) {
+                    SettingsListItem(
+                        modifier = Modifier.fillMaxWidth(),
+                        headlineContent = { Text("Ingredient checklist") },
+                        supportingContent = {
+                            Text("Show ingredients as checkable items while cooking")
+                        },
+                        trailingContent = {
+                            Switch(
+                                checked = ingredientChecklistEnabled,
+                                onCheckedChange = viewModel::setIngredientChecklistEnabled,
+                            )
+                        },
+                    )
                 }
             }
             item {

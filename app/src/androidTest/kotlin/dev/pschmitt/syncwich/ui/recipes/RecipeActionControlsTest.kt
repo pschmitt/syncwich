@@ -2,9 +2,11 @@ package dev.pschmitt.syncwich.ui.recipes
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
@@ -23,13 +25,17 @@ class RecipeActionControlsTest {
         var rating: Int? = null
         composeTestRule.setContent {
             MaterialTheme {
-                RecipeActionControls(
+                RecipeOverflowMenu(
+                    expanded = true,
                     actions = RecipeActionUiState(),
+                    onDismiss = {},
                     onFavoriteClick = { favorite = it },
-                    onRatingSelected = { rating = it },
                     onMadeThisClick = {},
                     onOpenTimelineClick = {},
+                    onShareClick = {},
+                    onOpenBrowserClick = {},
                 )
+                RecipeActionControls(actions = RecipeActionUiState(), onRatingSelected = { rating = it })
             }
         }
 
@@ -46,12 +52,15 @@ class RecipeActionControlsTest {
         var openTimelineCalls = 0
         composeTestRule.setContent {
             MaterialTheme {
-                RecipeActionControls(
+                RecipeOverflowMenu(
+                    expanded = true,
                     actions = RecipeActionUiState(),
+                    onDismiss = {},
                     onFavoriteClick = {},
-                    onRatingSelected = {},
                     onMadeThisClick = { madeThisCalls++ },
                     onOpenTimelineClick = { openTimelineCalls++ },
+                    onShareClick = {},
+                    onOpenBrowserClick = {},
                 )
             }
         }
@@ -69,14 +78,23 @@ class RecipeActionControlsTest {
             MaterialTheme {
                 RecipeActionControls(
                     actions = RecipeActionUiState(madeThisPending = true),
-                    onFavoriteClick = {},
                     onRatingSelected = {},
-                    onMadeThisClick = {},
-                    onOpenTimelineClick = {},
                 )
             }
         }
 
         composeTestRule.onNodeWithText("Saved offline; sync pending").assertIsDisplayed()
+    }
+
+    @Test
+    fun ratingControlsStayCompactWithout_a_redundant_your_rating_row() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                RecipeActionControls(actions = RecipeActionUiState(), onRatingSelected = {})
+            }
+        }
+
+        composeTestRule.onAllNodesWithText("Your rating").assertCountEquals(0)
+        composeTestRule.onNodeWithContentDescription("Rate 1 out of 5 stars").assertIsDisplayed()
     }
 }

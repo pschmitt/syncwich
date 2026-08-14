@@ -10,18 +10,33 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
  * The Mealie image version is included as `?v=...` in the returned URL so it also becomes Coil's
  * cache key.
  *
- * Mealie's `image` field on both the recipe list and detail responses is `null` *or* the literal
- * string `"no image"` when a recipe has no cover - never a URL fragment itself, just a
- * cache-busting marker that a real image exists. Both cases mean "don't render anything".
+ * Mealie's `image` field is normally a short cache-busting version, but some imported recipes
+ * expose the literal string `"no image"` even though the media endpoint still serves a real
+ * uploaded cover. Only a null/blank field is treated as absent; skipping the sentinel caused
+ * imported covers such as `bananengemuse` to disappear without even making the valid media call.
  */
 fun recipeImageUrl(serverUrl: String, recipeId: String, image: String?): String? {
     val imageVersion = image?.trim()
-    if (imageVersion.isNullOrBlank() || imageVersion == "no image") return null
+    if (imageVersion.isNullOrBlank()) return null
 
     val baseUrl = serverUrl.trimEnd('/').toHttpUrlOrNull() ?: return null
+    val explicitImageUrl = imageVersion.toHttpUrlOrNull()
+    if (explicitImageUrl != null) {
+        return explicitImageUrl
+            .takeIf {
+                it.scheme == baseUrl.scheme &&
+                    it.host == baseUrl.host &&
+                    it.port == baseUrl.port
+            }
+            ?.toString()
+    }
+    val imageFileName =
+        imageVersion.takeIf {
+            it == "original.webp" || it == "min-original.webp" || it == "tiny-original.webp"
+        } ?: "min-original.webp"
     return baseUrl
         .newBuilder()
-        .addPathSegments("api/media/recipes/$recipeId/images/min-original.webp")
+        .addPathSegments("api/media/recipes/$recipeId/images/$imageFileName")
         // Mealie changes this value when the cover changes. Including it in Coil's model gives
         // each server-side image version its own memory/disk-cache key while repeated renders of
         // the same version still reuse the exact same cached entry.

@@ -11,6 +11,9 @@ import dev.pschmitt.syncwich.data.repository.RecipeActionRepository
 import dev.pschmitt.syncwich.data.repository.RecipeRepository
 import dev.pschmitt.syncwich.data.repository.RecipeTimelineRepository
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
+import dev.pschmitt.syncwich.data.image.RecipeImageReference
+import dev.pschmitt.syncwich.data.image.extractRecipeImageReferences
+import dev.pschmitt.syncwich.data.api.recipeImageUrl
 import dev.pschmitt.syncwich.ui.common.RefreshState
 import dev.pschmitt.syncwich.ui.common.refreshErrorMessage
 import dev.pschmitt.syncwich.ui.navigation.Route
@@ -23,6 +26,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -39,7 +43,9 @@ sealed interface RecipeDetailUiState {
     data class Loaded(
         val recipe: RecipeDetailDto,
         val serverUrl: String,
+        val imageIndex: RecipeImageIndex = RecipeImageIndex.EMPTY,
         val actions: RecipeActionUiState = RecipeActionUiState(),
+        val ingredientChecklistEnabled: Boolean = false,
         val refreshError: String? = null,
     ) : RecipeDetailUiState
 }
@@ -51,6 +57,17 @@ data class RecipeActionUiState(
     val ratingPending: Boolean = false,
     val madeThisPending: Boolean = false,
 )
+
+/** Recipe image destinations indexed once on Dispatchers.Default for the detail screen. */
+data class RecipeImageIndex(
+    val coverUrl: String?,
+    val galleryUrls: List<String>,
+    val instructionReferences: List<List<RecipeImageReference>>,
+) {
+    companion object {
+        val EMPTY = RecipeImageIndex(null, emptyList(), emptyList())
+    }
+}
 
 private fun RecipeActionEntity?.toUiState(madeThisPending: Boolean) =
     RecipeActionUiState(
@@ -79,13 +96,17 @@ constructor(
 ) : ViewModel() {
 
     private val route = savedStateHandle.toRoute<Route.RecipeDetail>()
+    private val requestedRecipeId = route.recipeId
     private val _refreshState = MutableStateFlow(RefreshState())
     val refreshState: StateFlow<RefreshState> = _refreshState.asStateFlow()
     private var refreshJob: Job? = null
 
     private val detailJson: Flow<String?> =
-        recipeRepository
-            .observeRecipeDetail(route.recipeId)
+        (if (requestedRecipeId.isBlank()) {
+            recipeRepository.observeRecipeDetailBySlug(route.slug)
+        } else {
+            recipeRepository.observeRecipeDetail(requestedRecipeId)
+        })
             .map { it?.detailJson }
             .distinctUntilChanged()
 
@@ -97,23 +118,55 @@ constructor(
             .flowOn(Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+    private val effectiveRecipeId: StateFlow<String> =
+        decodedRecipe
+            .map { it?.id ?: requestedRecipeId }
+            .distinctUntilChanged()
+            .stateIn(viewModelScope, SharingStarted.Eagerly, requestedRecipeId)
+
+    /** Regex/URI work for Markdown and HTML image extraction stays off the Compose thread. */
+    private val recipePresentation =
+        combine(decodedRecipe, settingsRepository.credentials) { recipe, credentials ->
+                recipe?.let {
+                    RecipeDetailPresentation(
+                        recipe = it,
+                        serverUrl = credentials.serverUrl,
+                        imageIndex = recipeImageIndex(credentials.serverUrl, it),
+                    )
+                }
+            }
+            .flowOn(Dispatchers.Default)
+
+    private val ingredientChecklistEnabled =
+        settingsRepository.ingredientChecklistEnabled.distinctUntilChanged()
+
     private val actions: Flow<RecipeActionUiState> =
-        combine(
-                recipeActionRepository.observe(route.recipeId),
-                recipeTimelineRepository.observe(route.recipeId),
-            ) { action, timelineEvents ->
-                action.toUiState(madeThisPending = timelineEvents.any { it.pending })
+        effectiveRecipeId
+            .flatMapLatest { recipeId ->
+                combine(
+                    recipeActionRepository.observe(recipeId),
+                    recipeTimelineRepository.observe(recipeId),
+                ) { action, timelineEvents ->
+                    action.toUiState(madeThisPending = timelineEvents.any { it.pending })
+                }
             }
             .distinctUntilChanged()
 
     val uiState: StateFlow<RecipeDetailUiState> =
         combine(
-                decodedRecipe,
+                recipePresentation,
                 actions,
-                settingsRepository.credentials,
                 refreshState,
-            ) { recipe, recipeActions, credentials, refresh ->
-                recipeDetailUiState(recipe, recipeActions, credentials.serverUrl, refresh)
+                ingredientChecklistEnabled,
+            ) { presentation, recipeActions, refresh, checklistEnabled ->
+                recipeDetailUiState(
+                    recipe = presentation?.recipe,
+                    actions = recipeActions,
+                    serverUrl = presentation?.serverUrl.orEmpty(),
+                    refresh = refresh,
+                    imageIndex = presentation?.imageIndex,
+                    ingredientChecklistEnabled = checklistEnabled,
+                )
             }
             .stateIn(
                 viewModelScope,
@@ -137,7 +190,7 @@ constructor(
                     errorMessage =
                         refreshErrorMessage(
                             recipeRepository.refreshRecipeDetail(
-                                route.recipeId,
+                                requestedRecipeId,
                                 route.slug,
                                 forceRefresh,
                             )
@@ -148,20 +201,20 @@ constructor(
 
     fun setFavorite(isFavorite: Boolean) {
         viewModelScope.launch {
-            recipeActionRepository.setFavorite(route.recipeId, route.slug, isFavorite)
+            recipeActionRepository.setFavorite(effectiveRecipeId.value, route.slug, isFavorite)
         }
     }
 
     fun setRating(rating: Int) {
         require(rating in 1..5) { "Recipe rating must be between 1 and 5" }
         viewModelScope.launch {
-            recipeActionRepository.setRating(route.recipeId, route.slug, rating)
+            recipeActionRepository.setRating(effectiveRecipeId.value, route.slug, rating)
         }
     }
 
     /** Records a durable "I made this" cooking event - see [RecipeTimelineRepository]'s kdoc. */
     fun recordMadeThis() {
-        viewModelScope.launch { recipeTimelineRepository.recordMadeThis(route.recipeId) }
+        viewModelScope.launch { recipeTimelineRepository.recordMadeThis(effectiveRecipeId.value) }
     }
 
     private fun refreshActions() {
@@ -169,18 +222,28 @@ constructor(
     }
 }
 
+private data class RecipeDetailPresentation(
+    val recipe: RecipeDetailDto,
+    val serverUrl: String,
+    val imageIndex: RecipeImageIndex,
+)
+
 internal fun recipeDetailUiState(
     recipe: RecipeDetailDto?,
     actions: RecipeActionUiState,
     serverUrl: String,
     refresh: RefreshState,
+    imageIndex: RecipeImageIndex? = null,
+    ingredientChecklistEnabled: Boolean = false,
 ): RecipeDetailUiState =
     when {
         recipe != null ->
             RecipeDetailUiState.Loaded(
                 recipe = recipe,
                 serverUrl = serverUrl,
+                imageIndex = imageIndex ?: recipeImageIndex(serverUrl, recipe),
                 actions = actions,
+                ingredientChecklistEnabled = ingredientChecklistEnabled,
                 refreshError = refresh.errorMessage,
             )
         refresh.isRefreshing -> RecipeDetailUiState.Loading
@@ -189,3 +252,20 @@ internal fun recipeDetailUiState(
 
 internal fun decodeRecipeDetail(json: Json, rawJson: String): RecipeDetailDto? =
     runCatching { json.decodeFromString<RecipeDetailDto>(rawJson) }.getOrNull()
+
+internal fun recipeImageIndex(serverUrl: String, recipe: RecipeDetailDto): RecipeImageIndex {
+    val coverUrl = recipeImageUrl(serverUrl, recipe.id, recipe.image)
+    val instructionReferences =
+        recipe.recipeInstructions.map { extractRecipeImageReferences(it.text, serverUrl) }
+    val galleryUrls =
+        buildList {
+            coverUrl?.let(::add)
+            instructionReferences
+                .asSequence()
+                .flatten()
+                .map(RecipeImageReference::url)
+                .distinct()
+                .forEach(::add)
+        }
+    return RecipeImageIndex(coverUrl, galleryUrls, instructionReferences)
+}

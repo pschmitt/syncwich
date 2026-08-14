@@ -31,18 +31,23 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -50,10 +55,12 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.geometry.Size
@@ -76,9 +83,8 @@ import dev.pschmitt.syncwich.data.api.dto.RecipeDetailDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeIngredientDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeInstructionDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeNutritionDto
-import dev.pschmitt.syncwich.data.api.recipeImageUrl
-import dev.pschmitt.syncwich.data.image.extractRecipeImageReferences
 import dev.pschmitt.syncwich.data.image.isSafeRecipeImageUrl
+import dev.pschmitt.syncwich.data.image.RecipeImageReference
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
 import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
 
@@ -95,6 +101,8 @@ fun RecipeDetailScreen(
     val refreshState by viewModel.refreshState.collectAsStateWithLifecycle()
     val loadedState = uiState as? RecipeDetailUiState.Loaded
     val title = loadedState?.recipe?.name ?: "Recipe"
+    var overflowExpanded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     Scaffold(
         modifier = modifier,
@@ -108,12 +116,34 @@ fun RecipeDetailScreen(
                 },
                 actions = {
                     if (loadedState != null) {
-                        IconButton(
-                            onClick = {
-                                onEditClick(loadedState.recipe.id, loadedState.recipe.slug)
-                            }
-                        ) {
+                        IconButton(onClick = { onEditClick(loadedState.recipe.id, loadedState.recipe.slug) }) {
                             Icon(Icons.Filled.Edit, contentDescription = "Edit recipe")
+                        }
+                        Box {
+                            IconButton(onClick = { overflowExpanded = true }) {
+                                Icon(Icons.Filled.MoreVert, contentDescription = "More actions")
+                            }
+                            RecipeOverflowMenu(
+                                expanded = overflowExpanded,
+                                actions = loadedState.actions,
+                                onDismiss = { overflowExpanded = false },
+                                onFavoriteClick = { viewModel.setFavorite(it) },
+                                onMadeThisClick = viewModel::recordMadeThis,
+                                onOpenTimelineClick = { onOpenTimeline(loadedState.recipe.id) },
+                                onShareClick = {
+                                    shareRecipe(
+                                        context,
+                                        loadedState.recipe.name,
+                                        recipeWebUrl(loadedState.serverUrl, loadedState.recipe.slug),
+                                    )
+                                },
+                                onOpenBrowserClick = {
+                                    openRecipeInBrowser(
+                                        context,
+                                        recipeWebUrl(loadedState.serverUrl, loadedState.recipe.slug),
+                                    )
+                                },
+                            )
                         }
                     }
                 },
@@ -153,12 +183,10 @@ fun RecipeDetailScreen(
                         )
                         RecipeDetailContent(
                             recipe = state.recipe,
-                            serverUrl = state.serverUrl,
+                            imageIndex = state.imageIndex,
                             actions = state.actions,
-                            onFavoriteClick = viewModel::setFavorite,
+                            ingredientChecklistEnabled = state.ingredientChecklistEnabled,
                             onRatingSelected = viewModel::setRating,
-                            onMadeThisClick = viewModel::recordMadeThis,
-                            onOpenTimelineClick = { onOpenTimeline(state.recipe.id) },
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
@@ -169,18 +197,76 @@ fun RecipeDetailScreen(
 }
 
 @Composable
-private fun RecipeDetailContent(
-    recipe: RecipeDetailDto,
-    serverUrl: String,
+internal fun RecipeOverflowMenu(
+    expanded: Boolean,
     actions: RecipeActionUiState,
+    onDismiss: () -> Unit,
     onFavoriteClick: (Boolean) -> Unit,
-    onRatingSelected: (Int) -> Unit,
     onMadeThisClick: () -> Unit,
     onOpenTimelineClick: () -> Unit,
+    onShareClick: () -> Unit,
+    onOpenBrowserClick: () -> Unit,
+) {
+    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+        DropdownMenuItem(
+            text = { Text(if (actions.isFavorite) "Remove favorite" else "Favorite") },
+            leadingIcon = {
+                Icon(
+                    if (actions.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                    contentDescription = null,
+                )
+            },
+            onClick = {
+                onDismiss()
+                onFavoriteClick(!actions.isFavorite)
+            },
+        )
+        DropdownMenuItem(
+            text = { Text("I made this") },
+            leadingIcon = { Icon(Icons.Filled.Checklist, contentDescription = null) },
+            onClick = {
+                onDismiss()
+                onMadeThisClick()
+            },
+        )
+        DropdownMenuItem(
+            text = { Text("Show timeline") },
+            leadingIcon = { Icon(Icons.Filled.Timeline, contentDescription = null) },
+            onClick = {
+                onDismiss()
+                onOpenTimelineClick()
+            },
+        )
+        DropdownMenuItem(
+            text = { Text("Share") },
+            leadingIcon = { Icon(Icons.Filled.Share, contentDescription = null) },
+            onClick = {
+                onDismiss()
+                onShareClick()
+            },
+        )
+        DropdownMenuItem(
+            text = { Text("Open in browser") },
+            leadingIcon = { Icon(Icons.Filled.OpenInBrowser, contentDescription = null) },
+            onClick = {
+                onDismiss()
+                onOpenBrowserClick()
+            },
+        )
+    }
+}
+
+@Composable
+private fun RecipeDetailContent(
+    recipe: RecipeDetailDto,
+    imageIndex: RecipeImageIndex,
+    actions: RecipeActionUiState,
+    ingredientChecklistEnabled: Boolean,
+    onRatingSelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val imageUrl = recipeImageUrl(serverUrl, recipe.id, recipe.image)
-    val galleryImages = recipeImageGalleryUrls(serverUrl, recipe)
+    val imageUrl = imageIndex.coverUrl
+    val galleryImages = imageIndex.galleryUrls
     var viewerPage by rememberSaveable { mutableStateOf<Int?>(null) }
 
     LazyColumn(modifier = modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
@@ -204,10 +290,7 @@ private fun RecipeDetailContent(
         item {
             RecipeActionControls(
                 actions = actions,
-                onFavoriteClick = onFavoriteClick,
                 onRatingSelected = onRatingSelected,
-                onMadeThisClick = onMadeThisClick,
-                onOpenTimelineClick = onOpenTimelineClick,
             )
         }
 
@@ -246,7 +329,9 @@ private fun RecipeDetailContent(
 
         if (recipe.recipeIngredient.isNotEmpty()) {
             item { SectionHeader(icon = Icons.Filled.Checklist, title = "Ingredients") }
-            items(recipe.recipeIngredient) { ingredient -> IngredientRow(ingredient) }
+            items(recipe.recipeIngredient) { ingredient ->
+                IngredientRow(ingredient, checklistEnabled = ingredientChecklistEnabled)
+            }
         }
 
         if (recipe.recipeInstructions.isNotEmpty()) {
@@ -255,8 +340,7 @@ private fun RecipeDetailContent(
                 InstructionRow(
                     number = index + 1,
                     instruction = instruction,
-                    serverUrl = serverUrl,
-                    galleryImages = galleryImages,
+                    imageReferences = imageIndex.instructionReferences.getOrNull(index).orEmpty(),
                     onImageClick = { viewerPage = galleryImages.indexOf(it).coerceAtLeast(0) },
                 )
             }
@@ -296,74 +380,19 @@ private fun RecipeDetailContent(
 @Composable
 internal fun RecipeActionControls(
     actions: RecipeActionUiState,
-    onFavoriteClick: (Boolean) -> Unit,
     onRatingSelected: (Int) -> Unit,
-    onMadeThisClick: () -> Unit,
-    onOpenTimelineClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
         Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            OutlinedButton(
-                onClick = { onFavoriteClick(!actions.isFavorite) },
-                contentPadding = PaddingValues(horizontal = 12.dp),
-            ) {
-                Icon(
-                    imageVector =
-                        if (actions.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                    contentDescription = null,
-                )
-                Text(
-                    text = if (actions.isFavorite) "Unfavorite" else "Favorite",
-                    modifier = Modifier.padding(start = 8.dp),
-                )
-            }
-            OutlinedButton(
-                onClick = onMadeThisClick,
-                contentPadding = PaddingValues(horizontal = 12.dp),
-            ) {
-                Icon(Icons.Filled.Checklist, contentDescription = null)
-                Text("I made this", modifier = Modifier.padding(start = 8.dp))
-            }
-            OutlinedButton(
-                onClick = onOpenTimelineClick,
-                contentPadding = PaddingValues(horizontal = 12.dp),
-            ) {
-                Icon(Icons.Filled.Timeline, contentDescription = null)
-                Text("Open timeline", modifier = Modifier.padding(start = 8.dp))
-            }
-        }
-
-        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
         ) {
-            Icon(
-                imageVector = Icons.Filled.Star,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(20.dp),
-            )
-            Text(
-                text = "Your rating",
-                style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.padding(start = 8.dp),
-            )
-            actions.rating?.let { rating ->
-                Text(
-                    text = "($rating/5)",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 8.dp),
-                )
-            }
-        }
-        Row(modifier = Modifier.fillMaxWidth()) {
             (1..5).forEach { star ->
-                IconButton(onClick = { onRatingSelected(star) }) {
+                IconButton(
+                    onClick = { onRatingSelected(star) },
+                    modifier = Modifier.size(44.dp),
+                ) {
                     Icon(
                         imageVector =
                             if (star <= (actions.rating ?: 0)) Icons.Filled.Star
@@ -405,12 +434,7 @@ internal fun ratingContentDescription(star: Int): String {
 }
 
 fun recipeImageGalleryUrls(serverUrl: String, recipe: RecipeDetailDto): List<String> =
-    buildList {
-        recipeImageUrl(serverUrl, recipe.id, recipe.image)?.let(::add)
-        recipe.recipeInstructions
-            .flatMap { extractRecipeImageReferences(it.text, serverUrl).map { reference -> reference.url } }
-            .forEach { if (it !in this) add(it) }
-    }
+    recipeImageIndex(serverUrl, recipe).galleryUrls
 
 @Composable
 private fun SectionHeader(icon: ImageVector, title: String) {
@@ -450,14 +474,26 @@ private fun LabeledRow(icon: ImageVector, label: String, value: String) {
 }
 
 @Composable
-private fun IngredientRow(ingredient: RecipeIngredientDto) {
+private fun IngredientRow(ingredient: RecipeIngredientDto, checklistEnabled: Boolean) {
     val text =
         ingredient.display?.takeIf { it.isNotBlank() }
             ?: ingredient.note?.takeIf { it.isNotBlank() }
     if (text.isNullOrBlank()) return
-    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)) {
-        Text(text = "•", modifier = Modifier.padding(end = 8.dp))
-        Text(text = text, style = MaterialTheme.typography.bodyMedium)
+    var checked by rememberSaveable { mutableStateOf(false) }
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 1.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (checklistEnabled) {
+            Checkbox(checked = checked, onCheckedChange = { checked = it })
+        } else {
+            Text(text = "•", modifier = Modifier.padding(horizontal = 4.dp))
+        }
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(start = 4.dp),
+        )
     }
 }
 
@@ -465,8 +501,7 @@ private fun IngredientRow(ingredient: RecipeIngredientDto) {
 private fun InstructionRow(
     number: Int,
     instruction: RecipeInstructionDto,
-    serverUrl: String,
-    galleryImages: List<String>,
+    imageReferences: List<RecipeImageReference>,
     onImageClick: (String) -> Unit,
 ) {
     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
@@ -485,7 +520,6 @@ private fun InstructionRow(
                 imageTransformer = SafeRecipeImageTransformer,
                 modifier = Modifier.fillMaxWidth(),
             )
-            val imageReferences = extractRecipeImageReferences(instruction.text, serverUrl)
             if (imageReferences.isNotEmpty()) {
                 Row(
                     modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),

@@ -5,9 +5,8 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 /**
- * Pins the "no image" sentinel gotcha found live against a v3.22.0 Mealie instance while building
- * SW-3: a recipe with no cover image has `image: "no image"` in both `/api/recipes` and
- * `/api/recipes/{slug}` responses - not `null` like the rest of the DTOs' optional string fields.
+ * Pins the imported-image sentinel gotcha found live against a v3.22.0 Mealie instance: some
+ * recipes return `image: "no image"` even while their media endpoint serves a real cover.
  */
 class MealieMediaTest {
 
@@ -28,6 +27,25 @@ class MealieMediaTest {
     }
 
     @Test
+    fun `uses an explicit Mealie image filename when returned by the server`() {
+        assertEquals(
+            "https://mealie.example.com/api/media/recipes/abc-123/images/original.webp?v=original.webp",
+            recipeImageUrl("https://mealie.example.com", "abc-123", "original.webp"),
+        )
+    }
+
+    @Test
+    fun `rejects an external explicit image URL`() {
+        assertNull(
+            recipeImageUrl(
+                "https://mealie.example.com",
+                "abc-123",
+                "https://outside.example/image.webp",
+            )
+        )
+    }
+
+    @Test
     fun `normalizes a trailing slash without changing the cache key`() {
         assertEquals(
             recipeImageUrl("https://mealie.example.com", "abc-123", "130"),
@@ -36,8 +54,11 @@ class MealieMediaTest {
     }
 
     @Test
-    fun `returns null for the literal 'no image' sentinel`() {
-        assertNull(recipeImageUrl("https://mealie.example.com", "abc-123", "no image"))
+    fun `still requests the media endpoint for the literal 'no image' sentinel`() {
+        assertEquals(
+            "https://mealie.example.com/api/media/recipes/abc-123/images/min-original.webp?v=no%20image",
+            recipeImageUrl("https://mealie.example.com", "abc-123", "no image"),
+        )
     }
 
     @Test

@@ -16,6 +16,7 @@ import dev.pschmitt.syncwich.sync.SyncStatusState
 import dev.pschmitt.syncwich.ui.common.RefreshState
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -54,6 +55,8 @@ constructor(
     syncStatusRepository: SyncStatusRepository,
 ) : ViewModel() {
 
+    private val userRefreshRequested = MutableStateFlow(false)
+
     private val favoriteCookbook =
         cookbookRepository
             .observeCookbooks()
@@ -74,14 +77,25 @@ constructor(
             recipes to recipesForHistory(historyIds, recipes)
         }
 
+    private val syncPresentation =
+        combine(syncStatusRepository.status, userRefreshRequested) { syncStatus, userRefresh ->
+            syncStatus to userRefresh
+        }
+
     val uiState: StateFlow<HomeUiState> =
         combine(
                 recipeSections,
                 favoriteCookbook,
                 favoriteRecipes,
                 settingsRepository.credentials,
-                syncStatusRepository.status,
-            ) { (recipes, recentlyViewed), favoritesCookbook, favorites, credentials, syncStatus ->
+                syncPresentation,
+            ) {
+                (recipes, recentlyViewed),
+                favoritesCookbook,
+                favorites,
+                credentials,
+                (syncStatus, userRefresh),
+                ->
                 HomeUiState(
                     recentlyViewedRecipes = recentlyViewed,
                     recentlyAddedRecipes =
@@ -93,7 +107,9 @@ constructor(
                     serverUrl = credentials.serverUrl,
                     refreshState =
                         RefreshState(
-                            isRefreshing = syncStatus.state == SyncStatusState.SYNCING,
+                            // The Home sync card owns automatic-sync feedback. The pull-to-refresh
+                            // indicator is reserved for a gesture explicitly initiated by the user.
+                            isRefreshing = isHomePullToRefreshActive(syncStatus, userRefresh),
                             errorMessage =
                                 syncStatus.errorMessage?.let {
                                     "Couldn't refresh. Showing saved data. Check your connection."
@@ -105,10 +121,13 @@ constructor(
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), HomeUiState())
 
     init {
-        refresh()
+        // Automatic startup sync is reported by HomeSyncStatusCard, not by the pull gesture's
+        // indicator. This avoids showing a second refresh icon while the app is opening.
+        syncScheduler.syncAll()
     }
 
     fun refresh() {
+        userRefreshRequested.value = true
         syncScheduler.syncAll()
     }
 
@@ -119,6 +138,9 @@ constructor(
 }
 
 internal const val HOME_RECIPE_PREVIEW_LIMIT = 5
+
+internal fun isHomePullToRefreshActive(status: SyncStatus, userRefreshRequested: Boolean): Boolean =
+    userRefreshRequested && status.state == SyncStatusState.SYNCING
 
 fun findFavoriteCookbook(cookbooks: List<CookbookEntity>): CookbookEntity? =
     cookbooks.firstOrNull { cookbook ->

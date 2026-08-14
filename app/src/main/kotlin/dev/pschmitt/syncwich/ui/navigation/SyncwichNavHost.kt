@@ -2,6 +2,7 @@ package dev.pschmitt.syncwich.ui.navigation
 
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -14,11 +15,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import android.content.Intent
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -77,8 +82,13 @@ private val topLevelNavItems =
  *   [Route.Home] - see `MainActivity`, which reads `SettingsRepository.isConfigured` for this.
  */
 @Composable
-fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Route.Home) {
+fun SyncwichNavHost(
+    modifier: Modifier = Modifier,
+    startDestination: Route = Route.Home,
+    incomingIntent: Intent? = null,
+) {
     val navController = rememberNavController()
+    val snackbarHostState = remember { SnackbarHostState() }
     val navigationBarViewModel: NavigationBarViewModel = hiltViewModel()
     val recipeHistoryViewModel: RecipeHistoryViewModel = hiltViewModel()
     val openRecipe: (String, String) -> Unit = { recipeId, slug ->
@@ -92,6 +102,35 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
             topLevelNavItems.firstOrNull { it.destination.key == key }
         }
 
+    LaunchedEffect(incomingIntent) {
+        if (startDestination is Route.Onboarding || startDestination is Route.InitialSync) return@LaunchedEffect
+        when (val target = parseMealieIntent(incomingIntent)) {
+            is MealieLinkTarget.Recipe ->
+                navController.navigate(Route.RecipeDetail(slug = target.slug)) {
+                    launchSingleTop = true
+                }
+            is MealieLinkTarget.Cookbook ->
+                navController.navigate(Route.CookbookDetail(slug = target.slug)) {
+                    launchSingleTop = true
+                }
+            null -> {
+                val sharedAssetUri = parseSharedAssetUri(incomingIntent)
+                if (sharedAssetUri != null) {
+                    navController.navigate(Route.RecipeEditor(sharedAssetUri = sharedAssetUri)) {
+                        launchSingleTop = true
+                    }
+                } else if (
+                    incomingIntent?.action == Intent.ACTION_VIEW ||
+                        incomingIntent?.action == Intent.ACTION_SEND
+                ) {
+                    snackbarHostState.showSnackbar(
+                        "This isn't a supported Mealie recipe, cookbook, or image."
+                    )
+                }
+            }
+        }
+    }
+
     Scaffold(
         modifier = modifier,
         // Each destination owns its content scaffold and applies the status-bar inset alongside
@@ -99,6 +138,7 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
         // offset that whole destination a second time; NavigationBar still contributes its full
         // height (including the navigation-bar inset) to the content padding below.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             val backStackEntry by navController.currentBackStackEntryAsState()
             val currentDestination = backStackEntry?.destination

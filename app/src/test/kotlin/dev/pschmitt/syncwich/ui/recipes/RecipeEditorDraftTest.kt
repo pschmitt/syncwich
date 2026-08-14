@@ -102,4 +102,24 @@ class RecipeEditorDraftTest {
         assertEquals(listOf(""), draft.withIngredientRemoved(0).ingredients)
         assertEquals(listOf(""), draft.withInstructionRemoved(0).instructions)
     }
+
+    @Test
+    fun `moving an instruction preserves the complete step content`() {
+        val first = "First step\n\n![Image](https://example.test/first.webp)"
+        val second = "Second step with **formatting**"
+        val draft = RecipeEditorDraft(instructions = listOf(first, second))
+
+        assertEquals(listOf(second, first), draft.withInstructionMoved(0, 1).instructions)
+        assertEquals(draft, draft.withInstructionMoved(-1, 1))
+    }
+
+    @Test
+    fun `markdown image insertion preserves existing content and cover selection`() {
+        val draft = RecipeEditorDraft(description = "Intro", instructions = listOf("Step"))
+
+        assertEquals("Intro\n\n![Image](content://photo/1)", draft.withDescriptionImage("content://photo/1").description)
+        assertEquals("Step\n\n![Image](content://photo/2)", draft.withInstructionImage(0, "content://photo/2").instructions.single())
+        assertEquals("content://photo/3", draft.withCoverImage("content://photo/3").coverImageUri)
+        assertEquals(true, draft.withoutCoverImage().removeCoverImage)
+    }
 }

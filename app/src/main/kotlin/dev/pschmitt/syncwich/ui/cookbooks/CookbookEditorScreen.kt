@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.pschmitt.syncwich.ui.common.CenteredContent
+import dev.pschmitt.syncwich.ui.common.MarkdownEditor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,12 +99,10 @@ fun CookbookEditorScreen(
                 enabled = !isSaving,
                 modifier = Modifier.fillMaxWidth(),
             )
-            OutlinedTextField(
+            MarkdownEditor(
                 value = draft.description,
                 onValueChange = viewModel::onDescriptionChange,
-                label = { Text("Description") },
-                minLines = 3,
-                maxLines = 6,
+                label = "Description",
                 enabled = !isSaving,
                 modifier = Modifier.fillMaxWidth(),
             )

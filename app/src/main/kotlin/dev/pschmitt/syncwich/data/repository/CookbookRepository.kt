@@ -15,6 +15,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -52,6 +54,9 @@ constructor(
 
     fun observeCookbook(cookbookId: String): Flow<CookbookEntity?> =
         cookbookDao.observeById(cookbookId)
+
+    fun observeCookbookBySlug(slug: String): Flow<CookbookEntity?> =
+        cookbookDao.observeBySlug(slug)
 
     fun observeCookbookRecipes(cookbookId: String): Flow<List<RecipeSummaryEntity>> =
         recipeDao.observeByCookbook(cookbookId)

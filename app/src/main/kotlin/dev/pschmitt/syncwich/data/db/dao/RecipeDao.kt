@@ -42,6 +42,9 @@ interface RecipeDao {
     @Query("SELECT * FROM recipe_details WHERE id = :id")
     fun observeDetail(id: String): Flow<RecipeDetailEntity?>
 
+    @Query("SELECT * FROM recipe_details WHERE slug = :slug LIMIT 1")
+    fun observeDetailBySlug(slug: String): Flow<RecipeDetailEntity?>
+
     @Query("SELECT * FROM recipe_summaries ORDER BY id ASC")
     suspend fun getAll(): List<RecipeSummaryEntity>
 

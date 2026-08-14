@@ -18,10 +18,11 @@ sealed interface Route {
     // slug is carried alongside recipeId because Mealie's full-detail endpoint is keyed by slug,
     // not id (see RecipesApi.getRecipeDetailRaw) - the tapped recipe card already has both, so no
     // extra Room lookup is needed to fetch/refresh detail after navigating here.
-    @Serializable data class RecipeDetail(val recipeId: String, val slug: String) : Route
+    @Serializable data class RecipeDetail(val recipeId: String = "", val slug: String) : Route
 
     /** Empty [recipeId] opens a create draft; a cached id opens an edit draft. */
-    @Serializable data class RecipeEditor(val recipeId: String = "") : Route
+    @Serializable
+    data class RecipeEditor(val recipeId: String = "", val sharedAssetUri: String? = null) : Route
 
     /** A single recipe's confirmed "I made this" cooking-event history - see SW-30. */
     @Serializable data class RecipeTimeline(val recipeId: String) : Route
@@ -34,7 +35,7 @@ sealed interface Route {
 
     @Serializable data object Cookbooks : Route
 
-    @Serializable data class CookbookDetail(val cookbookId: String) : Route
+    @Serializable data class CookbookDetail(val cookbookId: String = "", val slug: String = "") : Route
 
     /** Empty [cookbookId] opens a create draft; a cached id opens an edit draft. */
     @Serializable data class CookbookEditor(val cookbookId: String = "") : Route
