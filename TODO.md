@@ -780,3 +780,16 @@ Zenfone verification remains pending.
 - [ ] Verify the loading behavior and sync settings on the Zenfone 10
 
 Status: not started.
+
+## SW-35: Add Home sync status card and background notifications
+
+- [ ] Add a Home-page sync card modeled on nyetbox, showing current/last sync state and a clear
+      manual sync action
+- [ ] Expose useful sync progress, success, failure, and stale-cache state without blocking cached
+      content
+- [ ] Investigate background notifications when a sync completes or fails while Syncwich is not in
+      the foreground
+- [ ] Respect the user's sync preferences and notification permission/state
+- [ ] Add focused coverage and verify the card and notification behavior on the Zenfone 10
+
+Status: not started.
