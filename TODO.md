@@ -689,3 +689,12 @@ the accessible close, page-count, and image-description nodes without crashes.
 Status: in progress, 2026-08-14. The action UI and mutation paths are waiting for confirmed Mealie
 write endpoint shapes; the configured verification host currently serves frontend HTML and returns
 404/405 for API routes, so no write request has been attempted.
+
+## SW-31: Replace cookbook previews with a Material 3 carousel
+
+- [ ] Replace the current cookbook preview layout with a real Material 3 carousel pattern
+- [ ] Match the referenced carousel behavior, sizing, spacing, and item emphasis
+- [ ] Preserve image-less filtering, responsive behavior, offline caching, and accessibility
+- [ ] Verify the carousel visually on the Zenfone 10
+
+Status: not started.
