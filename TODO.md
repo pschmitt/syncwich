@@ -1058,3 +1058,5 @@ was made.
 - [ ] Keep refresh operations cache-first, deduplicated, and accessible with clear progress/failure
       feedback
 - [ ] Add focused coverage and verify the gestures and sync scope on the Zenfone 10
+
+Status: not started.
