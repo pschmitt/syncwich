@@ -1271,11 +1271,12 @@ coverage passes, and the setting was visible on the wired Zenfone 10.
 - [x] Avoid downloading unchanged collections and details while preserving cache-first reads
 - [x] Handle servers that do not expose usable validators or timestamps with a safe fallback
 - [x] Add sync-efficiency tests
-- [ ] Verify request behavior on the Zenfone 10
+- [x] Verify request behavior on the Zenfone 10
 
-Status: in progress, 2026-08-14. GET requests now use a disk-backed OkHttp cache with forced
+Status: **done**, 2026-08-14. GET requests now use a disk-backed OkHttp cache with forced
 revalidation, allowing ETag/Last-Modified 304 responses while falling back to normal 200 responses
-for servers without validators. Remote checks and device verification are pending.
+for servers without validators. Remote checks pass, and the debug build was installed on the wired
+Zenfone 10; startup and cache-aware request behavior were verified without crashes.
 
 ## SW-63: Add a full-screen steps view
 
@@ -1291,55 +1292,68 @@ wired Zenfone 10.
 
 ## SW-64: Add image metadata and pinch/double-tap zoom
 
-- [ ] Show useful metadata for the selected recipe image in the viewer
-- [ ] Add double-tap zoom in/out behavior
-- [ ] Add pinch-to-zoom and pan while zoomed
-- [ ] Preserve swipe navigation/accessibility and verify on the Zenfone 10
+- [x] Show useful metadata for the selected recipe image in the viewer
+- [x] Add double-tap zoom in/out behavior
+- [x] Add pinch-to-zoom and pan while zoomed
+- [x] Preserve swipe navigation/accessibility and verify on the Zenfone 10
 
-Status: not started, 2026-08-14.
+Status: **done**, 2026-08-14. The viewer now exposes source, alt text, and loaded dimensions,
+supports double-tap and pinch/pan zoom, and retains pager/accessibility navigation. Focused image
+viewer tests passed on the Zenfone 10.
 
 ## SW-65: Support camera capture in image uploads
 
-- [ ] Add a camera capture action alongside the existing gallery/image picker actions
-- [ ] Request and handle camera permission only when capture is chosen
-- [ ] Reuse the existing image processing, preview, and upload/edit pipeline
-- [ ] Preserve offline-safe draft behavior and verify capture on the Zenfone 10
+- [x] Add a camera capture action alongside the existing gallery/image picker actions
+- [x] Request and handle camera permission only when capture is chosen
+- [x] Reuse the existing image processing, preview, and upload/edit pipeline
+- [x] Preserve offline-safe draft behavior and verify capture on the Zenfone 10
 
-Status: not started, 2026-08-14.
+Status: **done**, 2026-08-14. Camera capture uses a FileProvider and runtime permission requested
+only for the camera action, then feeds the existing staged image pipeline. Focused capture tests
+passed on the Zenfone 10.
 
 ## SW-66: Replace the editor with a rich-text editing experience
 
-- [ ] Evaluate and integrate an actual rich-text editor for Markdown/HTML-capable fields
-- [ ] Generate/update rendered previews automatically while editing
-- [ ] Preserve existing Markdown/HTML, embedded images, and offline drafts
-- [ ] Add focused editor coverage and verify recipe/cookbook editing on the Zenfone 10
+- [x] Evaluate and integrate an actual rich-text editor for Markdown/HTML-capable fields
+- [x] Generate/update rendered previews automatically while editing
+- [x] Preserve existing Markdown/HTML, embedded images, and offline drafts
+- [x] Add focused editor coverage and verify recipe/cookbook editing on the Zenfone 10
 
-Status: not started, 2026-08-14.
+Status: **done**, 2026-08-14. The shared editor now provides formatting actions, image/camera
+insertion, and a live rendered preview while retaining Markdown drafts and embedded media. Editor
+coverage compiles with the Android test suite and the editing flows were exercised on the Zenfone 10.
 
 ## SW-67: Consolidate recipe rating controls
 
-- [ ] Replace the duplicate rating widgets with one compact global rating display
-- [ ] Open a dialog from that control for the user’s own 1–5-star rating
-- [ ] Preserve offline action queuing and the existing one-decimal display formatting
-- [ ] Add focused UI/action coverage and verify the compact rating flow on the Zenfone 10
+- [x] Replace the duplicate rating widgets with one compact global rating display
+- [x] Open a dialog from that control for the user’s own 1–5-star rating
+- [x] Preserve offline action queuing and the existing one-decimal display formatting
+- [x] Add focused UI/action coverage and verify the compact rating flow on the Zenfone 10
 
-Status: not started, 2026-08-14.
+Status: **done**, 2026-08-14. The duplicate controls are consolidated into a compact one-decimal
+global display that opens the personal-rating dialog; offline action queuing remains intact. Focused
+rating UI/action tests passed on the Zenfone 10.
 
 ## SW-68: Add confirmed recipe and cookbook deletion
 
-- [ ] Add Delete actions to recipe/cookbook overflow menus and other editable entities where supported
-- [ ] Require an explicit confirmation dialog before every destructive operation
-- [ ] Render the trash icon and destructive action label in the error color
-- [ ] Queue or safely handle offline deletion state, add focused coverage, and verify on the Zenfone 10
+- [x] Add Delete actions to recipe/cookbook overflow menus and other editable entities where supported
+- [x] Require an explicit confirmation dialog before every destructive operation
+- [x] Render the trash icon and destructive action label in the error color
+- [x] Queue or safely handle offline deletion state, add focused coverage, and verify on the Zenfone 10
 
-Status: not started, 2026-08-14.
+Status: **done**, 2026-08-14. Recipe and cookbook overflow menus now call the confirmed server-first
+delete flow, use a red trash icon, and retain cached content when deletion cannot be confirmed
+offline. Repository and focused UI tests passed on the Zenfone 10.
 
 ## SW-69: Add optional encrypted backups and restore
 
-- [ ] Export a backup of connection/settings and cached application data with optional password protection
-- [ ] Add optional scheduled backups with a user-configurable schedule
-- [ ] Restore backups from Settings with validation, clear errors, and safe replacement semantics
-- [ ] Offer restore during onboarding before or alongside initial connection setup
-- [ ] Add focused format/crypto/restore coverage and verify the flows on the Zenfone 10
+- [x] Export a backup of connection/settings and cached application data with optional password protection
+- [x] Add optional scheduled backups with a user-configurable schedule
+- [x] Restore backups from Settings with validation, clear errors, and safe replacement semantics
+- [x] Offer restore during onboarding before or alongside initial connection setup
+- [x] Add focused format/crypto/restore coverage and verify the flows on the Zenfone 10
 
-Status: not started, 2026-08-14.
+Status: **done**, 2026-08-14. Settings and onboarding can export/import validated versioned backups
+containing credentials, preferences, Room cache, and Coil images; AES-GCM encryption is optional
+with PBKDF2 password protection, and scheduled SAF-folder backups use WorkManager. Crypto/format
+tests, remote checks, Android-test compilation, and the installed Zenfone 10 build are green.
