@@ -254,7 +254,8 @@ internal fun recipeDetailUiState(
 
 internal fun decodeRecipeDetail(json: Json, rawJson: String): RecipeDetailDto? = runCatching {
     json.decodeFromString<RecipeDetailDto>(rawJson)
-}.getOrNull()
+}
+    .getOrNull()
 
 internal fun recipeImageIndex(serverUrl: String, recipe: RecipeDetailDto): RecipeImageIndex {
     val coverUrl = recipeImageUrl(serverUrl, recipe.id, recipe.image)

@@ -306,4 +306,5 @@ constructor(
  */
 internal fun decodeRecipeInput(json: Json, rawJson: String): RecipeInputDto? = runCatching {
     json.decodeFromString<RecipeInputDto>(rawJson)
-}.getOrNull()
+}
+    .getOrNull()
