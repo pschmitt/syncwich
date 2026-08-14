@@ -7,6 +7,8 @@ import dev.pschmitt.syncwich.data.db.entity.CookbookEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.data.repository.CookbookRepository
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
+import dev.pschmitt.syncwich.ui.common.RefreshState
+import dev.pschmitt.syncwich.ui.common.refreshErrorMessage
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -29,6 +31,8 @@ constructor(
     private val _searchQuery = MutableStateFlow("")
 
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+    private val _refreshState = MutableStateFlow(RefreshState())
+    val refreshState: StateFlow<RefreshState> = _refreshState.asStateFlow()
 
     val cookbooks: StateFlow<List<CookbookEntity>> =
         combine(cookbookRepository.observeCookbooks(), searchQuery) { cookbooks, query ->
@@ -70,7 +74,15 @@ constructor(
     }
 
     init {
-        viewModelScope.launch { cookbookRepository.refreshCookbooks() }
+        refresh()
+    }
+
+    fun refresh() {
+        viewModelScope.launch {
+            _refreshState.value = RefreshState(isRefreshing = true)
+            _refreshState.value =
+                RefreshState(errorMessage = refreshErrorMessage(cookbookRepository.refreshCookbooks()))
+        }
     }
 
     private companion object {

@@ -10,6 +10,8 @@ import dev.pschmitt.syncwich.data.repository.CategoryRepository
 import dev.pschmitt.syncwich.data.repository.RecipeRepository
 import dev.pschmitt.syncwich.data.repository.TagRepository
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
+import dev.pschmitt.syncwich.ui.common.RefreshState
+import dev.pschmitt.syncwich.ui.common.refreshErrorMessage
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,6 +21,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 data class RecipesUiState(
@@ -29,6 +34,7 @@ data class RecipesUiState(
     val selectedCategoryId: String? = null,
     val selectedTagId: String? = null,
     val serverUrl: String = "",
+    val refreshState: RefreshState = RefreshState(),
 )
 
 /**
@@ -43,14 +49,15 @@ class RecipesViewModel
 @Inject
 constructor(
     private val recipeRepository: RecipeRepository,
-    categoryRepository: CategoryRepository,
-    tagRepository: TagRepository,
+    private val categoryRepository: CategoryRepository,
+    private val tagRepository: TagRepository,
     settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
     private val searchQuery = MutableStateFlow("")
     private val selectedCategoryId = MutableStateFlow<String?>(null)
     private val selectedTagId = MutableStateFlow<String?>(null)
+    private val refreshState = MutableStateFlow(RefreshState())
 
     // Category and tag chips are mutually exclusive single-select filters (see onCategorySelected/
     // onTagSelected) - the repository only exposes "all"/"by one category"/"by one tag" Room
@@ -77,7 +84,8 @@ constructor(
                 ),
                 selection,
                 settingsRepository.credentials,
-            ) { recipes, categoriesAndTags, (query, categoryId, tagId), credentials ->
+                refreshState,
+            ) { recipes, categoriesAndTags, (query, categoryId, tagId), credentials, refresh ->
                 val (categories, tags) = categoriesAndTags
                 RecipesUiState(
                     recipes = recipes,
@@ -87,16 +95,28 @@ constructor(
                     selectedCategoryId = categoryId,
                     selectedTagId = tagId,
                     serverUrl = credentials.serverUrl,
+                    refreshState = refresh,
                 )
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), RecipesUiState())
 
-    init {
-        // Independent launches so one endpoint failing doesn't delay the others - each repository
-        // call already swallows its own errors (Result), never touching what's cached on failure.
-        viewModelScope.launch { recipeRepository.refreshRecipes() }
-        viewModelScope.launch { categoryRepository.refreshCategories() }
-        viewModelScope.launch { tagRepository.refreshTags() }
+    init { refresh() }
+
+    fun refresh() {
+        viewModelScope.launch {
+            refreshState.value = RefreshState(isRefreshing = true)
+            val results =
+                coroutineScope {
+                    listOf(
+                            async { recipeRepository.refreshRecipes() },
+                            async { categoryRepository.refreshCategories() },
+                            async { tagRepository.refreshTags() },
+                        )
+                        .awaitAll()
+                }
+            refreshState.value =
+                RefreshState(errorMessage = results.firstNotNullOfOrNull(::refreshErrorMessage))
+        }
     }
 
     fun onSearchQueryChange(query: String) {

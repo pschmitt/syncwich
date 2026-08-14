@@ -27,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -42,6 +43,7 @@ import dev.pschmitt.syncwich.data.api.recipeImageUrl
 import dev.pschmitt.syncwich.data.db.entity.CookbookEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
+import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
 import dev.pschmitt.syncwich.ui.common.SearchField
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,6 +57,7 @@ fun CookbooksScreen(
     val cookbooks by viewModel.cookbooks.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val recipePreviews by viewModel.recipePreviews.collectAsStateWithLifecycle()
+    val refreshState by viewModel.refreshState.collectAsStateWithLifecycle()
 
     Scaffold(
         modifier = modifier,
@@ -69,41 +72,58 @@ fun CookbooksScreen(
             )
         },
     ) { innerPadding ->
-        Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            SearchField(
-                value = searchQuery,
-                onValueChange = viewModel::onSearchQueryChange,
-                placeholder = "Search cookbooks",
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-            )
-
-            if (cookbooks.isEmpty()) {
-                PlaceholderScreen(
-                    icon = Icons.AutoMirrored.Filled.MenuBook,
-                    title = if (searchQuery.isBlank()) "No cookbooks yet" else "No cookbooks match",
-                    subtitle =
-                        if (searchQuery.isBlank()) {
-                            "Cookbooks you curate in Mealie will show up here once synced."
-                        } else {
-                            "Try a different name or description."
-                        },
-                    modifier = Modifier.fillMaxSize(),
+        PullToRefreshBox(
+            isRefreshing = refreshState.isRefreshing,
+            onRefresh = viewModel::refresh,
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                RefreshErrorBanner(
+                    errorMessage = refreshState.errorMessage,
+                    onRetry = viewModel::refresh,
                 )
-            } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 160.dp),
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    items(cookbooks, key = { it.id }) { cookbook ->
-                        CookbookCard(
-                            cookbook = cookbook,
-                            recipes = recipePreviews[cookbook.id].orEmpty(),
-                            serverUrl = viewModel.serverUrl,
-                            onClick = { onCookbookClick(cookbook.id) },
-                        )
+                SearchField(
+                    value = searchQuery,
+                    onValueChange = viewModel::onSearchQueryChange,
+                    placeholder = "Search cookbooks",
+                    modifier =
+                        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+                if (cookbooks.isEmpty()) {
+                    PlaceholderScreen(
+                        icon = Icons.AutoMirrored.Filled.MenuBook,
+                        title =
+                            when {
+                                refreshState.isRefreshing -> "Loading cookbooks"
+                                searchQuery.isNotBlank() -> "No cookbooks match"
+                                else -> "No cookbooks yet"
+                            },
+                        subtitle =
+                            if (searchQuery.isBlank()) {
+                                "Cookbooks you curate in Mealie will show up here once synced."
+                            } else {
+                                "Try a different name or description."
+                            },
+                        modifier = Modifier.fillMaxSize(),
+                        isLoading = refreshState.isRefreshing,
+                        onRetry = viewModel::refresh,
+                    )
+                } else {
+                    LazyVerticalGrid(
+                        columns = GridCells.Adaptive(minSize = 160.dp),
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        items(cookbooks, key = { it.id }) { cookbook ->
+                            CookbookCard(
+                                cookbook = cookbook,
+                                recipes = recipePreviews[cookbook.id].orEmpty(),
+                                serverUrl = viewModel.serverUrl,
+                                onClick = { onCookbookClick(cookbook.id) },
+                            )
+                        }
                     }
                 }
             }

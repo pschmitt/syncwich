@@ -8,10 +8,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.pschmitt.syncwich.data.api.dto.RecipeDetailDto
 import dev.pschmitt.syncwich.data.repository.RecipeRepository
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
+import dev.pschmitt.syncwich.ui.common.RefreshState
+import dev.pschmitt.syncwich.ui.common.refreshErrorMessage
 import dev.pschmitt.syncwich.ui.navigation.Route
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -21,7 +25,13 @@ import kotlinx.serialization.json.Json
 sealed interface RecipeDetailUiState {
     data object Loading : RecipeDetailUiState
 
-    data class Loaded(val recipe: RecipeDetailDto, val serverUrl: String) : RecipeDetailUiState
+    data class Unavailable(val errorMessage: String? = null) : RecipeDetailUiState
+
+    data class Loaded(
+        val recipe: RecipeDetailDto,
+        val serverUrl: String,
+        val refreshError: String? = null,
+    ) : RecipeDetailUiState
 }
 
 /**
@@ -40,20 +50,31 @@ constructor(
 ) : ViewModel() {
 
     private val route = savedStateHandle.toRoute<Route.RecipeDetail>()
+    private val _refreshState = MutableStateFlow(RefreshState())
+    val refreshState: StateFlow<RefreshState> = _refreshState.asStateFlow()
 
     val uiState: StateFlow<RecipeDetailUiState> =
         combine(
                 recipeRepository.observeRecipeDetail(route.recipeId),
                 settingsRepository.credentials,
-            ) { entity, credentials ->
+                refreshState,
+            ) { entity, credentials, refresh ->
                 val recipe =
                     entity
                         ?.let {
                             runCatching { json.decodeFromString<RecipeDetailDto>(it.detailJson) }
                         }
                         ?.getOrNull()
-                if (recipe != null) RecipeDetailUiState.Loaded(recipe, credentials.serverUrl)
-                else RecipeDetailUiState.Loading
+                when {
+                    recipe != null ->
+                        RecipeDetailUiState.Loaded(
+                            recipe = recipe,
+                            serverUrl = credentials.serverUrl,
+                            refreshError = refresh.errorMessage,
+                        )
+                    refresh.isRefreshing -> RecipeDetailUiState.Loading
+                    else -> RecipeDetailUiState.Unavailable(refresh.errorMessage)
+                }
             }
             .stateIn(
                 viewModelScope,
@@ -61,7 +82,18 @@ constructor(
                 RecipeDetailUiState.Loading,
             )
 
-    init {
-        viewModelScope.launch { recipeRepository.refreshRecipeDetail(route.recipeId, route.slug) }
+    init { refresh() }
+
+    fun refresh() {
+        viewModelScope.launch {
+            _refreshState.value = RefreshState(isRefreshing = true)
+            _refreshState.value =
+                RefreshState(
+                    errorMessage =
+                        refreshErrorMessage(
+                            recipeRepository.refreshRecipeDetail(route.recipeId, route.slug)
+                        )
+                )
+        }
     }
 }

@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -25,6 +26,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.pschmitt.syncwich.data.db.entity.ShoppingListItemEntity
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
+import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,6 +37,7 @@ fun ShoppingListDetailScreen(
 ) {
     val list by viewModel.list.collectAsStateWithLifecycle()
     val items by viewModel.items.collectAsStateWithLifecycle()
+    val refreshState by viewModel.refreshState.collectAsStateWithLifecycle()
 
     Scaffold(
         modifier = modifier,
@@ -52,18 +55,47 @@ fun ShoppingListDetailScreen(
             )
         },
     ) { innerPadding ->
-        if (items.isEmpty()) {
-            PlaceholderScreen(
-                icon = Icons.Filled.ShoppingCart,
-                title = "No items yet",
-                subtitle = "This list is empty, or hasn't finished syncing yet.",
-                modifier = Modifier.fillMaxSize().padding(innerPadding),
-            )
-        } else {
-            LazyColumn(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-                items(items, key = { it.id }) { item ->
-                    ShoppingListItemRow(item)
-                    HorizontalDivider()
+        PullToRefreshBox(
+            isRefreshing = refreshState.isRefreshing,
+            onRefresh = viewModel::refresh,
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
+        ) {
+            if (list == null) {
+                PlaceholderScreen(
+                    icon = Icons.Filled.ShoppingCart,
+                    title =
+                        if (refreshState.isRefreshing) "Loading shopping list"
+                        else "Shopping list unavailable offline",
+                    subtitle =
+                        if (refreshState.errorMessage != null) {
+                            "This list is not saved on this device yet. Connect to Mealie and try again."
+                        } else {
+                            "This list hasn't finished syncing yet."
+                        },
+                    modifier = Modifier.fillMaxSize(),
+                    isLoading = refreshState.isRefreshing,
+                    onRetry = viewModel::refresh,
+                )
+            } else if (items.isEmpty()) {
+                PlaceholderScreen(
+                    icon = Icons.Filled.ShoppingCart,
+                    title = "No items yet",
+                    subtitle = "This list is empty, or hasn't finished syncing yet.",
+                    modifier = Modifier.fillMaxSize(),
+                    onRetry = viewModel::refresh,
+                )
+            } else {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    item {
+                        RefreshErrorBanner(
+                            errorMessage = refreshState.errorMessage,
+                            onRetry = viewModel::refresh,
+                        )
+                    }
+                    items(items, key = { it.id }) { item ->
+                        ShoppingListItemRow(item)
+                        HorizontalDivider()
+                    }
                 }
             }
         }

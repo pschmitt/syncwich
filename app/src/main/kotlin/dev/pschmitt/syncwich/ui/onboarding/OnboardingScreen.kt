@@ -175,7 +175,8 @@ fun OnboardingScreen(
                                 imageVector =
                                     if (passwordVisible) Icons.Filled.VisibilityOff
                                     else Icons.Filled.Visibility,
-                                contentDescription = null,
+                                contentDescription =
+                                    if (passwordVisible) "Hide password" else "Show password",
                             )
                         }
                     },
@@ -208,7 +209,8 @@ fun OnboardingScreen(
                                 imageVector =
                                     if (tokenVisible) Icons.Filled.VisibilityOff
                                     else Icons.Filled.Visibility,
-                                contentDescription = null,
+                                contentDescription =
+                                    if (tokenVisible) "Hide API token" else "Show API token",
                             )
                         }
                     },

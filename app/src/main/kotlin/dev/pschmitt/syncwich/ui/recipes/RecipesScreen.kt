@@ -31,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -44,6 +45,7 @@ import coil3.compose.AsyncImage
 import dev.pschmitt.syncwich.data.api.recipeImageUrl
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
+import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
 import dev.pschmitt.syncwich.ui.common.SearchField
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,64 +71,79 @@ fun RecipesScreen(
             )
         },
     ) { innerPadding ->
-        Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            SearchField(
-                value = uiState.searchQuery,
-                onValueChange = viewModel::onSearchQueryChange,
-                placeholder = "Search recipes",
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-            )
+        PullToRefreshBox(
+            isRefreshing = uiState.refreshState.isRefreshing,
+            onRefresh = viewModel::refresh,
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                SearchField(
+                    value = uiState.searchQuery,
+                    onValueChange = viewModel::onSearchQueryChange,
+                    placeholder = "Search recipes",
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                )
 
-            if (uiState.categories.isNotEmpty()) {
-                FilterChipRow(
-                    entries = uiState.categories,
-                    key = { it.id },
-                    label = { it.name },
-                    selectedId = uiState.selectedCategoryId,
-                    onSelected = viewModel::onCategorySelected,
-                )
-            }
-            if (uiState.tags.isNotEmpty()) {
-                FilterChipRow(
-                    entries = uiState.tags,
-                    key = { it.id },
-                    label = { it.name },
-                    selectedId = uiState.selectedTagId,
-                    onSelected = viewModel::onTagSelected,
-                )
-            }
+                if (uiState.categories.isNotEmpty()) {
+                    FilterChipRow(
+                        entries = uiState.categories,
+                        key = { it.id },
+                        label = { it.name },
+                        selectedId = uiState.selectedCategoryId,
+                        onSelected = viewModel::onCategorySelected,
+                    )
+                }
+                if (uiState.tags.isNotEmpty()) {
+                    FilterChipRow(
+                        entries = uiState.tags,
+                        key = { it.id },
+                        label = { it.name },
+                        selectedId = uiState.selectedTagId,
+                        onSelected = viewModel::onTagSelected,
+                    )
+                }
 
-            if (uiState.recipes.isEmpty()) {
-                PlaceholderScreen(
-                    icon = Icons.Filled.Restaurant,
-                    title =
-                        if (
-                            uiState.searchQuery.isBlank() &&
-                                uiState.selectedCategoryId == null &&
-                                uiState.selectedTagId == null
-                        ) {
-                            "No recipes synced yet"
-                        } else {
-                            "No recipes match"
-                        },
-                    subtitle =
-                        "Recipes appear here automatically once Syncwich syncs with your Mealie server.",
-                    modifier = Modifier.fillMaxSize(),
+                RefreshErrorBanner(
+                    errorMessage = uiState.refreshState.errorMessage,
+                    onRetry = viewModel::refresh,
                 )
-            } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 160.dp),
-                    contentPadding = PaddingValues(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    gridItems(uiState.recipes, key = { it.id }) { recipe ->
-                        RecipeCard(
-                            recipe = recipe,
-                            serverUrl = uiState.serverUrl,
-                            onClick = { onRecipeClick(recipe) },
-                        )
+
+                if (uiState.recipes.isEmpty()) {
+                    val hasFilter =
+                        uiState.searchQuery.isNotBlank() ||
+                            uiState.selectedCategoryId != null ||
+                            uiState.selectedTagId != null
+                    PlaceholderScreen(
+                        icon = Icons.Filled.Restaurant,
+                        title =
+                            when {
+                                hasFilter -> "No recipes match"
+                                uiState.refreshState.isRefreshing -> "Loading recipes"
+                                uiState.refreshState.errorMessage != null -> "No saved recipes yet"
+                                else -> "No recipes synced yet"
+                            },
+                        subtitle =
+                            if (hasFilter) "Try a different search or filter."
+                            else "Recipes appear here automatically once Syncwich syncs with your Mealie server.",
+                        modifier = Modifier.fillMaxSize(),
+                        isLoading = uiState.refreshState.isRefreshing,
+                        onRetry = if (!hasFilter) viewModel::refresh else null,
+                    )
+                } else {
+                    LazyVerticalGrid(
+                        columns = GridCells.Adaptive(minSize = 160.dp),
+                        contentPadding = PaddingValues(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        gridItems(uiState.recipes, key = { it.id }) { recipe ->
+                            RecipeCard(
+                                recipe = recipe,
+                                serverUrl = uiState.serverUrl,
+                                onClick = { onRecipeClick(recipe) },
+                            )
+                        }
                     }
                 }
             }
@@ -172,7 +189,7 @@ private fun RecipeCard(recipe: RecipeSummaryEntity, serverUrl: String, onClick: 
                 if (imageUrl != null) {
                     AsyncImage(
                         model = imageUrl,
-                        contentDescription = null,
+                        contentDescription = recipe.name,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize(),
                     )

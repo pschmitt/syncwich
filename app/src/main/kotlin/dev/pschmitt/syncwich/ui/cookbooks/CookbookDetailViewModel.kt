@@ -9,10 +9,14 @@ import dev.pschmitt.syncwich.data.db.entity.CookbookEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.data.repository.CookbookRepository
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
+import dev.pschmitt.syncwich.ui.common.RefreshState
+import dev.pschmitt.syncwich.ui.common.refreshErrorMessage
 import dev.pschmitt.syncwich.ui.navigation.Route
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -26,6 +30,8 @@ constructor(
 ) : ViewModel() {
 
     private val cookbookId = savedStateHandle.toRoute<Route.CookbookDetail>().cookbookId
+    private val _refreshState = MutableStateFlow(RefreshState())
+    val refreshState: StateFlow<RefreshState> = _refreshState.asStateFlow()
 
     /** Used to build a recipe's cover-image URL - see `RecipeSummaryEntity.image`'s kdoc. */
     val serverUrl: String
@@ -41,11 +47,14 @@ constructor(
             .observeCookbookRecipes(cookbookId)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), emptyList())
 
-    init {
-        // No per-cookbook refresh endpoint exists server-side (see CookbookRepository's kdoc) - a
-        // full refresh is cheap enough (a handful of cookbooks, at most) to just re-run here too, in
-        // case this screen is opened via a deep link before CookbooksScreen's own refresh ran.
-        viewModelScope.launch { cookbookRepository.refreshCookbooks() }
+    init { refresh() }
+
+    fun refresh() {
+        viewModelScope.launch {
+            _refreshState.value = RefreshState(isRefreshing = true)
+            _refreshState.value =
+                RefreshState(errorMessage = refreshErrorMessage(cookbookRepository.refreshCookbooks()))
+        }
     }
 
     private companion object {

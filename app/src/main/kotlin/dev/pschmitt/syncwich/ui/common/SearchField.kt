@@ -27,6 +27,7 @@ fun SearchField(
     TextField(
         value = value,
         onValueChange = onValueChange,
+        label = { Text(placeholder) },
         placeholder = { Text(placeholder) },
         leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
         trailingIcon = {

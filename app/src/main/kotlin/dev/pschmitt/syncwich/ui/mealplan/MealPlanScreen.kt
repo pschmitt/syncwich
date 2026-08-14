@@ -38,8 +38,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,8 +47,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.pschmitt.syncwich.data.db.entity.MealPlanEntryEntity
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
+import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -61,7 +63,7 @@ fun MealPlanScreen(
     onSettingsClick: () -> Unit = {},
     viewModel: MealPlanViewModel = hiltViewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
         modifier = modifier,
@@ -76,37 +78,55 @@ fun MealPlanScreen(
             )
         },
     ) { innerPadding ->
-        Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            WeekHeader(
-                weekStart = uiState.weekStart,
-                weekEnd = uiState.weekEnd,
-                isRefreshing = uiState.isRefreshing,
-                onPreviousWeek = viewModel::showPreviousWeek,
-                onNextWeek = viewModel::showNextWeek,
-                onToday = viewModel::showCurrentWeek,
-            )
-            if (uiState.entries.isEmpty() && !uiState.isRefreshing) {
-                PlaceholderScreen(
-                    icon = Icons.Filled.CalendarMonth,
-                    title = "Nothing planned this week",
-                    subtitle =
-                        "Meal plan entries synced from your household's Mealie meal plan show up here.",
-                    modifier = Modifier.fillMaxSize(),
+        PullToRefreshBox(
+            isRefreshing = uiState.refreshState.isRefreshing,
+            onRefresh = viewModel::refresh,
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                WeekHeader(
+                    weekStart = uiState.weekStart,
+                    weekEnd = uiState.weekEnd,
+                    isRefreshing = uiState.refreshState.isRefreshing,
+                    onPreviousWeek = viewModel::showPreviousWeek,
+                    onNextWeek = viewModel::showNextWeek,
+                    onToday = viewModel::showCurrentWeek,
                 )
-            } else {
-                val entriesByDate = uiState.entries.groupBy { it.date }
-                val days = generateSequence(uiState.weekStart) { it.plusDays(1) }.take(7).toList()
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    items(days) { day ->
-                        DayCard(
-                            day = day,
-                            entries = entriesByDate[day.toString()].orEmpty(),
-                            onRecipeClick = onRecipeClick,
-                        )
+                RefreshErrorBanner(
+                    errorMessage = uiState.refreshState.errorMessage,
+                    onRetry = viewModel::refresh,
+                )
+                if (uiState.entries.isEmpty()) {
+                    PlaceholderScreen(
+                        icon = Icons.Filled.CalendarMonth,
+                        title =
+                            if (uiState.refreshState.isRefreshing) "Loading meal plan"
+                            else "Nothing planned this week",
+                        subtitle =
+                            if (uiState.refreshState.errorMessage != null) {
+                                "Showing the saved meal plan. Connect to Mealie and try again to refresh it."
+                            } else {
+                                "Meal plan entries synced from your household's Mealie meal plan show up here."
+                            },
+                        modifier = Modifier.fillMaxSize(),
+                        isLoading = uiState.refreshState.isRefreshing,
+                        onRetry = viewModel::refresh,
+                    )
+                } else {
+                    val entriesByDate = uiState.entries.groupBy { it.date }
+                    val days = generateSequence(uiState.weekStart) { it.plusDays(1) }.take(7).toList()
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        items(days) { day ->
+                            DayCard(
+                                day = day,
+                                entries = entriesByDate[day.toString()].orEmpty(),
+                                onRecipeClick = onRecipeClick,
+                            )
+                        }
                     }
                 }
             }
@@ -199,7 +219,9 @@ private fun DayCard(
 private fun MealPlanEntryRow(entry: MealPlanEntryEntity, onRecipeClick: (String, String) -> Unit) {
     val clickableModifier =
         if (entry.recipeId != null && entry.recipeSlug != null) {
-            Modifier.clickable { onRecipeClick(entry.recipeId, entry.recipeSlug) }
+            Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button) {
+                onRecipeClick(entry.recipeId, entry.recipeSlug)
+            }
         } else {
             Modifier
         }

@@ -19,6 +19,7 @@ import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.automirrored.filled.StickyNote2
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.CircularProgressIndicator
@@ -30,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -47,6 +49,8 @@ import dev.pschmitt.syncwich.data.api.dto.RecipeIngredientDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeInstructionDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeNutritionDto
 import dev.pschmitt.syncwich.data.api.recipeImageUrl
+import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
+import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,7 +60,8 @@ fun RecipeDetailScreen(
     viewModel: RecipeDetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val title = (uiState as? RecipeDetailUiState.Loaded)?.recipe?.name.orEmpty()
+    val refreshState by viewModel.refreshState.collectAsStateWithLifecycle()
+    val title = (uiState as? RecipeDetailUiState.Loaded)?.recipe?.name ?: "Recipe"
 
     Scaffold(
         modifier = modifier,
@@ -71,21 +76,44 @@ fun RecipeDetailScreen(
             )
         },
     ) { innerPadding ->
-        when (val state = uiState) {
-            is RecipeDetailUiState.Loading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(innerPadding),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
+        PullToRefreshBox(
+            isRefreshing = refreshState.isRefreshing,
+            onRefresh = viewModel::refresh,
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
+        ) {
+            when (val state = uiState) {
+                is RecipeDetailUiState.Loading -> {
+                    PlaceholderScreen(
+                        icon = Icons.Filled.Restaurant,
+                        title = "Loading recipe",
+                        subtitle = "Checking your saved recipe and refreshing it if possible.",
+                        modifier = Modifier.fillMaxSize(),
+                        isLoading = true,
+                    )
                 }
-            }
-            is RecipeDetailUiState.Loaded -> {
-                RecipeDetailContent(
-                    recipe = state.recipe,
-                    serverUrl = state.serverUrl,
-                    modifier = Modifier.padding(innerPadding),
-                )
+                is RecipeDetailUiState.Unavailable -> {
+                    PlaceholderScreen(
+                        icon = Icons.Filled.Restaurant,
+                        title = "Recipe unavailable offline",
+                        subtitle =
+                            "This recipe is not saved on this device yet. Connect to Mealie and try again.",
+                        modifier = Modifier.fillMaxSize(),
+                        onRetry = viewModel::refresh,
+                    )
+                }
+                is RecipeDetailUiState.Loaded -> {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        RefreshErrorBanner(
+                            errorMessage = state.refreshError,
+                            onRetry = viewModel::refresh,
+                        )
+                        RecipeDetailContent(
+                            recipe = state.recipe,
+                            serverUrl = state.serverUrl,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
             }
         }
     }
@@ -104,7 +132,7 @@ private fun RecipeDetailContent(
             item {
                 AsyncImage(
                     model = imageUrl,
-                    contentDescription = null,
+                    contentDescription = recipe.name,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxWidth().height(220.dp),
                 )

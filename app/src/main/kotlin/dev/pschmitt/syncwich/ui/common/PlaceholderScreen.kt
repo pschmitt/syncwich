@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -20,18 +22,31 @@ import androidx.compose.ui.unit.dp
  * intentional even before its real content exists.
  */
 @Composable
-fun PlaceholderScreen(icon: ImageVector, title: String, subtitle: String, modifier: Modifier = Modifier) {
+fun PlaceholderScreen(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier,
+    isLoading: Boolean = false,
+    onRetry: (() -> Unit)? = null,
+) {
     Column(
         modifier = modifier.fillMaxSize().padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(bottom = 16.dp),
-        )
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.padding(bottom = 16.dp),
+            )
+        } else {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 16.dp),
+            )
+        }
         Text(text = title, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
         Text(
             text = subtitle,
@@ -40,5 +55,10 @@ fun PlaceholderScreen(icon: ImageVector, title: String, subtitle: String, modifi
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 8.dp),
         )
+        if (onRetry != null && !isLoading) {
+            Button(onClick = onRetry, modifier = Modifier.padding(top = 16.dp)) {
+                Text("Try again")
+            }
+        }
     }
 }

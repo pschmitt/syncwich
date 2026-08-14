@@ -18,6 +18,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -25,6 +26,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.pschmitt.syncwich.data.db.entity.ShoppingListEntity
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
+import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,6 +37,7 @@ fun ShoppingListsScreen(
     viewModel: ShoppingListsViewModel = hiltViewModel(),
 ) {
     val lists by viewModel.lists.collectAsStateWithLifecycle()
+    val refreshState by viewModel.refreshState.collectAsStateWithLifecycle()
 
     Scaffold(
         modifier = modifier,
@@ -49,18 +52,37 @@ fun ShoppingListsScreen(
             )
         },
     ) { innerPadding ->
-        if (lists.isEmpty()) {
-            PlaceholderScreen(
-                icon = Icons.Filled.ShoppingCart,
-                title = "No shopping lists yet",
-                subtitle = "Your household's shopping lists will show up here once synced.",
-                modifier = Modifier.fillMaxSize().padding(innerPadding),
-            )
-        } else {
-            LazyColumn(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-                items(lists, key = { it.id }) { list ->
-                    ShoppingListRow(list = list, onClick = { onListClick(list.id) })
-                    HorizontalDivider()
+        PullToRefreshBox(
+            isRefreshing = refreshState.isRefreshing,
+            onRefresh = viewModel::refresh,
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
+        ) {
+            if (lists.isEmpty()) {
+                PlaceholderScreen(
+                    icon = Icons.Filled.ShoppingCart,
+                    title =
+                        when {
+                            refreshState.isRefreshing -> "Loading shopping lists"
+                            refreshState.errorMessage != null -> "No saved shopping lists yet"
+                            else -> "No shopping lists yet"
+                        },
+                    subtitle = "Your household's shopping lists will show up here once synced.",
+                    modifier = Modifier.fillMaxSize(),
+                    isLoading = refreshState.isRefreshing,
+                    onRetry = viewModel::refresh,
+                )
+            } else {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    item {
+                        RefreshErrorBanner(
+                            errorMessage = refreshState.errorMessage,
+                            onRetry = viewModel::refresh,
+                        )
+                    }
+                    items(lists, key = { it.id }) { list ->
+                        ShoppingListRow(list = list, onClick = { onListClick(list.id) })
+                        HorizontalDivider()
+                    }
                 }
             }
         }
