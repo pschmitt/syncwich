@@ -21,6 +21,9 @@ sealed interface Route {
     /** Empty [recipeId] opens a create draft; a cached id opens an edit draft. */
     @Serializable data class RecipeEditor(val recipeId: String = "") : Route
 
+    /** A single recipe's confirmed "I made this" cooking-event history - see SW-30. */
+    @Serializable data class RecipeTimeline(val recipeId: String) : Route
+
     @Serializable data object MealPlan : Route
 
     @Serializable data object ShoppingLists : Route

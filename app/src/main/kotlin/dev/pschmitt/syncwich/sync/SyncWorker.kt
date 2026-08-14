@@ -11,6 +11,7 @@ import dev.pschmitt.syncwich.data.repository.CookbookRepository
 import dev.pschmitt.syncwich.data.repository.MealPlanRepository
 import dev.pschmitt.syncwich.data.repository.RecipeRepository
 import dev.pschmitt.syncwich.data.repository.RecipeActionRepository
+import dev.pschmitt.syncwich.data.repository.RecipeTimelineRepository
 import dev.pschmitt.syncwich.data.repository.ShoppingListRepository
 import dev.pschmitt.syncwich.data.repository.TagRepository
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
@@ -40,6 +41,7 @@ constructor(
     @Assisted params: WorkerParameters,
     private val recipeRepository: RecipeRepository,
     private val recipeActionRepository: RecipeActionRepository,
+    private val recipeTimelineRepository: RecipeTimelineRepository,
     private val categoryRepository: CategoryRepository,
     private val tagRepository: TagRepository,
     private val shoppingListRepository: ShoppingListRepository,
@@ -64,6 +66,10 @@ constructor(
                     // No request is made when there are no pending offline actions; pending
                     // favorite/rating flags are retried only after Room has made them visible.
                     recipeActionRepository.syncPendingActions(),
+                    // Retries any "I made this" taps recorded while offline - see
+                    // RecipeTimelineRepository.recordMadeThis's kdoc for why the local row can be
+                    // written before this ever needs to succeed.
+                    recipeTimelineRepository.syncPendingEvents(),
                     categoryRepository.refreshCategories(),
                     tagRepository.refreshTags(),
                     shoppingListRepository.refreshLists(),

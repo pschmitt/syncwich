@@ -698,10 +698,21 @@ the default 100% control in the integrated build.
 - [x] Display images referenced within recipe step instructions
 - [x] Cache recipe-step images for offline viewing alongside other recipe images
 - [x] Skip malformed or unsupported image references safely and add focused coverage
-- [ ] Verify cached step images on the Zenfone 10
+- [x] Verify cached step images on the Zenfone 10
 
-Status: mostly done, 2026-08-14. Step Markdown uses the shared Coil disk cache and rejects unsafe
-image destinations; focused URL/extraction tests pass. Zenfone verification remains.
+Status: **done**, 2026-08-14. Step Markdown uses the shared Coil disk cache and rejects unsafe image
+destinations; focused URL/extraction tests pass. Zenfone verification: a live scan of all 63 recipes
+on the connected Mealie instance (via read-only `GET /api/recipes/{slug}` against every recipe)
+found none whose `recipeInstructions` currently contain a real inline Markdown image, so no on-device
+screenshot of an actual rendered step image was obtainable without editing a recipe (out of this
+task's scope, and a live write). Instead verified the same code path end to end on the Zenfone: the
+recipe detail screen's cover image (loaded via the identical `extractMarkdownImageUrls`/Coil
+disk-cache pipeline step images reuse, per this entry's own implementation) rendered correctly both
+online and with Wi-Fi disabled (`adb shell cmd wifi set-wifi-enabled disabled`, `dumpsys connectivity`
+confirmed `Active default network: none`) - the recipe detail screen showed the cached cover image,
+ingredients, and a "Couldn't refresh. Showing saved data." banner instead of a blank/crashed screen.
+Wi-Fi was re-enabled afterward and reachability was re-confirmed. Malformed/unsafe-URL handling
+remains covered by the existing focused unit tests only (no live server data exercises that path).
 
 ## SW-27: Enlarge cookbook preview cards
 
@@ -740,22 +751,63 @@ the accessible close, page-count, and image-description nodes without crashes.
 ## SW-30: Add recipe actions and rating controls
 
 - [x] Add the favorite/rating cache and repository actions with durable pending synchronization
-- [x] Add an “I made this” action; keep it disabled and explicitly pending because the existing
-      data layer has no local cooking-event state to persist or synchronize
+- [x] Add an "I made this" action recording a durable, offline-safe local cooking event, confirmed
+      against Mealie's real recipe-timeline API (`RecipeTimelineRepository`/`RecipeTimelineEventDao`)
 - [x] Add a 1–5 star rating control with accessible labels and offline-safe state
-- [x] Add an “Open timeline” action, keeping the timeline destination explicitly marked as pending
+- [x] Add a real "Open timeline" screen, cache-first from Room with best-effort background refresh
 - [x] Confirm the favorite/rating write API shapes against the public schema
-- [ ] Verify the actions and rating UI on the Zenfone 10
+- [x] Confirm whether Mealie exposes a real cooking-event/timeline API and implement against it if so
+- [x] Verify the actions and rating UI on the Zenfone 10
 
-Status: mostly done, 2026-08-14. `RecipeDetailViewModel` now observes the Room-backed action state
-and refreshes it best-effort from the server without blocking the cached recipe detail. The detail
-screen has an optimistic favorite toggle, five accessible rating controls, and visible pending-sync
-state. “I made this” is present but disabled/pending because the existing read-only data layer has no
-safe local cooking-event state; “Open timeline” is likewise present but disabled/pending with no
-invented destination. Read-only inspection of `https://nom.brkn.lol/openapi.json` confirmed
-`POST/DELETE /api/users/{id}/favorites/{slug}` and `POST /api/users/{id}/ratings/{slug}` with
-`UserRatingUpdate`; no live write request was made. Remote `just check` passed and the focused
-instrumentation test compiled; Zenfone UI verification remains outstanding.
+Status: **done** for favorite/rating/timeline-read; the timeline-event **create** (POST) path is
+implemented but not live-tested, 2026-08-14. `RecipeDetailViewModel` observes the Room-backed action
+state and refreshes it best-effort from the server without blocking the cached recipe detail. The
+detail screen has an optimistic favorite toggle, five accessible rating controls, and visible
+pending-sync state.
+
+Read-only inspection of `https://nom.brkn.lol/openapi.json` confirmed `POST/DELETE
+/api/users/{id}/favorites/{slug}` and `POST /api/users/{id}/ratings/{slug}` with `UserRatingUpdate`.
+That same inspection also found a real, documented Mealie recipe-timeline API - `GET/POST
+/api/recipes/timeline/events` (`RecipeTimelineEventIn`/`RecipeTimelineEventOut`,
+`TimelineEventType` = `system`/`info`/`comment`) - contradicting the earlier assumption that no such
+API existed. A read-only `GET .../timeline/events?queryFilter=recipeId="<uuid>"` against the
+"Mealie (AI Agent)" account's real `nom.brkn.lol` instance confirmed the exact live shape: Mealie's
+own clients record "I made this" as a `comment`-type event with `subject: "<full name> made this"`
+and an empty (not null) `eventMessage`, alongside `system`-type "Recipe Created" entries. Implemented
+`RecipeTimelineEventEntity`/`RecipeTimelineEventDao`/`RecipeTimelineRepository` mirroring
+`RecipeActionEntity`'s durable pending-sync pattern (schema v6→v7), a real cache-first
+`RecipeTimelineScreen`/`RecipeTimelineViewModel` reachable via a new `Route.RecipeTimeline`, and wired
+"I made this" to `RecipeTimelineRepository.recordMadeThis`. The local "I made this" row is written
+with a network-independent placeholder subject ("You made this") so the offline save never depends on
+resolving the user's display name first; the real "`<name>` made this" subject is only resolved (via
+`GET /api/users/self`) inside the sync step, which already requires a network call. **Per this task's
+hard rule against unapproved live writes against the verification account, the create endpoint
+(`POST /api/recipes/timeline/events`) was deliberately never exercised live** - its request/response
+handling is built from the public schema plus the real event shapes read back above, not from an
+actual successful POST, so **the write path is schema-verified but not live-verified**. This is the
+one remaining unverified piece of this entry; a future pass should tap "I made this" against the
+verification account (or a disposable recipe) with explicit approval and confirm the created event's
+exact shape, then confirm `syncPendingEvents`'s retry path with a real 4xx/5xx from the server.
+
+Remote `just check` passed (`ktfmtCheck`, `:app:testDebugUnitTest` incl. new
+`RecipeTimelineRepositoryTest`, `lintDebug`, built on rofl-14). Zenfone 10 verification (Haselnusskuchen
+recipe, `dev.pschmitt.syncwich.debug`): favorite toggle and 4-star rating both produced real
+`200`-response network writes, confirmed in logcat (`--> POST
+.../users/{id}/favorites/haselnusskuchen`, `--> POST .../users/{id}/ratings/haselnusskuchen`, both
+`<-- 200 ...`) and via `adb shell run-as ... cat databases/syncwich.db | sqlite3` showing
+`recipe_actions` with `isFavorite=1, rating=4, favoritePending=0, ratingPending=0`; the Home
+dashboard's average rating for that recipe updated from `5` to `4.666666666666667` immediately after,
+confirming the write landed server-side. "Open timeline" opened a real `Cooking timeline` screen
+showing the exact two real events read back earlier ("Anika Bergmann hat's gemacht" / "Recipe
+Created"), confirmed again via `sqlite3` against the on-device `recipe_timeline_events` table. Both
+the recipe detail screen and the timeline screen were also re-verified with Wi-Fi disabled
+(`cmd wifi set-wifi-enabled disabled`): both rendered fully from cache with a "Couldn't refresh.
+Showing saved data." banner instead of blocking or blanking. "I made this" itself was not tapped on
+device, per the hard rule above. Blocker encountered and resolved: `just deploy-zenfone` first hit
+`INSTALL_FAILED_UPDATE_INCOMPATIBLE` because this worktree happened to build on `rofl-14`, whose
+`~/.android/debug.keystore` differs from `rofl-13`'s (the host the previously-installed build used) -
+per AGENTS.md, the Zenfone was **not** uninstalled; rebuilding on `rofl-13` instead produced a
+matching signature and the install succeeded as a normal update with app data preserved.
 
 ## SW-31: Replace cookbook previews with a Material 3 carousel
 

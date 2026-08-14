@@ -37,6 +37,7 @@ import dev.pschmitt.syncwich.ui.mealplan.MealPlanScreen
 import dev.pschmitt.syncwich.ui.onboarding.OnboardingScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipeDetailScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipeEditorScreen
+import dev.pschmitt.syncwich.ui.recipes.RecipeTimelineScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipesScreen
 import dev.pschmitt.syncwich.ui.settings.SettingsScreen
 import dev.pschmitt.syncwich.ui.settings.ConnectionSettingsScreen
@@ -255,6 +256,9 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
                     onEditClick = { recipeId, _ ->
                         navController.navigate(Route.RecipeEditor(recipeId))
                     },
+                    onOpenTimeline = { recipeId ->
+                        navController.navigate(Route.RecipeTimeline(recipeId))
+                    },
                 )
             }
             composable<Route.RecipeEditor> {
@@ -262,6 +266,9 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
                     onSaved = { navController.popBackStack() },
                     onBack = { navController.popBackStack() },
                 )
+            }
+            composable<Route.RecipeTimeline> {
+                RecipeTimelineScreen(onBack = { navController.popBackStack() })
             }
             composable<Route.ShoppingListDetail> {
                 ShoppingListDetailScreen(onBackClick = { navController.popBackStack() })
