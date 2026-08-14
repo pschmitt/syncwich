@@ -1248,3 +1248,12 @@ Status: not started, 2026-08-14.
 - [ ] Add focused navigation coverage and verify it on the Zenfone 10
 
 Status: not started, 2026-08-14.
+
+## SW-61: Add a “sync on app start” setting
+
+- [ ] Add a clearly named setting to enable or disable synchronization on app start
+- [ ] Default the setting to enabled for existing and new installations
+- [ ] Persist the preference and ensure disabling it does not block cached/offline content
+- [ ] Add focused settings/sync coverage and verify it on the Zenfone 10
+
+Status: not started, 2026-08-14.
