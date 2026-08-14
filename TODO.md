@@ -545,12 +545,14 @@ Status: not started.
 
 ## SW-19: Match default accent to launcher icon background
 
-- [ ] Adjust the default hand-picked accent/primary palette so it matches the background color used
+- [x] Adjust the default hand-picked accent/primary palette so it matches the background color used
       by the Syncwich launcher icon
-- [ ] Verify the resulting color relationship in both light and dark themes, including onboarding
+- [x] Verify the resulting color relationship in both light and dark themes, including onboarding
       and the main app shell
 
-Status: not started.
+Status: **done**, 2026-08-14. Fallback light and dark primary now share the launcher terracotta; the
+native splash references the same Android color resource, and a focused regression test covers both
+fallback schemes. Remote `just check` passed on rofl-13 (ktfmt, unit tests, Android lint).
 
 ## SW-20: Investigate excessive top/header spacing
 

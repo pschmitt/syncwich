@@ -11,7 +11,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
-private val LightColors =
+internal val LightColors =
     lightColorScheme(
         primary = SyncwichTerracotta40,
         secondary = SyncwichBasil40,
@@ -19,9 +19,10 @@ private val LightColors =
         error = SyncwichError40,
     )
 
-private val DarkColors =
+internal val DarkColors =
     darkColorScheme(
-        primary = SyncwichTerracotta80,
+        // Keep the fallback accent consistent with the launcher and native splash background.
+        primary = SyncwichTerracotta40,
         secondary = SyncwichBasil80,
         tertiary = SyncwichSaffron80,
         error = SyncwichError80,
