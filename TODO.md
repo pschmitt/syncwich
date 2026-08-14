@@ -35,14 +35,39 @@ correct icons and placeholder copy.
 
 ## SW-2: Server connection + data layer
 
-- [ ] Onboarding screen (server URL + long-lived API token entry, validated against
+- [x] Onboarding screen (server URL + long-lived API token entry, validated against
       `/api/users/self`)
-- [ ] Encrypted credential storage (server URL + API token)
-- [ ] Retrofit/OkHttp client with dynamic base URL + auth interceptors
-- [ ] Room database + cache-first repositories for recipes/categories/tags
-- [ ] WorkManager periodic sync worker
+- [x] Encrypted credential storage (server URL + API token) via `SettingsRepository`
+      (`EncryptedSharedPreferences` + DataStore for non-secret sync bookkeeping), plus
+      `AccountRepository.signOut()` wiping both credentials and the Room cache
+- [x] Retrofit/OkHttp client with dynamic base URL + auth interceptors (`DynamicBaseUrlInterceptor`,
+      `AuthInterceptor`, `di/NetworkModule.kt`), API interfaces `UsersApi`/`RecipesApi`/
+      `OrganizersApi` verified against the live Mealie instance (v3.22.0) before writing DTOs
+- [x] Room database + cache-first repositories for recipes/categories/tags (`RecipeRepository`,
+      `CategoryRepository`, `TagRepository`) - every read is a `Flow` from Room, a failed
+      `refresh*()` never clears cached data (see `CategoryRepositoryTest`)
+- [x] WorkManager periodic sync worker (`SyncWorker` + `SyncScheduler`, 6h/`NetworkType.CONNECTED`
+      + startup run), manual `HiltWorkerFactory` init in `SyncwichApp`/manifest
+      (`TODO(SW-2)` resolved)
 
-Status: not started.
+Status: **done**, 2026-08-14. `just check` (ktfmtCheck, 10 unit tests incl. `OnboardingValidatorTest`
+against MockWebServer and DTO-parsing tests pinned to the live API shapes, Android Lint) green on
+rofl-13. Onboarding verified end-to-end on a real Zenfone 10 against the verification Mealie
+instance: malformed-URL, wrong-token (401), and valid-token paths all show the right inline error/
+success; a cold relaunch after a successful connect skips onboarding and lands on Recipes straight
+away; `adb shell run-as` + `sqlite3` confirmed the WorkManager startup sync actually populated Room
+(63 recipes, 7 categories, 29 tags, plus the recipe/category and recipe/tag cross-ref tables) from
+the real server. Caught and fixed a real bug this way: `OnboardingValidator` was calling OkHttp's
+blocking `execute()` on the main thread (`NetworkOnMainThreadException` crash) - now wrapped in
+`withContext(Dispatchers.IO)`. Also fixed the onboarding form staying usable with the keyboard open
+(`imePadding()` + the API token field's Done action submitting directly, so reaching the Connect
+button is never required) after a mid-task ask to check that. Endpoint shapes confirmed live
+against Mealie v3.22.0 for the next SW-N agents: `/api/users/self`, paginated `/api/recipes`
+(`{page,per_page,total,total_pages,items,next,previous}`), `/api/recipes/{slug}` (full detail,
+stored as raw JSON), `/api/organizers/categories`, `/api/organizers/tags` (same paginated envelope,
+`{id,groupId,name,slug}` items). A stray Mealie API token was created on the verification account
+for this device test ("Syncwich SW-2 onboarding e2e test (agent, revoke after review)", token id 2)
+- safe to revoke once reviewed.
 
 ## SW-3: Recipes UI
 
