@@ -1357,3 +1357,49 @@ Status: **done**, 2026-08-14. Settings and onboarding can export/import validate
 containing credentials, preferences, Room cache, and Coil images; AES-GCM encryption is optional
 with PBKDF2 password protection, and scheduled SAF-folder backups use WorkManager. Crypto/format
 tests, remote checks, Android-test compilation, and the installed Zenfone 10 build are green.
+
+## SW-70: Polish the About settings section
+
+- [x] Remove the standalone header above the About card when About is its only item
+- [x] Show the Syncwich launcher icon in the About section instead of the generic section icon
+- [x] Add a GitHub Sponsors link, matching the other apps’ About pages
+
+Status: **done**, 2026-08-14. The Settings landing screen now uses a headerless single-item About
+card. The About page uses the Syncwich launcher artwork in its section header and links to GitHub
+Sponsors alongside the repository, privacy, and license links. Remote checks and Android-test
+compilation pass, and the build was deployed to all three attached devices.
+
+## SW-71: Avoid redundant Home navigation reloads
+
+- [ ] Keep the current Home destination when the Home navbar button is tapped on Home
+- [ ] Avoid recreating or reloading the Home content for a no-op navigation event
+- [ ] Add focused navigation coverage and verify the behavior on the Zenfone 10
+
+Status: not started, 2026-08-14.
+
+## SW-72: Track completed recipe steps
+
+- [ ] Let users mark individual recipe steps as completed/crossed off
+- [ ] Persist step completion state per recipe for offline use
+- [ ] Restore the recipe steps scroll position when returning to the view
+- [ ] Add focused UI/state coverage and verify the behavior on the Zenfone 10
+
+Status: not started, 2026-08-14.
+
+## SW-73: Add transient font controls to full-screen steps
+
+- [ ] Add a floating control to increase and decrease full-screen step text size
+- [ ] Keep the full-screen adjustment independent from the global Appearance font setting
+- [ ] Preserve the chosen size while the full-screen view remains open
+- [ ] Add focused UI coverage and verify the controls on the Zenfone 10
+
+Status: not started, 2026-08-14.
+
+## SW-74: Add current-view icons to screen headers
+
+- [ ] Include the active view icon in applicable screen headers
+- [ ] Reuse the same icon definitions shown in the navigation bar
+- [ ] Keep header icon placement and accessibility consistent across destinations
+- [ ] Add focused UI coverage and verify the headers on the Zenfone 10
+
+Status: not started, 2026-08-14.

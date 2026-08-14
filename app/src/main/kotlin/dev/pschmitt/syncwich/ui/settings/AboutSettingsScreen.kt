@@ -3,11 +3,13 @@ package dev.pschmitt.syncwich.ui.settings
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -15,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material.icons.filled.Public
@@ -28,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -35,8 +39,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import dev.pschmitt.syncwich.BuildConfig
+import dev.pschmitt.syncwich.R
 
 private const val REPOSITORY_URL = "https://github.com/pschmitt/syncwich"
+private const val SPONSORS_URL = "https://github.com/sponsors/pschmitt"
 private const val PRIVACY_URL = "https://github.com/pschmitt/syncwich/blob/main/PRIVACY.md"
 private const val LICENSE_URL = "https://github.com/pschmitt/syncwich/blob/main/LICENSE"
 
@@ -63,7 +69,17 @@ fun AboutSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             item {
-                SettingsGroupCard(title = "Syncwich", icon = Icons.Filled.Info) {
+                SettingsGroupCard(
+                    title = "Syncwich",
+                    icon = Icons.Filled.Info,
+                    headerContent = {
+                        Image(
+                            painter = painterResource(R.drawable.syncwich_icon),
+                            contentDescription = "Syncwich app icon",
+                            modifier = Modifier.size(24.dp),
+                        )
+                    },
+                ) {
                     AboutInfoRow(
                         icon = Icons.Filled.Apps,
                         title = "Version",
@@ -88,6 +104,13 @@ fun AboutSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         url = REPOSITORY_URL,
                         title = "GitHub repository",
                         subtitle = "View the source code and report issues",
+                    )
+                    ExternalLinkRow(
+                        context = context,
+                        url = SPONSORS_URL,
+                        icon = Icons.Filled.Favorite,
+                        title = "Sponsor the project",
+                        subtitle = "Support development on GitHub Sponsors",
                     )
                     ExternalLinkRow(
                         context = context,
@@ -121,12 +144,18 @@ private fun AboutInfoRow(
 }
 
 @Composable
-private fun ExternalLinkRow(context: Context, url: String, title: String, subtitle: String) {
+private fun ExternalLinkRow(
+    context: Context,
+    url: String,
+    title: String,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector = Icons.Filled.Public,
+) {
     SettingsListItem(
         modifier = Modifier.clickable(role = Role.Button) {
             ContextCompat.startActivity(context, Intent(Intent.ACTION_VIEW, Uri.parse(url)), null)
         }.semantics { role = Role.Button },
-        leadingContent = { Icon(Icons.Filled.Public, contentDescription = null) },
+        leadingContent = { Icon(icon, contentDescription = null) },
         headlineContent = { Text(title) },
         supportingContent = { Text(subtitle) },
         trailingContent = {

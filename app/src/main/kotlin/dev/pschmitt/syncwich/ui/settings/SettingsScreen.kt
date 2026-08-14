@@ -106,7 +106,7 @@ fun SettingsScreen(
                 }
             }
             item {
-                SettingsGroupCard(title = "About", icon = Icons.Filled.Info) {
+                SettingsSingleItemCard {
                     SettingsCategoryRow(SettingsCategory.About, onCategoryClick)
                 }
             }
@@ -137,6 +137,7 @@ internal fun SettingsListItem(
 internal fun SettingsGroupCard(
     title: String,
     icon: ImageVector,
+    headerContent: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Card(
@@ -148,9 +149,15 @@ internal fun SettingsGroupCard(
     ) {
         Column(modifier = Modifier.padding(vertical = 4.dp)) {
             SettingsListItem(
-                leadingContent = {
-                    Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                },
+                leadingContent =
+                    headerContent
+                        ?: {
+                            Icon(
+                                icon,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                        },
                 headlineContent = {
                     Text(
                         title,
@@ -162,6 +169,22 @@ internal fun SettingsGroupCard(
             )
             content()
         }
+    }
+}
+
+@Composable
+internal fun SettingsSingleItemCard(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        colors =
+            CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Column(modifier = Modifier.padding(vertical = 4.dp), content = content)
     }
 }
 
