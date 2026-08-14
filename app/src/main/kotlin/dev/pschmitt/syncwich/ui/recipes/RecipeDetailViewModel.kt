@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.pschmitt.syncwich.data.api.dto.RecipeDetailDto
+import dev.pschmitt.syncwich.data.db.entity.RecipeActionEntity
+import dev.pschmitt.syncwich.data.repository.RecipeActionRepository
 import dev.pschmitt.syncwich.data.repository.RecipeRepository
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import dev.pschmitt.syncwich.ui.common.RefreshState
@@ -35,9 +37,25 @@ sealed interface RecipeDetailUiState {
     data class Loaded(
         val recipe: RecipeDetailDto,
         val serverUrl: String,
+        val actions: RecipeActionUiState = RecipeActionUiState(),
         val refreshError: String? = null,
     ) : RecipeDetailUiState
 }
+
+data class RecipeActionUiState(
+    val isFavorite: Boolean = false,
+    val rating: Int? = null,
+    val favoritePending: Boolean = false,
+    val ratingPending: Boolean = false,
+)
+
+private fun RecipeActionEntity?.toUiState() =
+    RecipeActionUiState(
+        isFavorite = this?.isFavorite == true,
+        rating = this?.rating,
+        favoritePending = this?.favoritePending == true,
+        ratingPending = this?.ratingPending == true,
+    )
 
 /**
  * Backs [RecipeDetailScreen]. [dev.pschmitt.syncwich.data.db.entity.RecipeDetailEntity.detailJson]
@@ -50,6 +68,7 @@ class RecipeDetailViewModel
 constructor(
     savedStateHandle: SavedStateHandle,
     private val recipeRepository: RecipeRepository,
+    private val recipeActionRepository: RecipeActionRepository,
     settingsRepository: SettingsRepository,
     private val json: Json,
 ) : ViewModel() {
@@ -70,17 +89,25 @@ constructor(
             .distinctUntilChanged()
             .flowOn(Dispatchers.Default)
 
+    private val actions: Flow<RecipeActionUiState> =
+        recipeActionRepository
+            .observe(route.recipeId)
+            .map { it.toUiState() }
+            .distinctUntilChanged()
+
     val uiState: StateFlow<RecipeDetailUiState> =
         combine(
                 decodedRecipe,
+                actions,
                 settingsRepository.credentials,
                 refreshState,
-            ) { recipe, credentials, refresh ->
+            ) { recipe, recipeActions, credentials, refresh ->
                 when {
                     recipe != null ->
                         RecipeDetailUiState.Loaded(
                             recipe = recipe,
                             serverUrl = credentials.serverUrl,
+                            actions = recipeActions,
                             refreshError = refresh.errorMessage,
                         )
                     refresh.isRefreshing -> RecipeDetailUiState.Loading
@@ -93,9 +120,12 @@ constructor(
                 RecipeDetailUiState.Loading,
             )
 
-    init { refresh() }
+    init {
+        refresh()
+    }
 
     fun refresh() {
+        refreshActions()
         viewModelScope.launch {
             _refreshState.value = RefreshState(isRefreshing = true)
             _refreshState.value =
@@ -106,6 +136,23 @@ constructor(
                         )
                 )
         }
+    }
+
+    fun setFavorite(isFavorite: Boolean) {
+        viewModelScope.launch {
+            recipeActionRepository.setFavorite(route.recipeId, route.slug, isFavorite)
+        }
+    }
+
+    fun setRating(rating: Int) {
+        require(rating in 1..5) { "Recipe rating must be between 1 and 5" }
+        viewModelScope.launch {
+            recipeActionRepository.setRating(route.recipeId, route.slug, rating)
+        }
+    }
+
+    private fun refreshActions() {
+        viewModelScope.launch { recipeActionRepository.refreshFromServer() }
     }
 }
 

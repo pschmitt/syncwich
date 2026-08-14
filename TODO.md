@@ -685,18 +685,22 @@ the accessible close, page-count, and image-description nodes without crashes.
 ## SW-30: Add recipe actions and rating controls
 
 - [x] Add the favorite/rating cache and repository actions with durable pending synchronization
-- [ ] Add an “I made this” action and persist or synchronize the cooking event
-- [ ] Add a 1–5 star rating control with accessible labels and offline-safe state
-- [ ] Add an “Open timeline” action, keeping the timeline destination explicitly marked as pending
+- [x] Add an “I made this” action; keep it disabled and explicitly pending because the existing
+      data layer has no local cooking-event state to persist or synchronize
+- [x] Add a 1–5 star rating control with accessible labels and offline-safe state
+- [x] Add an “Open timeline” action, keeping the timeline destination explicitly marked as pending
 - [x] Confirm the favorite/rating write API shapes against the public schema
 - [ ] Verify the actions and rating UI on the Zenfone 10
 
-Status: in progress, 2026-08-14. Room-backed favorite/rating actions now update offline state first,
-retain pending flags, and retry from the background worker; the action UI, “I made this,” and
-timeline remain pending. Read-only inspection of `https://nom.brkn.lol/openapi.json` confirmed
+Status: mostly done, 2026-08-14. `RecipeDetailViewModel` now observes the Room-backed action state
+and refreshes it best-effort from the server without blocking the cached recipe detail. The detail
+screen has an optimistic favorite toggle, five accessible rating controls, and visible pending-sync
+state. “I made this” is present but disabled/pending because the existing read-only data layer has no
+safe local cooking-event state; “Open timeline” is likewise present but disabled/pending with no
+invented destination. Read-only inspection of `https://nom.brkn.lol/openapi.json` confirmed
 `POST/DELETE /api/users/{id}/favorites/{slug}` and `POST /api/users/{id}/ratings/{slug}` with
-`UserRatingUpdate`; no live write request was made. Remote `just check` passed, while Zenfone UI
-verification remains blocked by the intentionally bounded data-layer-only scope.
+`UserRatingUpdate`; no live write request was made. Remote `just check` passed and the focused
+instrumentation test compiled; Zenfone UI verification remains outstanding.
 
 ## SW-31: Replace cookbook previews with a Material 3 carousel
 

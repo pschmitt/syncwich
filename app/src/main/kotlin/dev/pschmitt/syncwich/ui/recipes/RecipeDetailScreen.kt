@@ -26,16 +26,22 @@ import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.automirrored.filled.StickyNote2
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -133,6 +139,9 @@ fun RecipeDetailScreen(
                         RecipeDetailContent(
                             recipe = state.recipe,
                             serverUrl = state.serverUrl,
+                            actions = state.actions,
+                            onFavoriteClick = viewModel::setFavorite,
+                            onRatingSelected = viewModel::setRating,
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
@@ -146,6 +155,9 @@ fun RecipeDetailScreen(
 private fun RecipeDetailContent(
     recipe: RecipeDetailDto,
     serverUrl: String,
+    actions: RecipeActionUiState,
+    onFavoriteClick: (Boolean) -> Unit,
+    onRatingSelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val imageUrl = recipeImageUrl(serverUrl, recipe.id, recipe.image)
@@ -168,6 +180,14 @@ private fun RecipeDetailContent(
                             .semantics { contentDescription = "Open recipe images" },
                 )
             }
+        }
+
+        item {
+            RecipeActionControls(
+                actions = actions,
+                onFavoriteClick = onFavoriteClick,
+                onRatingSelected = onRatingSelected,
+            )
         }
 
         item {
@@ -249,6 +269,109 @@ private fun RecipeDetailContent(
             onDismiss = { viewerPage = null },
         )
     }
+}
+
+@Composable
+internal fun RecipeActionControls(
+    actions: RecipeActionUiState,
+    onFavoriteClick: (Boolean) -> Unit,
+    onRatingSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            OutlinedButton(
+                onClick = { onFavoriteClick(!actions.isFavorite) },
+                contentPadding = PaddingValues(horizontal = 12.dp),
+            ) {
+                Icon(
+                    imageVector =
+                        if (actions.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                    contentDescription = null,
+                )
+                Text(
+                    text = if (actions.isFavorite) "Unfavorite" else "Favorite",
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            }
+            OutlinedButton(onClick = {}, enabled = false, contentPadding = PaddingValues(horizontal = 12.dp)) {
+                Icon(Icons.Filled.Checklist, contentDescription = null)
+                Text("I made this (pending)", modifier = Modifier.padding(start = 8.dp))
+            }
+            OutlinedButton(onClick = {}, enabled = false, contentPadding = PaddingValues(horizontal = 12.dp)) {
+                Icon(Icons.Filled.Timeline, contentDescription = null)
+                Text("Open timeline (pending)", modifier = Modifier.padding(start = 8.dp))
+            }
+        }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Star,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp),
+            )
+            Text(
+                text = "Your rating",
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(start = 8.dp),
+            )
+            actions.rating?.let { rating ->
+                Text(
+                    text = "($rating/5)",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            }
+        }
+        Row(modifier = Modifier.fillMaxWidth()) {
+            (1..5).forEach { star ->
+                IconButton(onClick = { onRatingSelected(star) }) {
+                    Icon(
+                        imageVector =
+                            if (star <= (actions.rating ?: 0)) Icons.Filled.Star
+                            else Icons.Filled.StarBorder,
+                        contentDescription = ratingContentDescription(star),
+                        tint =
+                            if (star <= (actions.rating ?: 0)) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+
+        if (actions.favoritePending || actions.ratingPending) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.CloudOff,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp),
+                )
+                Text(
+                    text = "Saved offline; sync pending",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 6.dp),
+                )
+            }
+        }
+    }
+}
+
+internal fun ratingContentDescription(star: Int): String {
+    require(star in 1..5) { "Recipe rating must be between 1 and 5" }
+    return "Rate $star out of 5 stars"
 }
 
 fun recipeImageGalleryUrls(serverUrl: String, recipe: RecipeDetailDto): List<String> =
