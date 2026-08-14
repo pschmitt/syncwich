@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -33,7 +31,6 @@ import java.util.concurrent.TimeUnit
 @Composable
 fun HomeSyncStatusCard(
     status: SyncStatus,
-    onSyncNow: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Card(modifier = modifier.fillMaxWidth()) {
@@ -69,12 +66,6 @@ fun HomeSyncStatusCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-            }
-            Spacer(Modifier.width(8.dp))
-            Button(onClick = onSyncNow, enabled = status.state != SyncStatusState.SYNCING) {
-                Icon(Icons.Filled.Refresh, contentDescription = null)
-                Spacer(Modifier.width(6.dp))
-                Text(if (status.state == SyncStatusState.SYNCING) "Syncing…" else "Sync now")
             }
         }
     }

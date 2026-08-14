@@ -97,7 +97,6 @@ fun HomeScreen(
                 item {
                     HomeSyncStatusCard(
                         status = uiState.syncStatus,
-                        onSyncNow = viewModel::refresh,
                     )
                 }
                 item {

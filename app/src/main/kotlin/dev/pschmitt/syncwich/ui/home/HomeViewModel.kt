@@ -37,7 +37,7 @@ data class HomeUiState(
 )
 
 /**
- * Reads every dashboard section from Room first. Refreshing only queues the existing background
+ * Reads every dashboard section from Room first. Home refresh queues the existing full background
  * worker and is deliberately independent from the state flow, so a disconnected server never
  * hides recipes that are already cached.
  */
@@ -109,7 +109,7 @@ constructor(
     }
 
     fun refresh() {
-        syncScheduler.syncNow()
+        syncScheduler.syncAll()
     }
 
     private companion object {

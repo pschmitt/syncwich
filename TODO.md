@@ -1052,11 +1052,19 @@ was made.
 
 ## SW-44: Simplify sync status and add scoped pull-to-refresh
 
-- [ ] Reduce the Home sync card to essential status information and remove its “Sync now” button
-- [ ] Add pull-to-refresh to Home that runs a complete recursive sync of all supported data
-- [ ] Add scoped pull-to-refresh to other pages (current recipe, or current cookbook and its recipes)
-- [ ] Keep refresh operations cache-first, deduplicated, and accessible with clear progress/failure
+- [x] Reduce the Home sync card to essential status information and remove its “Sync now” button
+- [x] Add pull-to-refresh to Home that queues the existing complete `SyncWorker` pass for all
+      supported data
+- [x] Keep the existing precise refresh entry points for the current recipe and current cookbook;
+      cookbook refreshes recursively refresh that cookbook's cached recipe membership
+- [x] Keep refresh operations cache-first, deduplicated, and accessible with clear progress/failure
       feedback
-- [ ] Add focused coverage and verify the gestures and sync scope on the Zenfone 10
+- [x] Add focused coverage for sync status behavior and forced, targeted cookbook refresh
+- [ ] Verify the gestures and sync scope on the Zenfone 10
 
-Status: not started.
+Status: mostly done, 2026-08-14. Home pull-to-refresh now uses the explicitly named full-sync
+scheduler path, while the card only reports status and leaves refresh initiation to the gesture.
+Recipe detail and cookbook detail already expose scoped pull-to-refresh backed by their respective
+cache-first, mutex-protected repository methods; the cookbook path's forced-refresh/dedup behavior
+is covered by unit tests, alongside the existing sync-status coverage. Remote `just check` passed;
+Zenfone gesture/scope verification remains to be run.

@@ -75,8 +75,8 @@ constructor(
         workManager.enqueueUniqueWork(STARTUP_WORK_NAME, ExistingWorkPolicy.KEEP, request)
     }
 
-    /** Queues the same non-blocking one-off pass used at startup for an explicit manual refresh. */
-    fun syncNow() {
+    /** Queues the non-blocking full pass used at startup for an explicit manual refresh. */
+    fun syncAll() {
         scheduleStartup()
     }
 

@@ -203,6 +203,28 @@ class CookbookRepositoryTest {
             assertEquals(0, targetedApi.requestCount("two"))
         }
 
+    @Test
+    fun `explicit cookbook refresh bypasses freshness while staying targeted`() = runTest {
+        val recipesApi =
+            FakeRecipesApi(
+                byCookbook =
+                    mapOf("current" to listOf(RecipeSummaryDto("r1", "r1", "Current recipe")))
+            )
+        val repository =
+            CookbookRepository(
+                FakeCookbooksApi(),
+                recipesApi,
+                FakeCookbookDao(),
+                FakeRecipeDao(),
+            )
+
+        repository.refreshCookbookRecipes("current")
+        repository.refreshCookbookRecipes("current", forceRefresh = true)
+
+        assertEquals(2, recipesApi.requestCount("current"))
+        assertEquals(0, recipesApi.requestCount("other"))
+    }
+
     private class FakeCookbookDao(seed: List<CookbookEntity> = emptyList()) : CookbookDao {
         private val state = MutableStateFlow(seed)
 
