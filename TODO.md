@@ -643,3 +643,12 @@ Status: not started.
 - [ ] Verify the updated cookbook layout visually on the Zenfone 10
 
 Status: not started.
+
+## SW-28: Remove duplicate recipe-detail title card
+
+- [ ] Keep the recipe name in the detail header and remove the duplicate title card below the
+      hero/title image
+- [ ] Preserve the remaining recipe metadata and content spacing
+- [ ] Verify the simplified recipe detail layout on the Zenfone 10
+
+Status: not started.
