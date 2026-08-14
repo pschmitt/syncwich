@@ -119,7 +119,13 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
                     }
                 )
             }
-            composable<Route.MealPlan> { MealPlanScreen() }
+            composable<Route.MealPlan> {
+                MealPlanScreen(
+                    onRecipeClick = { recipeId, slug ->
+                        navController.navigate(Route.RecipeDetail(recipeId, slug))
+                    }
+                )
+            }
             composable<Route.ShoppingLists> {
                 ShoppingListsScreen(
                     onListClick = { listId ->
