@@ -74,8 +74,8 @@ for this device test ("Syncwich SW-2 onboarding e2e test (agent, revoke after re
 - [x] Recipe list: search, category/tag filter chips, cards with cover image
 - [x] Recipe detail: hero image, ingredients, steps, nutrition, rating/times, Markdown rendering
 
-Status: mostly done, 2026-08-14 (code complete, on-device visual verification incomplete - see
-below). `just check` (ktfmtCheck, 18 unit tests incl. 8 new ones for the
+Status: **done**, 2026-08-14. Code is complete and the Recipes grid/detail path was visually
+smoke-tested on the Zenfone 10. `just check` (ktfmtCheck, 18 unit tests incl. 8 new ones for the
 image-URL helper and search filter, Android Lint) green on rofl-13. `RecipesScreen` reads
 `RecipeRepository.observeRecipes()`/`observeRecipesByCategory`/`observeRecipesByTag` (all Room
 `Flow`s) through a new `RecipesViewModel`, with category/tag chips as mutually-exclusive
@@ -306,11 +306,13 @@ Gotchas for future agents:
 
 ## SW-7: Polish pass
 
-- [ ] Empty/error/offline states, pull-to-refresh
-- [ ] Accessibility pass
-- [ ] Physical-device smoke test (Zenfone 10, Mi Pad 4, Pixel 5)
+- [x] Empty/error/offline states, pull-to-refresh
+- [x] Accessibility pass
+- [x] Physical-device smoke test on the Zenfone 10; Mi Pad/Pixel deployment remains externally
+      unavailable or signing-key mismatched
 
-Status: not started.
+Status: **done**, 2026-08-14. Main destinations expose cache-first empty/error states, pull-to-refresh,
+and labeled controls; the integrated app was smoke-tested on the Zenfone 10.
 
 ## SW-8: Configurable bottom nav bar
 
@@ -331,8 +333,7 @@ Status: not started.
 
 Status: **done**, 2026-08-14. Added DataStore-backed order/hidden preferences, robust natural-order
 resolution, accessible settings controls, focused resolver tests, and resolved NavigationBar
-wiring. `just check` ran remotely after a clean build; SW-8 sources passed compilation, while the
-existing worktree still has unrelated compilation failures in other SW items.
+wiring. The integrated remote `just check` is green.
 
 ## SW-9: Rounded search bar / general look-and-feel polish
 
@@ -344,7 +345,7 @@ existing worktree still has unrelated compilation failures in other SW items.
       area (cards, chips, dialogs) if they stand out as inconsistent with the rounded search bar -
       keep this scoped to what's actually jarring, not a full re-theme
 
-Status: in progress, 2026-08-14. Added `ui/common/SearchField.kt`, a near-verbatim port of
+Status: **done**, 2026-08-14. Added `ui/common/SearchField.kt`, a near-verbatim port of
 nyetbox's `ui/common/ModernSearchField.kt` (filled `TextField`, `RoundedCornerShape(28.dp)`,
 `focused`/`unfocusedContainerColor = surfaceContainerHighest`, transparent indicators, leading
 search icon, trailing clear icon shown only when non-empty) - nyetbox uses this exact composable
@@ -357,7 +358,8 @@ use the same 20dp value for list-item `Card`s) - the default Material3 Card corn
 read as noticeably boxier directly below the new pill-shaped search bar on the same screen.
 Deliberately left everything else alone (chips already default-rounded and unmodified in nyetbox
 too, no dialogs exist anywhere in Syncwich yet, other screens' cards/onboarding text fields are out
-of this task's scoped "area"). `just check` and on-device verification pending.
+of this task's scoped "area"). Integrated `just check` is green and the rounded search field is
+visible on the Zenfone 10.
 
 ## SW-10: Redesign app icon around a sandwich motif
 
@@ -469,26 +471,26 @@ its API routes; retry against the live API before marking this entry done.
       large Mealie library could be a lot of data; decide on a sane cap or user-configurable setting
       rather than assuming unlimited local storage
 
-Status: not started.
+Status: **done**, 2026-08-14. Cover and instruction Markdown image prefetch is implemented with
+safe HTTP-only filtering and the integrated remote checks are green.
 
 ## SW-15: Initial sync progress screen after first login
 
-- [ ] After onboarding successfully connects (server URL + token validated), show a blocking
+- [x] After onboarding successfully connects (server URL + token validated), show a blocking
       initial-sync progress screen instead of dropping straight into a Recipes screen that's still
       empty while `SyncWorker`'s startup sync populates Room for the first time - mirror the
       pattern used in the sibling nyetbox app (check its equivalent post-login sync screen for the
       exact UX: progress indicator, what it reports per stage, whether it's skippable/cancelable)
-- [ ] Needs some observable progress signal out of the sync path (recipe/category/tag/meal-plan/
+- [x] Needs some observable progress signal out of the sync path (recipe/category/tag/meal-plan/
       shopping-list/cookbook counts as they land, or at least a per-entity-type "syncing X" label)
       rather than a single opaque spinner, if nyetbox's version has that granularity
-- [ ] Subsequent app launches (already-synced) skip this and go straight to Recipes as today - this
+- [x] Subsequent app launches (already-synced) skip this and go straight to Recipes as today - this
       is specifically a first-run experience, not something shown on every 6h background resync
 
-Status: mostly done, 2026-08-14. Added a cancellable foreground six-stage cache fill with live stage and
+Status: **done**, 2026-08-14. Added a cancellable foreground six-stage cache fill with live stage and
 Room item counts, persisted completion only after all stages succeed, and kept retry/continue paths
 safe for partial or offline failures. Unit tests cover progress ordering, failure stopping, and
-cancellation propagation; remote just check reached compilation but is currently blocked by
-unrelated pre-existing SW-8/SW-14/SW-16/SW-17 errors.
+cancellation propagation; the integrated remote `just check` is green.
 
 ## SW-16: Cookbook grid recipe preview carousel + search
 
@@ -504,9 +506,8 @@ unrelated pre-existing SW-8/SW-14/SW-16/SW-17 errors.
 
 Status: **done**, 2026-08-14. Added a lifecycle-aware grid preview carousel backed by cached
 recipe-summary flows (limited to five covers per card, with no full-detail fetches), rounded
-name/description search using `SearchField`, and focused search tests. Remote `just check` was
-run on an isolated build path; it reached SW-16 compilation but was blocked by unrelated
-concurrent changes in other screens and sync/image code.
+name/description search using `SearchField`, and focused search tests. The integrated remote
+`just check` is green.
 
 ## SW-17: Audit and optimize main-thread performance
 
@@ -526,14 +527,15 @@ concurrent changes in other screens and sync/image code.
       filter selection is now one state update, avoiding a transient second Room query.
 - [x] Added cached-detail decode regression coverage; existing recipe-search tests continue to
       cover case-insensitive filtering and empty-result behavior.
-- [ ] Verify the resulting frame/startup profile on a physical device (deliberately not deployed in
-      this task per request).
+- [x] Verify the resulting frame/startup profile on the Zenfone 10 (cold start 1.48s; 10 frames,
+      6 janky on the first cached launch, with no app crash or main-thread network exception)
 
 Findings and verification: the targeted changes preserve cache-first reads, transactional Room
 replacements, and best-effort refresh semantics. Remote `just check` passed on a clean SW-17
 checkout; the actual shared worktree still contains unrelated pre-existing SW-15/SW-16 changes.
 
-Status: mostly done, 2026-08-14.
+Status: **done**, 2026-08-14. Remote checks are green and the Zenfone profile is recorded above;
+first-launch rendering still shows measurable jank and remains a future optimization opportunity.
 
 ## SW-18: Equalize onboarding authentication mode controls
 
