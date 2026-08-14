@@ -16,18 +16,15 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,6 +40,7 @@ import coil3.compose.AsyncImage
 import dev.pschmitt.syncwich.data.api.recipeImageUrl
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
+import dev.pschmitt.syncwich.ui.common.SearchField
 
 @Composable
 fun RecipesScreen(
@@ -54,20 +52,11 @@ fun RecipesScreen(
 
     Scaffold(modifier = modifier) { innerPadding ->
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            OutlinedTextField(
+            SearchField(
                 value = uiState.searchQuery,
                 onValueChange = viewModel::onSearchQueryChange,
+                placeholder = "Search recipes",
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = { Text("Search recipes") },
-                singleLine = true,
-                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                trailingIcon = {
-                    if (uiState.searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
-                            Icon(Icons.Filled.Clear, contentDescription = "Clear search")
-                        }
-                    }
-                },
             )
 
             if (uiState.categories.isNotEmpty()) {
@@ -153,7 +142,7 @@ private fun <T> FilterChipRow(
 
 @Composable
 private fun RecipeCard(recipe: RecipeSummaryEntity, serverUrl: String, onClick: () -> Unit) {
-    Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+    Card(onClick = onClick, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
         Column {
             val imageUrl = recipeImageUrl(serverUrl, recipe.id, recipe.image)
             Box(

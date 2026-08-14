@@ -333,15 +333,28 @@ Status: not started.
 
 ## SW-9: Rounded search bar / general look-and-feel polish
 
-- [ ] Restyle the Recipes list's search field from the current sharp-edged `OutlinedTextField` to a
+- [x] Restyle the Recipes list's search field from the current sharp-edged `OutlinedTextField` to a
       fully rounded, pill-shaped search bar - match the look of the sibling nyetbox app's search
       bar (check its `ui/` search composable for the exact shape/elevation/token choices before
       reinventing one)
-- [ ] Sweep for other "edge-y" Material defaults worth rounding/softening to match while in this
+- [x] Sweep for other "edge-y" Material defaults worth rounding/softening to match while in this
       area (cards, chips, dialogs) if they stand out as inconsistent with the rounded search bar -
       keep this scoped to what's actually jarring, not a full re-theme
 
-Status: not started.
+Status: in progress, 2026-08-14. Added `ui/common/SearchField.kt`, a near-verbatim port of
+nyetbox's `ui/common/ModernSearchField.kt` (filled `TextField`, `RoundedCornerShape(28.dp)`,
+`focused`/`unfocusedContainerColor = surfaceContainerHighest`, transparent indicators, leading
+search icon, trailing clear icon shown only when non-empty) - nyetbox uses this exact composable
+for every search entry point (global search top bar, device list, sidebar section filter), so this
+reuses its established shape/token choices rather than inventing a new look. Wired it into
+`RecipesScreen.kt` in place of the plain `OutlinedTextField`. While in that file: also bumped
+`RecipeCard`'s shape to `RoundedCornerShape(20.dp)`, matching nyetbox's own app-wide soft-card
+convention (its `DeviceListScreen`/`GlobalSearchScreen`/`DashboardScreen`/`GenericListScreen` all
+use the same 20dp value for list-item `Card`s) - the default Material3 Card corner radius (12dp)
+read as noticeably boxier directly below the new pill-shaped search bar on the same screen.
+Deliberately left everything else alone (chips already default-rounded and unmodified in nyetbox
+too, no dialogs exist anywhere in Syncwich yet, other screens' cards/onboarding text fields are out
+of this task's scoped "area"). `just check` and on-device verification pending.
 
 ## SW-10: Redesign app icon around a sandwich motif
 
