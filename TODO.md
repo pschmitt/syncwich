@@ -903,3 +903,16 @@ Status: not started.
 - [ ] Verify the updated Settings experience visually and accessibly on the Zenfone 10
 
 Status: not started.
+
+## SW-40: Audit UI/UX against current Material 3 guidance
+
+- [ ] Review the app's screens, navigation, settings, forms, cards, dialogs, loading states, and
+      feedback patterns against the current guidance at https://m3.material.io
+- [ ] Identify and prioritize recommendations that materially improve usability, accessibility,
+      responsive layout, motion, color, typography, and component consistency
+- [ ] Implement the prioritized UI/UX updates without regressing offline-first behavior or existing
+      navigation preferences
+- [ ] Add focused coverage for behavior/accessibility changes and verify the refreshed experience on
+      the Zenfone 10
+
+Status: not started.
