@@ -582,13 +582,15 @@ Status: not started.
 
 ## SW-22: Hide cookbook preview placeholders for image-less recipes
 
-- [ ] In cookbook recipe-preview carousels, omit recipes whose title image is missing or unusable
+- [x] In cookbook recipe-preview carousels, omit recipes whose title image is missing or unusable
       instead of rendering a placeholder restaurant icon
-- [ ] Keep cookbook cards and carousels visually balanced when all preview images are unavailable
-- [ ] Add focused coverage for filtering image-less recipes and verify the result visually on the
+- [x] Keep cookbook cards and carousels visually balanced when all preview images are unavailable
+- [x] Add focused coverage for filtering image-less recipes and verify the result visually on the
       Zenfone 10
 
-Status: not started.
+Status: **done**, 2026-08-14. Cookbook preview carousels now omit recipes without usable cover-image
+references, avoid placeholder icons, and retain a balanced empty-card state. Focused filtering tests
+passed with remote `just check`; Zenfone visual verification passed.
 
 ## SW-23: Hide empty feature destinations by default
 

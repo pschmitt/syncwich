@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -138,12 +137,17 @@ private fun CookbookCard(
     serverUrl: String,
     onClick: () -> Unit,
 ) {
+    val previewRecipes = filterRecipePreviewsWithImages(recipes, serverUrl)
+
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        if (recipes.isNotEmpty()) {
-            CookbookPreviewCarousel(recipes = recipes.take(PREVIEW_RECIPE_LIMIT), serverUrl = serverUrl)
+        if (previewRecipes.isNotEmpty()) {
+            CookbookPreviewCarousel(
+                recipes = previewRecipes.take(PREVIEW_RECIPE_LIMIT),
+                serverUrl = serverUrl,
+            )
         }
         Column(modifier = Modifier.padding(16.dp)) {
-            if (recipes.isEmpty()) {
+            if (previewRecipes.isEmpty()) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.MenuBook,
                     contentDescription = null,
@@ -186,24 +190,23 @@ private fun CookbookPreviewCarousel(recipes: List<RecipeSummaryEntity>, serverUr
                         .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center,
             ) {
-                val imageUrl = recipeImageUrl(serverUrl, recipe.id, recipe.image)
-                if (imageUrl != null) {
+                recipeImageUrl(serverUrl, recipe.id, recipe.image)?.let { imageUrl ->
                     AsyncImage(
                         model = imageUrl,
                         contentDescription = recipe.name,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize(),
                     )
-                } else {
-                    Icon(
-                        imageVector = Icons.Filled.Restaurant,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
                 }
             }
         }
     }
 }
+
+fun filterRecipePreviewsWithImages(
+    recipes: List<RecipeSummaryEntity>,
+    serverUrl: String,
+): List<RecipeSummaryEntity> =
+    recipes.filter { recipe -> recipeImageUrl(serverUrl, recipe.id, recipe.image) != null }
 
 private const val PREVIEW_RECIPE_LIMIT = 5
