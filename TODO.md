@@ -710,6 +710,19 @@ Status: **done**, 2026-08-14. Implemented with Material 3's
 Verified visually and through the accessibility tree on the Zenfone 10; image-less recipes remain
 filtered and the cached image previews render offline-first.
 
+## SW-32: Add a home page dashboard
+
+- [x] Add a Home destination inspired by nyetbox's dashboard structure
+- [x] Show links or sections for recently added/updated recipes
+- [x] Show favorite recipes and other useful recipe shortcuts
+- [x] Keep sections cache-first, responsive, accessible, and useful offline
+- [x] Integrate Home with configurable bottom navigation and verify it on the Zenfone 10
+
+Status: **done**, 2026-08-14. Added the Room-backed Home destination with recently added/cooked
+recipe sections, Favorites cookbook links, shortcuts, offline-safe refresh behavior, and configurable
+bottom-navigation integration. Remote `just check` passed; the integrated debug build opened on the
+wired Zenfone 10 and exposed the Home sections and navigation nodes without crashes.
+
 ## SW-33: Add and edit recipes and collections
 
 - [ ] Add recipe and cookbook creation flows
@@ -719,15 +732,3 @@ filtered and the cached image previews render offline-first.
 - [ ] Verify create/edit flows on the Zenfone 10
 
 Status: not started.
-
-## SW-32: Add a home page dashboard
-
-- [x] Add a Home destination inspired by nyetbox's dashboard structure
-- [x] Show links or sections for recently added/updated recipes
-- [x] Show favorite recipes and other useful recipe shortcuts
-- [x] Keep sections cache-first, responsive, accessible, and useful offline
-- [ ] Integrate Home with configurable bottom navigation and verify it on the Zenfone 10
-
-Status: mostly done, 2026-08-14. Added the Room-backed Home destination with recently added/cooked
-recipe sections, Favorites cookbook links, shortcuts, offline-safe refresh behavior, and configurable
-bottom-navigation integration. Remote `just check` passed; Zenfone verification remains.
