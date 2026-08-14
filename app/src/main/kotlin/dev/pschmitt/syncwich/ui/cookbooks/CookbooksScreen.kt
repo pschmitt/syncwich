@@ -8,14 +8,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Settings
@@ -27,12 +25,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
+import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -141,12 +139,12 @@ private fun CookbookCard(
     serverUrl: String,
     onClick: () -> Unit,
 ) {
-    val previewRecipes = filterRecipePreviewsWithImages(recipes, serverUrl)
+    val previewRecipes = cookbookPreviewRecipes(recipes, serverUrl)
 
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
         if (previewRecipes.isNotEmpty()) {
             CookbookPreviewCarousel(
-                recipes = previewRecipes.take(PREVIEW_RECIPE_LIMIT),
+                recipes = previewRecipes,
                 serverUrl = serverUrl,
             )
         }
@@ -179,36 +177,43 @@ private fun CookbookCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CookbookPreviewCarousel(recipes: List<RecipeSummaryEntity>, serverUrl: String) {
-    LazyRow(
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        items(recipes, key = { it.id }) { recipe ->
-            Box(
-                modifier =
-                    Modifier.size(
-                            width = COOKBOOK_PREVIEW_TILE_WIDTH_DP.dp,
-                            height = COOKBOOK_PREVIEW_TILE_HEIGHT_DP.dp,
-                        )
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment = Alignment.Center,
-            ) {
-                recipeImageUrl(serverUrl, recipe.id, recipe.image)?.let { imageUrl ->
-                    AsyncImage(
-                        model = imageUrl,
-                        contentDescription = recipe.name,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
-            }
+    HorizontalMultiBrowseCarousel(
+        state = rememberCarouselState { recipes.size },
+        preferredItemWidth = COOKBOOK_PREVIEW_PREFERRED_ITEM_WIDTH_DP.dp,
+        itemSpacing = COOKBOOK_PREVIEW_ITEM_SPACING_DP.dp,
+        contentPadding =
+            PaddingValues(
+                horizontal = COOKBOOK_PREVIEW_CONTENT_PADDING_DP.dp,
+                vertical = COOKBOOK_PREVIEW_CONTENT_VERTICAL_PADDING_DP.dp,
+            ),
+        modifier = Modifier.fillMaxWidth().wrapContentHeight(),
+    ) { index ->
+        val recipe = recipes[index]
+        Box(
+            modifier =
+                Modifier.fillMaxWidth()
+                    .height(COOKBOOK_PREVIEW_ITEM_HEIGHT_DP.dp)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .maskClip(MaterialTheme.shapes.extraLarge),
+        ) {
+            AsyncImage(
+                model = recipeImageUrl(serverUrl, recipe.id, recipe.image),
+                contentDescription = recipe.name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
         }
     }
 }
+
+internal fun cookbookPreviewRecipes(
+    recipes: List<RecipeSummaryEntity>,
+    serverUrl: String,
+): List<RecipeSummaryEntity> =
+    filterRecipePreviewsWithImages(recipes, serverUrl).take(PREVIEW_RECIPE_LIMIT)
 
 fun filterRecipePreviewsWithImages(
     recipes: List<RecipeSummaryEntity>,
@@ -221,8 +226,11 @@ private const val PREVIEW_RECIPE_LIMIT = 5
 internal const val COOKBOOK_GRID_MIN_CARD_WIDTH_DP = 220
 internal const val COOKBOOK_GRID_PADDING_DP = 16
 internal const val COOKBOOK_GRID_SPACING_DP = 12
-internal const val COOKBOOK_PREVIEW_TILE_WIDTH_DP = 144
-internal const val COOKBOOK_PREVIEW_TILE_HEIGHT_DP = 108
+internal const val COOKBOOK_PREVIEW_PREFERRED_ITEM_WIDTH_DP = 144
+internal const val COOKBOOK_PREVIEW_ITEM_HEIGHT_DP = 128
+internal const val COOKBOOK_PREVIEW_ITEM_SPACING_DP = 8
+internal const val COOKBOOK_PREVIEW_CONTENT_PADDING_DP = 16
+internal const val COOKBOOK_PREVIEW_CONTENT_VERTICAL_PADDING_DP = 12
 
 internal fun cookbookGridColumnCount(availableWidthDp: Int): Int =
     ((availableWidthDp - (2 * COOKBOOK_GRID_PADDING_DP) + COOKBOOK_GRID_SPACING_DP) /

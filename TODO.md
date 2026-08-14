@@ -692,12 +692,15 @@ write endpoint shapes; the configured verification host currently serves fronten
 
 ## SW-31: Replace cookbook previews with a Material 3 carousel
 
-- [ ] Replace the current cookbook preview layout with a real Material 3 carousel pattern
-- [ ] Match the referenced carousel behavior, sizing, spacing, and item emphasis
-- [ ] Preserve image-less filtering, responsive behavior, offline caching, and accessibility
-- [ ] Verify the carousel visually on the Zenfone 10
+- [x] Replace the current cookbook preview layout with a real Material 3 carousel pattern
+- [x] Match the referenced carousel behavior, sizing, spacing, and item emphasis
+- [x] Preserve image-less filtering, responsive behavior, offline caching, and accessibility
+- [x] Verify the carousel visually on the Zenfone 10
 
-Status: not started.
+Status: **done**, 2026-08-14. Implemented with Material 3's
+`HorizontalMultiBrowseCarousel`, including focused unit coverage and remote `just check`.
+Verified visually and through the accessibility tree on the Zenfone 10; image-less recipes remain
+filtered and the cached image previews render offline-first.
 
 ## SW-33: Add and edit recipes and collections
 
