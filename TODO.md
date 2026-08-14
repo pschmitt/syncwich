@@ -551,3 +551,12 @@ Status: not started.
       and the main app shell
 
 Status: not started.
+
+## SW-20: Investigate excessive top/header spacing
+
+- [ ] Trace the source of the large empty area above the screen content (status-bar insets, top app
+      bar height, scaffold padding, or nested window insets)
+- [ ] Reduce the spacing while preserving safe edge-to-edge behavior and accessibility
+- [ ] Verify the corrected header layout visually on the Zenfone 10
+
+Status: not started.
