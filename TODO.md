@@ -836,3 +836,11 @@ Status: not started.
 - [ ] Verify offline and slow-network behavior, especially cookbook recipe lists, on the Zenfone 10
 
 Status: not started.
+
+## SW-38: Remove the Home Shortcuts section
+
+- [ ] Remove the “Shortcuts” section from the Home view
+- [ ] Preserve the remaining Home sections, spacing, cache-first behavior, and accessibility
+- [ ] Update focused coverage and verify the simplified Home view on the Zenfone 10
+
+Status: not started.
