@@ -26,7 +26,7 @@ internal val LightColors =
 internal val DarkColors =
     darkColorScheme(
         // Keep the fallback accent consistent with the launcher and native splash background.
-        primary = SyncwichTerracotta40,
+        primary = SyncwichTerracotta80,
         secondary = SyncwichBasil80,
         tertiary = SyncwichSaffron80,
         error = SyncwichError80,

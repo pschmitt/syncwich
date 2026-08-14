@@ -1,6 +1,7 @@
 package dev.pschmitt.syncwich.ui.recipes
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -61,30 +62,30 @@ fun RecipeTimelineScreen(
             onRefresh = viewModel::refresh,
             modifier = Modifier.fillMaxSize().padding(innerPadding),
         ) {
-            if (events.isEmpty()) {
-                PlaceholderScreen(
-                    icon = Icons.Filled.Timeline,
-                    title =
-                        if (refreshState.isRefreshing) "Loading timeline"
-                        else "No cooking events yet",
-                    subtitle =
-                        "Tap \"I made this\" on the recipe to add the first entry, or check " +
-                            "your connection and try again.",
-                    modifier = Modifier.fillMaxSize(),
-                    isLoading = refreshState.isRefreshing,
+            Column(modifier = Modifier.fillMaxSize()) {
+                RefreshErrorBanner(
+                    errorMessage = refreshState.errorMessage,
                     onRetry = viewModel::refresh,
                 )
-            } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    item {
-                        RefreshErrorBanner(
-                            errorMessage = refreshState.errorMessage,
-                            onRetry = viewModel::refresh,
-                        )
-                    }
-                    items(events, key = { it.localId }) { event ->
-                        RecipeTimelineEventRow(event)
-                        HorizontalDivider()
+                if (events.isEmpty()) {
+                    PlaceholderScreen(
+                        icon = Icons.Filled.Timeline,
+                        title =
+                            if (refreshState.isRefreshing) "Loading timeline"
+                            else "No cooking events yet",
+                        subtitle =
+                            "Tap \"I made this\" on the recipe to add the first entry, or check " +
+                                "your connection and try again.",
+                        modifier = Modifier.weight(1f),
+                        isLoading = refreshState.isRefreshing,
+                        onRetry = viewModel::refresh,
+                    )
+                } else {
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        items(events, key = { it.localId }) { event ->
+                            RecipeTimelineEventRow(event)
+                            HorizontalDivider()
+                        }
                     }
                 }
             }

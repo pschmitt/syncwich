@@ -187,7 +187,7 @@ private fun <T> FilterChipRow(
 
 @Composable
 internal fun RecipeCard(recipe: RecipeSummaryEntity, serverUrl: String, onClick: () -> Unit) {
-    Card(onClick = onClick, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
+    Card(onClick = onClick, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
         Column {
             val imageUrl = recipeImageUrl(serverUrl, recipe.id, recipe.image)
             Box(

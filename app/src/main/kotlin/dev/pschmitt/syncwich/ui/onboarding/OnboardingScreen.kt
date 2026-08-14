@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.pschmitt.syncwich.R
+import dev.pschmitt.syncwich.ui.common.CenteredContent
 
 /**
  * First-run connection setup. Users can paste a long-lived Mealie API token or sign in once with
@@ -90,15 +91,13 @@ fun OnboardingScreen(
         // when the keyboard is open, instead of them sitting hidden behind it - the token field's
         // Done action also submits directly (see below), so reaching the button with the keyboard
         // still open is the uncommon path, not the only one.
-        Column(
-            modifier =
-                Modifier.fillMaxSize()
-                    .padding(innerPadding)
-                    .verticalScroll(rememberScrollState())
-                    .imePadding()
-                    .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+        CenteredContent(
+            modifier = Modifier.fillMaxSize().padding(innerPadding).imePadding(),
         ) {
+            Column(
+                modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
             Icon(
                 painter = painterResource(R.drawable.ic_launcher_monochrome),
                 contentDescription = null,
@@ -233,9 +232,14 @@ fun OnboardingScreen(
                         strokeWidth = 2.dp,
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
+                    Text(
+                        text = "Connecting…",
+                        modifier = Modifier.padding(start = 8.dp),
+                    )
                 } else {
                     Text(stringResource(R.string.onboarding_connect))
                 }
+            }
             }
         }
     }

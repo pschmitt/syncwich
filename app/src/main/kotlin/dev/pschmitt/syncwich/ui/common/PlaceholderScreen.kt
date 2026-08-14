@@ -13,6 +13,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
@@ -37,7 +39,10 @@ fun PlaceholderScreen(
     ) {
         if (isLoading) {
             CircularProgressIndicator(
-                modifier = Modifier.padding(bottom = 16.dp),
+                modifier =
+                    Modifier.padding(bottom = 16.dp).semantics {
+                        contentDescription = "Loading"
+                    },
             )
         } else {
             Icon(

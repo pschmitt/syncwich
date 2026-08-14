@@ -13,6 +13,8 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
 // Mirrors the sibling nyetbox app's `ModernSearchField` (pill shape, filled surface, no
@@ -27,7 +29,6 @@ fun SearchField(
     TextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(placeholder) },
         placeholder = { Text(placeholder) },
         leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
         trailingIcon = {
@@ -38,7 +39,7 @@ fun SearchField(
             }
         },
         singleLine = true,
-        modifier = modifier,
+        modifier = modifier.semantics { contentDescription = placeholder },
         shape = RoundedCornerShape(28.dp),
         colors =
             TextFieldDefaults.colors(

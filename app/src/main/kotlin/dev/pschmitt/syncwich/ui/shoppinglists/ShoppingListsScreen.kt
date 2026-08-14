@@ -3,6 +3,7 @@ package dev.pschmitt.syncwich.ui.shoppinglists
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -57,31 +58,31 @@ fun ShoppingListsScreen(
             onRefresh = viewModel::refresh,
             modifier = Modifier.fillMaxSize().padding(innerPadding),
         ) {
-            if (lists.isEmpty()) {
-                PlaceholderScreen(
-                    icon = Icons.Filled.ShoppingCart,
-                    title =
-                        when {
-                            refreshState.isRefreshing -> "Loading shopping lists"
-                            refreshState.errorMessage != null -> "No saved shopping lists yet"
-                            else -> "No shopping lists yet"
-                        },
-                    subtitle = "Your household's shopping lists will show up here once synced.",
-                    modifier = Modifier.fillMaxSize(),
-                    isLoading = refreshState.isRefreshing,
+            Column(modifier = Modifier.fillMaxSize()) {
+                RefreshErrorBanner(
+                    errorMessage = refreshState.errorMessage,
                     onRetry = viewModel::refresh,
                 )
-            } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    item {
-                        RefreshErrorBanner(
-                            errorMessage = refreshState.errorMessage,
-                            onRetry = viewModel::refresh,
-                        )
-                    }
-                    items(lists, key = { it.id }) { list ->
-                        ShoppingListRow(list = list, onClick = { onListClick(list.id) })
-                        HorizontalDivider()
+                if (lists.isEmpty()) {
+                    PlaceholderScreen(
+                        icon = Icons.Filled.ShoppingCart,
+                        title =
+                            when {
+                                refreshState.isRefreshing -> "Loading shopping lists"
+                                refreshState.errorMessage != null -> "No saved shopping lists yet"
+                                else -> "No shopping lists yet"
+                            },
+                        subtitle = "Your household's shopping lists will show up here once synced.",
+                        modifier = Modifier.weight(1f),
+                        isLoading = refreshState.isRefreshing,
+                        onRetry = viewModel::refresh,
+                    )
+                } else {
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        items(lists, key = { it.id }) { list ->
+                            ShoppingListRow(list = list, onClick = { onListClick(list.id) })
+                            HorizontalDivider()
+                        }
                     }
                 }
             }

@@ -2,6 +2,7 @@ package dev.pschmitt.syncwich.ui.recipes
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -55,34 +56,38 @@ fun FavoritesScreen(
             onRefresh = viewModel::refresh,
             modifier = Modifier.fillMaxSize().padding(innerPadding),
         ) {
-            RefreshErrorBanner(
-                errorMessage = uiState.refreshState.errorMessage,
-                onRetry = viewModel::refresh,
-            )
-            if (uiState.recipes.isEmpty()) {
-                PlaceholderScreen(
-                    icon = Icons.Filled.Favorite,
-                    title = if (uiState.refreshState.isRefreshing) "Loading favorites" else "No favorites yet",
-                    subtitle =
-                        "Favorite recipes appear here after their saved favorite state is synced or changed offline.",
-                    modifier = Modifier.fillMaxSize(),
-                    isLoading = uiState.refreshState.isRefreshing,
+            Column(modifier = Modifier.fillMaxSize()) {
+                RefreshErrorBanner(
+                    errorMessage = uiState.refreshState.errorMessage,
                     onRetry = viewModel::refresh,
                 )
-            } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 160.dp),
-                    contentPadding = PaddingValues(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    items(uiState.recipes, key = { it.id }) { recipe ->
-                        RecipeCard(
-                            recipe = recipe,
-                            serverUrl = uiState.serverUrl,
-                            onClick = { onRecipeClick(recipe) },
-                        )
+                if (uiState.recipes.isEmpty()) {
+                    PlaceholderScreen(
+                        icon = Icons.Filled.Favorite,
+                        title =
+                            if (uiState.refreshState.isRefreshing) "Loading favorites"
+                            else "No favorites yet",
+                        subtitle =
+                            "Favorite recipes appear here after their saved favorite state is synced or changed offline.",
+                        modifier = Modifier.weight(1f),
+                        isLoading = uiState.refreshState.isRefreshing,
+                        onRetry = viewModel::refresh,
+                    )
+                } else {
+                    LazyVerticalGrid(
+                        columns = GridCells.Adaptive(minSize = 160.dp),
+                        contentPadding = PaddingValues(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        items(uiState.recipes, key = { it.id }) { recipe ->
+                            RecipeCard(
+                                recipe = recipe,
+                                serverUrl = uiState.serverUrl,
+                                onClick = { onRecipeClick(recipe) },
+                            )
+                        }
                     }
                 }
             }

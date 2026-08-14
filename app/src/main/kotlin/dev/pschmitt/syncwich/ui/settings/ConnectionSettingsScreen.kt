@@ -41,6 +41,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.size
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.pschmitt.syncwich.ui.common.CenteredContent
 
 /** Edits the connection without changing the first-run onboarding surface. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,15 +93,13 @@ fun ConnectionSettingsScreen(
             )
         },
     ) { innerPadding ->
-        Column(
-            modifier =
-                Modifier.fillMaxSize()
-                    .padding(innerPadding)
-                    .verticalScroll(rememberScrollState())
-                    .imePadding()
-                    .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+        CenteredContent(
+            modifier = Modifier.fillMaxSize().padding(innerPadding).imePadding(),
         ) {
+            Column(
+                modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
             Text(
                 "The new connection is checked before it replaces the saved one. The current " +
                     "cache remains available if validation fails.",
@@ -216,9 +215,11 @@ fun ConnectionSettingsScreen(
                         modifier = Modifier.size(18.dp),
                         strokeWidth = 2.dp,
                     )
+                    Text("Saving…", modifier = Modifier.padding(start = 8.dp))
                 } else {
                     Text("Save connection")
                 }
+            }
             }
         }
     }

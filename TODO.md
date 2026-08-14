@@ -999,14 +999,19 @@ wipe, or live Mealie write was made.
 
 ## SW-40: Audit UI/UX against current Material 3 guidance
 
-- [ ] Review the app's screens, navigation, settings, forms, cards, dialogs, loading states, and
+- [x] Review the app's screens, navigation, settings, forms, cards, dialogs, loading states, and
       feedback patterns against the current guidance at https://m3.material.io
-- [ ] Identify and prioritize recommendations that materially improve usability, accessibility,
+- [x] Identify and prioritize recommendations that materially improve usability, accessibility,
       responsive layout, motion, color, typography, and component consistency
-- [ ] Implement the prioritized UI/UX updates without regressing offline-first behavior or existing
+- [x] Implement the prioritized UI/UX updates without regressing offline-first behavior or existing
       navigation preferences
-- [ ] Add focused coverage for behavior/accessibility changes and verify the refreshed experience on
-      the Zenfone 10
+- [x] Add focused coverage for behavior/accessibility changes
+- [ ] Verify the refreshed experience on the Zenfone 10
+
+Status: mostly done, 2026-08-14. Material 3 guidance was reviewed and the prioritized UI/common,
+form, state-feedback, responsive-width, fallback-color, and component-consistency changes are
+implemented; remote `just check` and instrumentation-test compilation pass. Zenfone visual
+verification remains outstanding.
 
 ## SW-41: Format displayed ratings to one decimal place
 

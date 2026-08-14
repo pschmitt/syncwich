@@ -29,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.pschmitt.syncwich.R
 import dev.pschmitt.syncwich.sync.InitialSyncProgress
 import dev.pschmitt.syncwich.sync.InitialSyncStage
+import dev.pschmitt.syncwich.ui.common.CenteredContent
 
 @Composable
 fun InitialSyncScreen(
@@ -50,11 +51,12 @@ fun InitialSyncScreen(
     BackHandler { viewModel.cancel() }
 
     Scaffold(modifier = modifier) { innerPadding ->
-        Column(
-            modifier = Modifier.fillMaxSize().padding(innerPadding).padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
-        ) {
+        CenteredContent(modifier = Modifier.fillMaxSize().padding(innerPadding), maxWidth = 520.dp) {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+            ) {
             Icon(
                 imageVector = Icons.Filled.Sync,
                 contentDescription = null,
@@ -102,6 +104,7 @@ fun InitialSyncScreen(
                 OutlinedButton(onClick = viewModel::cancel, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.initial_sync_cancel))
                 }
+            }
             }
         }
     }

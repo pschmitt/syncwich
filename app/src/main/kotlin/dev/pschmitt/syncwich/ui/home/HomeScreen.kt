@@ -273,7 +273,7 @@ private fun HomeRecipeCard(
     serverUrl: String,
     onClick: () -> Unit,
 ) {
-    Card(onClick = onClick, modifier = Modifier.width(184.dp), shape = RoundedCornerShape(20.dp)) {
+    Card(onClick = onClick, modifier = Modifier.width(184.dp), shape = MaterialTheme.shapes.large) {
         Column {
             Box(
                 modifier =

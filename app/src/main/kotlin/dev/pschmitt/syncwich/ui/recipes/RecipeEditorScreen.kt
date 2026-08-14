@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -36,6 +37,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.pschmitt.syncwich.ui.common.CenteredContent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,14 +69,11 @@ fun RecipeEditorScreen(
             )
         },
     ) { innerPadding ->
-        Column(
-            modifier =
-                Modifier.fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(innerPadding)
-                    .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
+        CenteredContent(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            Column(
+                modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
             Text(
                 text =
                     if (viewModel.isEditing) {
@@ -196,11 +195,13 @@ fun RecipeEditorScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 if (isSaving) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                    Text("Saving recipe…", modifier = Modifier.padding(start = 8.dp))
                 } else {
                     Icon(Icons.Filled.Save, contentDescription = null)
                     Text("Save recipe", modifier = Modifier.padding(start = 8.dp))
                 }
+            }
             }
         }
     }

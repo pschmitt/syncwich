@@ -6,11 +6,11 @@ import org.junit.Test
 
 class ThemeColorTest {
     @Test
-    fun fallbackPrimaryMatchesLauncherAccentInLightAndDarkThemes() {
+    fun fallbackPrimaryUsesAccessibleLightAndDarkTones() {
         val launcherAccent = Color(0xFFE4572E)
 
         assertEquals(launcherAccent, SyncwichTerracotta40)
         assertEquals(launcherAccent, LightColors.primary)
-        assertEquals(launcherAccent, DarkColors.primary)
+        assertEquals(SyncwichTerracotta80, DarkColors.primary)
     }
 }
