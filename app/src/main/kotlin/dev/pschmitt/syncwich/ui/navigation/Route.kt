@@ -18,6 +18,9 @@ sealed interface Route {
     // extra Room lookup is needed to fetch/refresh detail after navigating here.
     @Serializable data class RecipeDetail(val recipeId: String, val slug: String) : Route
 
+    /** A single recipe's confirmed "I made this" cooking-event history - see SW-30. */
+    @Serializable data class RecipeTimeline(val recipeId: String) : Route
+
     @Serializable data object MealPlan : Route
 
     @Serializable data object ShoppingLists : Route

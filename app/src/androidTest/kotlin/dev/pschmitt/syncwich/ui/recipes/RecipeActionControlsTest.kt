@@ -1,7 +1,7 @@
 package dev.pschmitt.syncwich.ui.recipes
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -27,6 +27,8 @@ class RecipeActionControlsTest {
                     actions = RecipeActionUiState(),
                     onFavoriteClick = { favorite = it },
                     onRatingSelected = { rating = it },
+                    onMadeThisClick = {},
+                    onOpenTimelineClick = {},
                 )
             }
         }
@@ -39,22 +41,42 @@ class RecipeActionControlsTest {
     }
 
     @Test
-    fun unsupportedActionsAreClearlyPendingAndDisabled() {
+    fun madeThisAndTimelineControlsInvokeTheirCallbacks() {
+        var madeThisCalls = 0
+        var openTimelineCalls = 0
         composeTestRule.setContent {
             MaterialTheme {
                 RecipeActionControls(
                     actions = RecipeActionUiState(),
                     onFavoriteClick = {},
                     onRatingSelected = {},
+                    onMadeThisClick = { madeThisCalls++ },
+                    onOpenTimelineClick = { openTimelineCalls++ },
                 )
             }
         }
 
-        composeTestRule
-            .onNodeWithText("I made this (pending)")
-            .assertIsNotEnabled()
-        composeTestRule
-            .onNodeWithText("Open timeline (pending)")
-            .assertIsNotEnabled()
+        composeTestRule.onNodeWithText("I made this").performClick()
+        composeTestRule.onNodeWithText("Open timeline").performClick()
+
+        assertEquals(1, madeThisCalls)
+        assertEquals(1, openTimelineCalls)
+    }
+
+    @Test
+    fun madeThisPendingStateShowsTheOfflineSyncBanner() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                RecipeActionControls(
+                    actions = RecipeActionUiState(madeThisPending = true),
+                    onFavoriteClick = {},
+                    onRatingSelected = {},
+                    onMadeThisClick = {},
+                    onOpenTimelineClick = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("Saved offline; sync pending").assertIsDisplayed()
     }
 }

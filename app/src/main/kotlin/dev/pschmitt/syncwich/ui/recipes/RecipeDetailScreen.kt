@@ -85,6 +85,7 @@ import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
 @Composable
 fun RecipeDetailScreen(
     onBack: () -> Unit,
+    onOpenTimeline: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: RecipeDetailViewModel = hiltViewModel(),
 ) {
@@ -142,6 +143,8 @@ fun RecipeDetailScreen(
                             actions = state.actions,
                             onFavoriteClick = viewModel::setFavorite,
                             onRatingSelected = viewModel::setRating,
+                            onMadeThisClick = viewModel::recordMadeThis,
+                            onOpenTimelineClick = { onOpenTimeline(state.recipe.id) },
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
@@ -158,6 +161,8 @@ private fun RecipeDetailContent(
     actions: RecipeActionUiState,
     onFavoriteClick: (Boolean) -> Unit,
     onRatingSelected: (Int) -> Unit,
+    onMadeThisClick: () -> Unit,
+    onOpenTimelineClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val imageUrl = recipeImageUrl(serverUrl, recipe.id, recipe.image)
@@ -187,6 +192,8 @@ private fun RecipeDetailContent(
                 actions = actions,
                 onFavoriteClick = onFavoriteClick,
                 onRatingSelected = onRatingSelected,
+                onMadeThisClick = onMadeThisClick,
+                onOpenTimelineClick = onOpenTimelineClick,
             )
         }
 
@@ -276,6 +283,8 @@ internal fun RecipeActionControls(
     actions: RecipeActionUiState,
     onFavoriteClick: (Boolean) -> Unit,
     onRatingSelected: (Int) -> Unit,
+    onMadeThisClick: () -> Unit,
+    onOpenTimelineClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
@@ -297,13 +306,19 @@ internal fun RecipeActionControls(
                     modifier = Modifier.padding(start = 8.dp),
                 )
             }
-            OutlinedButton(onClick = {}, enabled = false, contentPadding = PaddingValues(horizontal = 12.dp)) {
+            OutlinedButton(
+                onClick = onMadeThisClick,
+                contentPadding = PaddingValues(horizontal = 12.dp),
+            ) {
                 Icon(Icons.Filled.Checklist, contentDescription = null)
-                Text("I made this (pending)", modifier = Modifier.padding(start = 8.dp))
+                Text("I made this", modifier = Modifier.padding(start = 8.dp))
             }
-            OutlinedButton(onClick = {}, enabled = false, contentPadding = PaddingValues(horizontal = 12.dp)) {
+            OutlinedButton(
+                onClick = onOpenTimelineClick,
+                contentPadding = PaddingValues(horizontal = 12.dp),
+            ) {
                 Icon(Icons.Filled.Timeline, contentDescription = null)
-                Text("Open timeline (pending)", modifier = Modifier.padding(start = 8.dp))
+                Text("Open timeline", modifier = Modifier.padding(start = 8.dp))
             }
         }
 
@@ -347,7 +362,7 @@ internal fun RecipeActionControls(
             }
         }
 
-        if (actions.favoritePending || actions.ratingPending) {
+        if (actions.favoritePending || actions.ratingPending || actions.madeThisPending) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth().padding(top = 4.dp),

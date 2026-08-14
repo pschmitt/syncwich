@@ -13,6 +13,7 @@ import dev.pschmitt.syncwich.data.api.MealPlanApi
 import dev.pschmitt.syncwich.data.api.OrganizersApi
 import dev.pschmitt.syncwich.data.api.RecipesApi
 import dev.pschmitt.syncwich.data.api.ShoppingListsApi
+import dev.pschmitt.syncwich.data.api.TimelineApi
 import dev.pschmitt.syncwich.data.api.UsersApi
 import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
@@ -125,4 +126,8 @@ object NetworkModule {
     @Singleton
     fun provideCookbooksApi(retrofit: Retrofit): CookbooksApi =
         retrofit.create(CookbooksApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideTimelineApi(retrofit: Retrofit): TimelineApi = retrofit.create(TimelineApi::class.java)
 }

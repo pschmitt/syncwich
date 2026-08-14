@@ -9,6 +9,7 @@ import dev.pschmitt.syncwich.data.api.dto.RecipeDetailDto
 import dev.pschmitt.syncwich.data.db.entity.RecipeActionEntity
 import dev.pschmitt.syncwich.data.repository.RecipeActionRepository
 import dev.pschmitt.syncwich.data.repository.RecipeRepository
+import dev.pschmitt.syncwich.data.repository.RecipeTimelineRepository
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import dev.pschmitt.syncwich.ui.common.RefreshState
 import dev.pschmitt.syncwich.ui.common.refreshErrorMessage
@@ -47,14 +48,16 @@ data class RecipeActionUiState(
     val rating: Int? = null,
     val favoritePending: Boolean = false,
     val ratingPending: Boolean = false,
+    val madeThisPending: Boolean = false,
 )
 
-private fun RecipeActionEntity?.toUiState() =
+private fun RecipeActionEntity?.toUiState(madeThisPending: Boolean) =
     RecipeActionUiState(
         isFavorite = this?.isFavorite == true,
         rating = this?.rating,
         favoritePending = this?.favoritePending == true,
         ratingPending = this?.ratingPending == true,
+        madeThisPending = madeThisPending,
     )
 
 /**
@@ -69,6 +72,7 @@ constructor(
     savedStateHandle: SavedStateHandle,
     private val recipeRepository: RecipeRepository,
     private val recipeActionRepository: RecipeActionRepository,
+    private val recipeTimelineRepository: RecipeTimelineRepository,
     settingsRepository: SettingsRepository,
     private val json: Json,
 ) : ViewModel() {
@@ -90,9 +94,12 @@ constructor(
             .flowOn(Dispatchers.Default)
 
     private val actions: Flow<RecipeActionUiState> =
-        recipeActionRepository
-            .observe(route.recipeId)
-            .map { it.toUiState() }
+        combine(
+                recipeActionRepository.observe(route.recipeId),
+                recipeTimelineRepository.observe(route.recipeId),
+            ) { action, timelineEvents ->
+                action.toUiState(madeThisPending = timelineEvents.any { it.pending })
+            }
             .distinctUntilChanged()
 
     val uiState: StateFlow<RecipeDetailUiState> =
@@ -149,6 +156,11 @@ constructor(
         viewModelScope.launch {
             recipeActionRepository.setRating(route.recipeId, route.slug, rating)
         }
+    }
+
+    /** Records a durable "I made this" cooking event - see [RecipeTimelineRepository]'s kdoc. */
+    fun recordMadeThis() {
+        viewModelScope.launch { recipeTimelineRepository.recordMadeThis(route.recipeId) }
     }
 
     private fun refreshActions() {
