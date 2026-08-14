@@ -711,10 +711,12 @@ Status: not started.
 
 ## SW-32: Add a home page dashboard
 
-- [ ] Add a Home destination inspired by nyetbox's dashboard structure
-- [ ] Show links or sections for recently added/updated recipes
-- [ ] Show favorite recipes and other useful recipe shortcuts
-- [ ] Keep sections cache-first, responsive, accessible, and useful offline
+- [x] Add a Home destination inspired by nyetbox's dashboard structure
+- [x] Show links or sections for recently added/updated recipes
+- [x] Show favorite recipes and other useful recipe shortcuts
+- [x] Keep sections cache-first, responsive, accessible, and useful offline
 - [ ] Integrate Home with configurable bottom navigation and verify it on the Zenfone 10
 
-Status: not started.
+Status: mostly done, 2026-08-14. Added the Room-backed Home destination with recently added/cooked
+recipe sections, Favorites cookbook links, shortcuts, offline-safe refresh behavior, and configurable
+bottom-navigation integration. Remote `just check` passed; Zenfone verification remains.

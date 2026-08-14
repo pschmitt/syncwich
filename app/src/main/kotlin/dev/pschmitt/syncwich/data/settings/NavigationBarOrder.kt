@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 
 /** Stable, persisted keys for the destinations that can appear in the bottom navigation bar. */
 object NavigationBarItemKeys {
+    const val HOME = "home"
     const val RECIPES = "recipes"
     const val MEAL_PLAN = "meal_plan"
     const val SHOPPING_LISTS = "shopping_lists"

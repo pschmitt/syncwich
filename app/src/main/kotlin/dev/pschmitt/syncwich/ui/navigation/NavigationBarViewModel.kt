@@ -44,7 +44,7 @@ constructor(
             .stateIn(
                 viewModelScope,
                 SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
-                listOf(NavigationBarItemKeys.RECIPES),
+                listOf(NavigationBarItemKeys.HOME, NavigationBarItemKeys.RECIPES),
             )
 
     private companion object {

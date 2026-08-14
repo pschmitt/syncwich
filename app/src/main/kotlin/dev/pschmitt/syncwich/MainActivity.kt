@@ -46,7 +46,7 @@ class MainActivity : ComponentActivity() {
                         SyncwichNavHost(startDestination = Route.Onboarding)
                     initialSyncCompleted == null -> StartupLoadingScreen()
                     initialSyncCompleted == true ->
-                        SyncwichNavHost(startDestination = Route.Recipes)
+                        SyncwichNavHost(startDestination = Route.Home)
                     else -> SyncwichNavHost(startDestination = Route.InitialSync)
                 }
             }

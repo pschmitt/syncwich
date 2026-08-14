@@ -9,6 +9,8 @@ sealed interface Route {
 
     @Serializable data object InitialSync : Route
 
+    @Serializable data object Home : Route
+
     @Serializable data object Recipes : Route
 
     // slug is carried alongside recipeId because Mealie's full-detail endpoint is keyed by slug,
@@ -36,8 +38,9 @@ sealed interface Route {
     @Serializable data object SettingsConnection : Route
 }
 
-/** The four bottom-navigation destinations, in display order. */
+/** The five bottom-navigation destinations, in display order. */
 enum class TopLevelDestination(val key: String, val route: Route, val label: String) {
+    HOME(NavigationBarItemKeys.HOME, Route.Home, "Home"),
     RECIPES(NavigationBarItemKeys.RECIPES, Route.Recipes, "Recipes"),
     MEAL_PLAN(NavigationBarItemKeys.MEAL_PLAN, Route.MealPlan, "Meal Plan"),
     SHOPPING_LISTS(NavigationBarItemKeys.SHOPPING_LISTS, Route.ShoppingLists, "Shopping"),

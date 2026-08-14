@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -30,6 +31,7 @@ import androidx.navigation.toRoute
 import dev.pschmitt.syncwich.ui.cookbooks.CookbookDetailScreen
 import dev.pschmitt.syncwich.ui.cookbooks.CookbooksScreen
 import dev.pschmitt.syncwich.ui.initialsync.InitialSyncScreen
+import dev.pschmitt.syncwich.ui.home.HomeScreen
 import dev.pschmitt.syncwich.ui.mealplan.MealPlanScreen
 import dev.pschmitt.syncwich.ui.onboarding.OnboardingScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipeDetailScreen
@@ -48,6 +50,7 @@ private data class TopLevelNavItem(
 
 private val topLevelNavItems =
     listOf(
+        TopLevelNavItem(TopLevelDestination.HOME, Icons.Filled.Home, "Home"),
         TopLevelNavItem(TopLevelDestination.RECIPES, Icons.Filled.Restaurant, "Recipes"),
         TopLevelNavItem(TopLevelDestination.MEAL_PLAN, Icons.Filled.CalendarMonth, "Meal Plan"),
         TopLevelNavItem(TopLevelDestination.SHOPPING_LISTS, Icons.Filled.ShoppingCart, "Shopping"),
@@ -59,15 +62,15 @@ private val topLevelNavItems =
     )
 
 /**
- * The app's main scaffold: a Material 3 bottom navigation bar switching between the four v1
+ * The app's main scaffold: a Material 3 bottom navigation bar switching between the five v1
  * top-level destinations, plus a Settings entry point reachable from each screen's own top app
  * bar (see SW-11 - each top-level screen owns its `TopAppBar`, not this outer `Scaffold`).
  *
  * @param startDestination [Route.Onboarding] until a server URL + API token are saved, otherwise
- *   [Route.Recipes] - see `MainActivity`, which reads `SettingsRepository.isConfigured` for this.
+ *   [Route.Home] - see `MainActivity`, which reads `SettingsRepository.isConfigured` for this.
  */
 @Composable
-fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Route.Recipes) {
+fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Route.Home) {
     val navController = rememberNavController()
     val navigationBarViewModel: NavigationBarViewModel = hiltViewModel()
     val visibleNavBarItemKeys by
@@ -137,17 +140,32 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
             composable<Route.InitialSync> {
                 InitialSyncScreen(
                     onFinished = {
-                        navController.navigate(Route.Recipes) {
+                        navController.navigate(Route.Home) {
                             popUpTo(Route.InitialSync) { inclusive = true }
                             launchSingleTop = true
                         }
                     },
                     onCancel = {
-                        navController.navigate(Route.Recipes) {
+                        navController.navigate(Route.Home) {
                             popUpTo(Route.InitialSync) { inclusive = true }
                             launchSingleTop = true
                         }
                     },
+                )
+            }
+            composable<Route.Home> {
+                HomeScreen(
+                    onRecipeClick = { recipe ->
+                        navController.navigate(Route.RecipeDetail(recipe.id, recipe.slug))
+                    },
+                    onRecipesClick = { navController.navigate(Route.Recipes) },
+                    onMealPlanClick = { navController.navigate(Route.MealPlan) },
+                    onShoppingListsClick = { navController.navigate(Route.ShoppingLists) },
+                    onCookbooksClick = { navController.navigate(Route.Cookbooks) },
+                    onCookbookClick = { cookbookId ->
+                        navController.navigate(Route.CookbookDetail(cookbookId))
+                    },
+                    onSettingsClick = { navController.navigate(Route.Settings) },
                 )
             }
             composable<Route.Recipes> {

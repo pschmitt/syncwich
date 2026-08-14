@@ -14,13 +14,13 @@ import org.junit.Test
 class NavigationBarViewModelTest {
 
     @Test
-    fun `empty Room-backed caches leave Recipes as the only default destination`() = runTest {
+    fun `empty Room-backed caches keep Home and Recipes as the defaults`() = runTest {
         val viewModel = NavigationBarViewModel(FakePreferences(), FakeCache())
 
         assertEquals(
-            listOf(NavigationBarItemKeys.RECIPES),
+            listOf(NavigationBarItemKeys.HOME, NavigationBarItemKeys.RECIPES),
             viewModel.visibleItemKeys.first {
-                it == listOf(NavigationBarItemKeys.RECIPES)
+                it == listOf(NavigationBarItemKeys.HOME, NavigationBarItemKeys.RECIPES)
             },
         )
     }
@@ -39,6 +39,7 @@ class NavigationBarViewModelTest {
 
         assertEquals(
             listOf(
+                NavigationBarItemKeys.HOME,
                 NavigationBarItemKeys.RECIPES,
                 NavigationBarItemKeys.MEAL_PLAN,
                 NavigationBarItemKeys.SHOPPING_LISTS,
@@ -47,6 +48,7 @@ class NavigationBarViewModelTest {
             viewModel.visibleItemKeys.first {
                 it ==
                     listOf(
+                        NavigationBarItemKeys.HOME,
                         NavigationBarItemKeys.RECIPES,
                         NavigationBarItemKeys.MEAL_PLAN,
                         NavigationBarItemKeys.SHOPPING_LISTS,
@@ -62,9 +64,18 @@ class NavigationBarViewModelTest {
         val viewModel = NavigationBarViewModel(preferences, FakeCache())
 
         assertEquals(
-            listOf(NavigationBarItemKeys.RECIPES, NavigationBarItemKeys.COOKBOOKS),
+            listOf(
+                NavigationBarItemKeys.HOME,
+                NavigationBarItemKeys.RECIPES,
+                NavigationBarItemKeys.COOKBOOKS,
+            ),
             viewModel.visibleItemKeys.first {
-                it == listOf(NavigationBarItemKeys.RECIPES, NavigationBarItemKeys.COOKBOOKS)
+                it ==
+                    listOf(
+                        NavigationBarItemKeys.HOME,
+                        NavigationBarItemKeys.RECIPES,
+                        NavigationBarItemKeys.COOKBOOKS,
+                    )
             },
         )
     }

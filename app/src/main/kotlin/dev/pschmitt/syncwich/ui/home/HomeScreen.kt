@@ -1,0 +1,374 @@
+package dev.pschmitt.syncwich.ui.home
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
+import dev.pschmitt.syncwich.data.api.recipeImageUrl
+import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
+import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
+import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeScreen(
+    onRecipeClick: (RecipeSummaryEntity) -> Unit,
+    onRecipesClick: () -> Unit,
+    onMealPlanClick: () -> Unit,
+    onShoppingListsClick: () -> Unit,
+    onCookbooksClick: () -> Unit,
+    onCookbookClick: (String) -> Unit,
+    onSettingsClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: HomeViewModel = hiltViewModel(),
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val hasCachedRecipes =
+        uiState.recentlyAddedRecipes.isNotEmpty() ||
+            uiState.recentlyCookedRecipes.isNotEmpty() ||
+            uiState.favoriteRecipes.isNotEmpty()
+
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.Home, contentDescription = null)
+                        Text("Home", modifier = Modifier.padding(start = 8.dp))
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                    }
+                },
+            )
+        },
+    ) { innerPadding ->
+        PullToRefreshBox(
+            isRefreshing = uiState.refreshState.isRefreshing,
+            onRefresh = viewModel::refresh,
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
+        ) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+            ) {
+                item {
+                    QuickLinks(
+                        onRecipesClick = onRecipesClick,
+                        onMealPlanClick = onMealPlanClick,
+                        onShoppingListsClick = onShoppingListsClick,
+                        onCookbooksClick = onCookbooksClick,
+                    )
+                }
+                item {
+                    RefreshErrorBanner(
+                        errorMessage = uiState.refreshState.errorMessage,
+                        onRetry = viewModel::refresh,
+                    )
+                }
+                if (!hasCachedRecipes && !uiState.refreshState.isRefreshing) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().height(240.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            PlaceholderScreen(
+                                icon = Icons.Filled.Home,
+                                title = "Your recipe home",
+                                subtitle =
+                                    "Syncwich will show recent and favorite recipes here. Pull to refresh or browse the recipe library.",
+                                modifier = Modifier.fillMaxSize(),
+                                onRetry = viewModel::refresh,
+                            )
+                        }
+                    }
+                }
+                if (uiState.recentlyAddedRecipes.isNotEmpty()) {
+                    item {
+                        RecipeSection(
+                            title = "Recently added",
+                            recipes = uiState.recentlyAddedRecipes,
+                            serverUrl = uiState.serverUrl,
+                            onRecipeClick = onRecipeClick,
+                            onSeeAll = onRecipesClick,
+                        )
+                    }
+                }
+                if (uiState.recentlyCookedRecipes.isNotEmpty()) {
+                    item {
+                        RecipeSection(
+                            title = "Cooked recently",
+                            recipes = uiState.recentlyCookedRecipes,
+                            serverUrl = uiState.serverUrl,
+                            onRecipeClick = onRecipeClick,
+                            onSeeAll = onRecipesClick,
+                        )
+                    }
+                }
+                if (uiState.favoriteCookbook != null || uiState.favoriteRecipes.isNotEmpty()) {
+                    item {
+                        FavoriteSection(
+                            recipes = uiState.favoriteRecipes,
+                            cookbookId = uiState.favoriteCookbook?.id,
+                            serverUrl = uiState.serverUrl,
+                            onRecipeClick = onRecipeClick,
+                            onOpenFavorites = { cookbookId ->
+                                if (cookbookId == null) onCookbooksClick()
+                                else onCookbookClick(cookbookId)
+                            },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuickLinks(
+    onRecipesClick: () -> Unit,
+    onMealPlanClick: () -> Unit,
+    onShoppingListsClick: () -> Unit,
+    onCookbooksClick: () -> Unit,
+) {
+    Column {
+        Text("Shortcuts", style = MaterialTheme.typography.titleLarge)
+        Spacer(Modifier.height(12.dp))
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(end = 8.dp),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            item {
+                ShortcutCard(Icons.Filled.Restaurant, "Recipes", onRecipesClick)
+            }
+            item {
+                ShortcutCard(Icons.AutoMirrored.Filled.MenuBook, "Cookbooks", onCookbooksClick)
+            }
+            item {
+                ShortcutCard(Icons.Filled.CalendarMonth, "Meal plan", onMealPlanClick)
+            }
+            item {
+                ShortcutCard(Icons.Filled.ShoppingCart, "Shopping", onShoppingListsClick)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ShortcutCard(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: () -> Unit,
+) {
+    Card(onClick = onClick, modifier = Modifier.width(132.dp)) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.height(8.dp))
+            Text(label, style = MaterialTheme.typography.labelLarge)
+        }
+    }
+}
+
+@Composable
+private fun RecipeSection(
+    title: String,
+    recipes: List<RecipeSummaryEntity>,
+    serverUrl: String,
+    onRecipeClick: (RecipeSummaryEntity) -> Unit,
+    onSeeAll: () -> Unit,
+) {
+    Column {
+        SectionHeader(title = title, actionLabel = "View all recipes", onAction = onSeeAll)
+        Spacer(Modifier.height(8.dp))
+        RecipeRow(
+            recipes = recipes,
+            serverUrl = serverUrl,
+            onRecipeClick = onRecipeClick,
+        )
+    }
+}
+
+@Composable
+private fun FavoriteSection(
+    recipes: List<RecipeSummaryEntity>,
+    cookbookId: String?,
+    serverUrl: String,
+    onRecipeClick: (RecipeSummaryEntity) -> Unit,
+    onOpenFavorites: (String?) -> Unit,
+) {
+    Column {
+        SectionHeader(
+            title = "Favorites",
+            actionLabel = if (cookbookId == null) "Find cookbooks" else "Open cookbook",
+            onAction = { onOpenFavorites(cookbookId) },
+        )
+        Spacer(Modifier.height(8.dp))
+        if (recipes.isEmpty()) {
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Filled.Favorite, contentDescription = null)
+                    Text(
+                        text =
+                            if (cookbookId == null) {
+                                "A cookbook named Favorites will appear here."
+                            } else {
+                                "Your Favorites cookbook has no cached recipes yet."
+                            },
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(start = 12.dp),
+                    )
+                }
+            }
+        } else {
+            RecipeRow(
+                recipes = recipes,
+                serverUrl = serverUrl,
+                onRecipeClick = onRecipeClick,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SectionHeader(title: String, actionLabel: String, onAction: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+        Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+        TextButton(onClick = onAction) { Text(actionLabel) }
+    }
+}
+
+@Composable
+private fun RecipeRow(
+    recipes: List<RecipeSummaryEntity>,
+    serverUrl: String,
+    onRecipeClick: (RecipeSummaryEntity) -> Unit,
+) {
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(end = 8.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        items(recipes, key = { it.id }) { recipe ->
+            HomeRecipeCard(
+                recipe = recipe,
+                serverUrl = serverUrl,
+                onClick = { onRecipeClick(recipe) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun HomeRecipeCard(
+    recipe: RecipeSummaryEntity,
+    serverUrl: String,
+    onClick: () -> Unit,
+) {
+    Card(onClick = onClick, modifier = Modifier.width(184.dp), shape = RoundedCornerShape(20.dp)) {
+        Column {
+            Box(
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .height(124.dp)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center,
+            ) {
+                val imageUrl = recipeImageUrl(serverUrl, recipe.id, recipe.image)
+                if (imageUrl != null) {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = recipe.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                } else {
+                    Icon(
+                        Icons.Filled.Restaurant,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(40.dp),
+                    )
+                }
+            }
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(
+                    recipe.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                recipe.rating?.let { rating ->
+                    Row(
+                        modifier = Modifier.padding(top = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            Icons.Filled.Star,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.tertiary,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Text(
+                            " ${rating.toString().trimEnd('0').trimEnd('.')}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
