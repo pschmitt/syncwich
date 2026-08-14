@@ -19,10 +19,16 @@ interface MealPlanDao {
     @Query("SELECT EXISTS(SELECT 1 FROM meal_plan_entries)")
     fun observeHasEntries(): Flow<Boolean>
 
+    @Query("SELECT * FROM meal_plan_entries WHERE id = :id")
+    suspend fun getById(id: Long): MealPlanEntryEntity?
+
     @Upsert suspend fun upsertAll(entries: List<MealPlanEntryEntity>)
 
     @Query("DELETE FROM meal_plan_entries WHERE date BETWEEN :startDate AND :endDate")
     suspend fun deleteRange(startDate: String, endDate: String)
+
+    @Query("DELETE FROM meal_plan_entries WHERE id = :id")
+    suspend fun deleteById(id: Long)
 
     /**
      * Atomically replaces only the queried date window - unlike `RecipeDao`/`CategoryDao`'s

@@ -11,7 +11,10 @@ import kotlinx.serialization.Serializable
  * `snack`/`drink`/`dessert` per the schema's enum, kept as a raw string here rather than a
  * `@Serializable` enum so an unrecognized future value degrades to "unknown" in the UI instead of
  * failing to decode. `recipe` reuses [RecipeSummaryDto] - the server's embedded `RecipeSummary`
- * schema has the same fields.
+ * schema has the same fields. `groupId`/`userId` are required by `ReadPlanEntry` (re-confirmed for
+ * SW-24/SW-33's meal-plan mutation work) and are kept - defaulted to `""` only so any code
+ * constructing this DTO without them still compiles - so an edit can round-trip them into
+ * `UpdatePlanEntryDto` without a separate lookup.
  */
 @Serializable
 data class MealPlanEntryDto(
@@ -22,4 +25,6 @@ data class MealPlanEntryDto(
     val text: String = "",
     val recipeId: String? = null,
     val recipe: RecipeSummaryDto? = null,
+    val groupId: String = "",
+    val userId: String = "",
 )

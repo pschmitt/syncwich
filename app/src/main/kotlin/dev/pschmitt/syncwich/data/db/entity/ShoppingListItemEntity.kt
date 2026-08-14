@@ -8,7 +8,10 @@ import androidx.room.PrimaryKey
 /**
  * One item of a `/api/households/shopping/lists/{id}` response - `display` is Mealie's own
  * pre-formatted rendering, see [dev.pschmitt.syncwich.data.api.dto.ShoppingListItemDto]. `checked`
- * is shown but never mutated - this app is read-only.
+ * is toggleable (SW-24/SW-33); `checkedPending` mirrors `RecipeActionEntity.favoritePending` -
+ * it marks an offline/failed checked-state sync durable until
+ * [dev.pschmitt.syncwich.data.repository.ShoppingListRepository.syncPendingItemChecks] can retry
+ * it, the same optimistic-update-with-retry shape used for recipe favorites/ratings.
  */
 @Entity(
     tableName = "shopping_list_items",
@@ -30,4 +33,5 @@ data class ShoppingListItemEntity(
     val note: String?,
     val checked: Boolean,
     val position: Int,
+    val checkedPending: Boolean = false,
 )

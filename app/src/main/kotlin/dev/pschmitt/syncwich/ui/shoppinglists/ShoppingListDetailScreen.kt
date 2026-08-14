@@ -1,27 +1,39 @@
 package dev.pschmitt.syncwich.ui.shoppinglists
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.pschmitt.syncwich.data.db.entity.ShoppingListItemEntity
@@ -38,6 +50,16 @@ fun ShoppingListDetailScreen(
     val list by viewModel.list.collectAsStateWithLifecycle()
     val items by viewModel.items.collectAsStateWithLifecycle()
     val refreshState by viewModel.refreshState.collectAsStateWithLifecycle()
+    val addItemState by viewModel.addItemState.collectAsStateWithLifecycle()
+
+    if (addItemState.isOpen) {
+        AddShoppingItemDialog(
+            state = addItemState,
+            onTextChange = viewModel::onAddItemTextChange,
+            onConfirm = viewModel::confirmAddItem,
+            onDismiss = viewModel::dismissAddItem,
+        )
+    }
 
     Scaffold(
         modifier = modifier,
@@ -53,6 +75,15 @@ fun ShoppingListDetailScreen(
                     }
                 },
             )
+        },
+        floatingActionButton = {
+            if (list != null) {
+                ExtendedFloatingActionButton(
+                    onClick = viewModel::startAddItem,
+                    icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                    text = { Text("Add item") },
+                )
+            }
         },
     ) { innerPadding ->
         PullToRefreshBox(
@@ -80,7 +111,7 @@ fun ShoppingListDetailScreen(
                 PlaceholderScreen(
                     icon = Icons.Filled.ShoppingCart,
                     title = "No items yet",
-                    subtitle = "This list is empty, or hasn't finished syncing yet.",
+                    subtitle = "Tap \"Add item\" to add one, or pull to refresh.",
                     modifier = Modifier.fillMaxSize(),
                     onRetry = viewModel::refresh,
                 )
@@ -93,7 +124,11 @@ fun ShoppingListDetailScreen(
                         )
                     }
                     items(items, key = { it.id }) { item ->
-                        ShoppingListItemRow(item)
+                        ShoppingListItemRow(
+                            item = item,
+                            onCheckedChange = { checked -> viewModel.setChecked(item.id, checked) },
+                            onRemove = { viewModel.removeItem(item.id) },
+                        )
                         HorizontalDivider()
                     }
                 }
@@ -103,11 +138,16 @@ fun ShoppingListDetailScreen(
 }
 
 /**
- * View-only: shows the checked state Mealie already has for this item but never lets the user
- * toggle it - this app is read-only, see AGENTS.md.
+ * Toggleable (SW-24/SW-33): checking/unchecking calls [onCheckedChange], which writes to Room
+ * before any network sync - see `ShoppingListRepository.setItemChecked`'s kdoc - so the row updates
+ * immediately even offline. [onRemove] deletes the item outright.
  */
 @Composable
-private fun ShoppingListItemRow(item: ShoppingListItemEntity) {
+private fun ShoppingListItemRow(
+    item: ShoppingListItemEntity,
+    onCheckedChange: (Boolean) -> Unit,
+    onRemove: () -> Unit,
+) {
     ListItem(
         headlineContent = {
             Text(
@@ -119,8 +159,50 @@ private fun ShoppingListItemRow(item: ShoppingListItemEntity) {
             )
         },
         supportingContent = item.note?.takeIf { it.isNotBlank() }?.let { note -> { Text(note) } },
-        leadingContent = {
-            Checkbox(checked = item.checked, onCheckedChange = null, enabled = false)
+        leadingContent = { Checkbox(checked = item.checked, onCheckedChange = onCheckedChange) },
+        trailingContent = {
+            IconButton(onClick = onRemove) {
+                Icon(Icons.Filled.Delete, contentDescription = "Remove item")
+            }
+        },
+    )
+}
+
+@Composable
+private fun AddShoppingItemDialog(
+    state: AddShoppingItemState,
+    onTextChange: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add item") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = state.display,
+                    onValueChange = onTextChange,
+                    label = { Text("Item") },
+                    singleLine = true,
+                    isError = state.errorMessage != null,
+                    supportingText = state.errorMessage?.let { { Text(it) } },
+                    enabled = !state.isSaving,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = !state.isSaving) {
+                if (state.isSaving) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                } else {
+                    Text("Add")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !state.isSaving) { Text("Cancel") }
         },
     )
 }
