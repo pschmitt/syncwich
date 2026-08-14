@@ -7,14 +7,16 @@ import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dev.pschmitt.syncwich.data.repository.CategoryRepository
+import dev.pschmitt.syncwich.data.repository.CookbookRepository
 import dev.pschmitt.syncwich.data.repository.RecipeRepository
 import dev.pschmitt.syncwich.data.repository.TagRepository
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import timber.log.Timber
 
 /**
- * Refreshes the offline recipe cache in the background: recipe list + category/tag dictionaries.
- * Never wipes or blocks what's already cached on failure - each repository's own `refresh*`
+ * Refreshes the offline recipe cache in the background: recipe list, category/tag dictionaries, and
+ * cookbooks (plus each cookbook's matching recipes). Never wipes or blocks what's already cached on
+ * failure - each repository's own `refresh*`
  * function already logs and swallows its own errors (see [RecipeRepository.refreshRecipes]'s kdoc),
  * so a bad run here only means "still showing what was last cached", never a blank screen.
  *
@@ -31,6 +33,7 @@ constructor(
     private val recipeRepository: RecipeRepository,
     private val categoryRepository: CategoryRepository,
     private val tagRepository: TagRepository,
+    private val cookbookRepository: CookbookRepository,
     private val settingsRepository: SettingsRepository,
 ) : CoroutineWorker(context, params) {
 
@@ -42,6 +45,7 @@ constructor(
                     recipeRepository.refreshRecipes(),
                     categoryRepository.refreshCategories(),
                     tagRepository.refreshTags(),
+                    cookbookRepository.refreshCookbooks(),
                 )
                 .mapNotNull { it.exceptionOrNull() }
 

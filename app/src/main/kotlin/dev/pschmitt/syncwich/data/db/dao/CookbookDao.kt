@@ -1,0 +1,29 @@
+package dev.pschmitt.syncwich.data.db.dao
+
+import androidx.room.Dao
+import androidx.room.Query
+import androidx.room.Transaction
+import androidx.room.Upsert
+import dev.pschmitt.syncwich.data.db.entity.CookbookEntity
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface CookbookDao {
+
+    @Query("SELECT * FROM cookbooks ORDER BY position ASC, name COLLATE NOCASE ASC")
+    fun observeAll(): Flow<List<CookbookEntity>>
+
+    @Query("SELECT * FROM cookbooks WHERE id = :id")
+    fun observeById(id: String): Flow<CookbookEntity?>
+
+    @Upsert suspend fun upsertAll(cookbooks: List<CookbookEntity>)
+
+    @Query("DELETE FROM cookbooks") suspend fun deleteAll()
+
+    /** Atomically replaces the whole cookbook dictionary - see [CategoryDao.replaceAll]'s kdoc. */
+    @Transaction
+    suspend fun replaceAll(cookbooks: List<CookbookEntity>) {
+        deleteAll()
+        upsertAll(cookbooks)
+    }
+}
