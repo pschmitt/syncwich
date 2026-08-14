@@ -585,3 +585,30 @@ Status: not started.
       Zenfone 10
 
 Status: not started.
+
+## SW-23: Hide empty feature destinations by default
+
+- [ ] Hide Meal Plan, Shopping, and Cookbooks navigation items by default when their corresponding
+      data is absent
+- [ ] Keep the visibility choice user-configurable so users can show empty destinations explicitly
+- [ ] Verify navigation behavior and defaults on the Zenfone 10
+
+Status: not started.
+
+## SW-24: Add and update recipes and collections
+
+- [ ] Add support for creating recipes, cookbooks, meal plans, and shopping lists
+- [ ] Add support for updating existing recipes, cookbooks, meal plans, and shopping lists
+- [ ] Preserve offline-first behavior and confirm the Mealie write API shapes against the real
+      instance before implementing network mutations
+- [ ] Add focused coverage and verify the editing flows on the Zenfone 10
+
+Status: not started.
+
+## SW-25: Make font size configurable in Appearance settings
+
+- [ ] Add an Appearance setting for adjusting the app font size
+- [ ] Persist the selected font-size preference and apply it consistently across the app
+- [ ] Verify the setting visually on the Zenfone 10
+
+Status: not started.
