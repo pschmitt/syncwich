@@ -627,3 +627,11 @@ Status: not started.
 - [ ] Verify cached step images on the Zenfone 10
 
 Status: not started.
+
+## SW-27: Enlarge cookbook preview cards
+
+- [ ] Increase cookbook card/preview dimensions so recipe images are displayed larger
+- [ ] Preserve responsive grid behavior and usable scrolling on narrow screens
+- [ ] Verify the updated cookbook layout visually on the Zenfone 10
+
+Status: not started.
