@@ -1,0 +1,170 @@
+package dev.pschmitt.syncwich.ui.onboarding
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.pschmitt.syncwich.R
+
+/**
+ * First-run connection setup: server URL + long-lived Mealie API token, validated against
+ * `/api/users/self` before being saved (see [OnboardingViewModel]). No password is ever entered or
+ * stored here - see AGENTS.md for why.
+ */
+@Composable
+fun OnboardingScreen(
+    onConnected: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: OnboardingViewModel = hiltViewModel(),
+) {
+    var serverUrl by rememberSaveable { mutableStateOf("") }
+    var apiToken by rememberSaveable { mutableStateOf("") }
+    var tokenVisible by rememberSaveable { mutableStateOf(false) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isValidating = uiState is OnboardingUiState.Validating
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    fun submit() {
+        keyboardController?.hide()
+        viewModel.connect(serverUrl, apiToken)
+    }
+
+    LaunchedEffect(uiState) {
+        if (uiState is OnboardingUiState.Success) onConnected()
+    }
+
+    Scaffold(modifier = modifier) { innerPadding ->
+        // imePadding() (on top of the scroll) keeps the fields and the Connect button reachable
+        // when the keyboard is open, instead of them sitting hidden behind it - the token field's
+        // Done action also submits directly (see below), so reaching the button with the keyboard
+        // still open is the uncommon path, not the only one.
+        Column(
+            modifier =
+                Modifier.fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+                    .imePadding()
+                    .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Restaurant,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(48.dp),
+            )
+            Text(
+                text = stringResource(R.string.onboarding_title),
+                style = MaterialTheme.typography.headlineSmall,
+            )
+            Text(
+                text = stringResource(R.string.onboarding_subtitle),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            OutlinedTextField(
+                value = serverUrl,
+                onValueChange = { serverUrl = it },
+                label = { Text(stringResource(R.string.onboarding_server_url_label)) },
+                placeholder = { Text(stringResource(R.string.onboarding_server_url_placeholder)) },
+                singleLine = true,
+                enabled = !isValidating,
+                keyboardOptions =
+                    KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            OutlinedTextField(
+                value = apiToken,
+                onValueChange = { apiToken = it },
+                label = { Text(stringResource(R.string.onboarding_api_token_label)) },
+                singleLine = true,
+                enabled = !isValidating,
+                visualTransformation =
+                    if (tokenVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions =
+                    KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Done,
+                    ),
+                keyboardActions = KeyboardActions(onDone = { submit() }),
+                trailingIcon = {
+                    IconButton(onClick = { tokenVisible = !tokenVisible }) {
+                        Icon(
+                            imageVector =
+                                if (tokenVisible) Icons.Filled.VisibilityOff
+                                else Icons.Filled.Visibility,
+                            contentDescription = null,
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Text(
+                text = stringResource(R.string.onboarding_api_token_help),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            if (uiState is OnboardingUiState.Error) {
+                Text(
+                    text = (uiState as OnboardingUiState.Error).message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+
+            Button(
+                onClick = ::submit,
+                enabled = !isValidating,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                if (isValidating) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                    )
+                } else {
+                    Text(stringResource(R.string.onboarding_connect))
+                }
+            }
+        }
+    }
+}

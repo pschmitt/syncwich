@@ -1,0 +1,138 @@
+package dev.pschmitt.syncwich.data.repository
+
+import androidx.room.withTransaction
+import dev.pschmitt.syncwich.data.api.RecipesApi
+import dev.pschmitt.syncwich.data.api.dto.OrganizerDto
+import dev.pschmitt.syncwich.data.api.dto.RecipeSummaryDto
+import dev.pschmitt.syncwich.data.db.AppDatabase
+import dev.pschmitt.syncwich.data.db.dao.RecipeDao
+import dev.pschmitt.syncwich.data.db.entity.CategoryEntity
+import dev.pschmitt.syncwich.data.db.entity.RecipeCategoryCrossRef
+import dev.pschmitt.syncwich.data.db.entity.RecipeDetailEntity
+import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
+import dev.pschmitt.syncwich.data.db.entity.RecipeTagCrossRef
+import dev.pschmitt.syncwich.data.db.entity.TagEntity
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlinx.coroutines.flow.Flow
+import timber.log.Timber
+
+/**
+ * Cache-first, offline-first recipe access - see AGENTS.md's architecture section. Every read is a
+ * [Flow] straight from Room; [refreshRecipes]/[refreshRecipeDetail] are best-effort background
+ * refreshes that upsert into Room on success and are silently logged (never thrown, never wipe the
+ * existing cache) on failure. `CategoryRepository`/`TagRepository` mirror this same shape.
+ */
+@Singleton
+class RecipeRepository
+@Inject
+constructor(
+    private val recipesApi: RecipesApi,
+    private val recipeDao: RecipeDao,
+    private val database: AppDatabase,
+) {
+
+    fun observeRecipes(): Flow<List<RecipeSummaryEntity>> = recipeDao.observeAll()
+
+    fun observeRecipesByCategory(categoryId: String): Flow<List<RecipeSummaryEntity>> =
+        recipeDao.observeByCategory(categoryId)
+
+    fun observeRecipesByTag(tagId: String): Flow<List<RecipeSummaryEntity>> =
+        recipeDao.observeByTag(tagId)
+
+    /** The full recipe, decoded lazily by the caller - see [RecipeDetailEntity]'s kdoc. */
+    fun observeRecipeDetail(recipeId: String): Flow<RecipeDetailEntity?> =
+        recipeDao.observeDetail(recipeId)
+
+    /**
+     * Fetches every page of `/api/recipes` and replaces the cached list + category/tag associations
+     * in one transaction. A failure leaves whatever was cached before completely untouched -
+     * callers should treat this as "refresh attempted", not "recipes are now guaranteed fresh".
+     */
+    suspend fun refreshRecipes(): Result<Unit> =
+        runCatching {
+                val allItems = mutableListOf<RecipeSummaryDto>()
+                var page = 1
+                while (true) {
+                    val response =
+                        recipesApi.getRecipes(page = page, perPage = RecipesApi.DEFAULT_PAGE_SIZE)
+                    allItems += response.items
+                    if (response.items.isEmpty() || page >= response.totalPages) break
+                    page++
+                }
+
+                val categories = mutableMapOf<String, CategoryEntity>()
+                val tags = mutableMapOf<String, TagEntity>()
+                val categoryRefs = mutableListOf<RecipeCategoryCrossRef>()
+                val tagRefs = mutableListOf<RecipeTagCrossRef>()
+                val recipes = allItems.map { dto ->
+                    dto.recipeCategory.forEach { category ->
+                        categories[category.id] = category.toCategoryEntity()
+                        categoryRefs +=
+                            RecipeCategoryCrossRef(recipeId = dto.id, categoryId = category.id)
+                    }
+                    dto.tags.forEach { tag ->
+                        tags[tag.id] = tag.toTagEntity()
+                        tagRefs += RecipeTagCrossRef(recipeId = dto.id, tagId = tag.id)
+                    }
+                    dto.toEntity()
+                }
+
+                database.withTransaction {
+                    recipeDao.deleteAll()
+                    recipeDao.deleteAllCategoryCrossRefs()
+                    recipeDao.deleteAllTagCrossRefs()
+                    // Non-destructive: unlike the recipe list itself, the category/tag dictionaries
+                    // are
+                    // authoritatively refreshed by CategoryRepository/TagRepository - upsert here
+                    // only so
+                    // a name/slug embedded in this response is never stale, without racing a delete
+                    // of a
+                    // category that has no recipes (and thus never shows up in this loop) out from
+                    // under
+                    // CategoryRepository's own refresh.
+                    if (categories.isNotEmpty())
+                        database.categoryDao().upsertAll(categories.values.toList())
+                    if (tags.isNotEmpty()) database.tagDao().upsertAll(tags.values.toList())
+                    recipeDao.upsertAll(recipes)
+                    if (categoryRefs.isNotEmpty()) recipeDao.insertCategoryCrossRefs(categoryRefs)
+                    if (tagRefs.isNotEmpty()) recipeDao.insertTagCrossRefs(tagRefs)
+                }
+            }
+            .onFailure { Timber.w(it, "Recipe list refresh failed; keeping cached data") }
+
+    /** Fetches one recipe's full detail and caches its raw JSON - see [RecipeDetailEntity]. */
+    suspend fun refreshRecipeDetail(recipeId: String, slug: String): Result<Unit> =
+        runCatching {
+                val body = recipesApi.getRecipeDetailRaw(slug).string()
+                recipeDao.upsertDetail(
+                    RecipeDetailEntity(
+                        id = recipeId,
+                        slug = slug,
+                        detailJson = body,
+                        fetchedAt = System.currentTimeMillis(),
+                    )
+                )
+            }
+            .onFailure {
+                Timber.w(it, "Recipe detail refresh failed for '$slug'; keeping cached data")
+            }
+
+    private fun OrganizerDto.toCategoryEntity() = CategoryEntity(id = id, name = name, slug = slug)
+
+    private fun RecipeSummaryDto.toEntity() =
+        RecipeSummaryEntity(
+            id = id,
+            slug = slug,
+            name = name,
+            description = description.orEmpty(),
+            image = image,
+            rating = rating,
+            prepTime = prepTime,
+            totalTime = totalTime,
+            dateAdded = dateAdded,
+            lastMade = lastMade,
+        )
+}
+
+private fun OrganizerDto.toTagEntity() = TagEntity(id = id, name = name, slug = slug)

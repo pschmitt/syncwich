@@ -1,0 +1,22 @@
+package dev.pschmitt.syncwich.data.repository
+
+import dev.pschmitt.syncwich.data.db.AppDatabase
+import dev.pschmitt.syncwich.data.settings.SettingsRepository
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/**
+ * Signs the user out: wipes the stored server URL/API token and the offline recipe cache together,
+ * so switching to (or re-onboarding) a different Mealie server never shows stale data cached from
+ * the previous one.
+ */
+@Singleton
+class AccountRepository
+@Inject
+constructor(private val settingsRepository: SettingsRepository, private val database: AppDatabase) {
+
+    suspend fun signOut() {
+        settingsRepository.clear()
+        database.clearAllTables()
+    }
+}

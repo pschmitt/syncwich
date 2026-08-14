@@ -4,11 +4,14 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- Periodic full-cache sync runs as a WorkManager foreground service while backgrounded. -->
+    <!-- Provisioned for a future foreground-service promotion of the periodic sync worker
+         (SyncWorker currently runs as a plain, comparatively quick WorkManager job - list +
+         category/tag refresh, not a bulk recipe-detail download - so it doesn't call
+         setForeground() yet). Kept declared so that doesn't require another manifest change. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-    <!-- API 33+ runtime permission, requested at first launch, needed to post the background-
-         sync-failure notification. Sync itself never depends on this being granted. -->
+    <!-- API 33+ runtime permission for the same not-yet-built sync notification. Nothing in the
+         app requests it yet; sync never depends on it being granted. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
@@ -40,10 +43,19 @@
             </intent-filter>
         </activity>
 
-        <!-- TODO(SW-2): once the WorkManager sync worker lands, disable ContentProvider auto-init
-             here and initialize WorkManager manually in SyncwichApp (Configuration.Provider) with
-             a Hilt-injected HiltWorkerFactory - same pattern as the sibling nyetbox app. Left as
-             plain auto-init for now since nothing uses WorkManager yet. -->
+        <!-- WorkManager is initialized manually in SyncwichApp (Configuration.Provider) so Hilt
+             can inject HiltWorkerFactory into it - disable the default ContentProvider-based
+             auto-init to avoid double initialization. -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
     </application>
 
 </manifest>
