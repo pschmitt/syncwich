@@ -35,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -45,6 +46,7 @@ import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
 import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
 import dev.pschmitt.syncwich.ui.common.SearchField
+import dev.pschmitt.syncwich.ui.common.highlightedSearchText
 import dev.pschmitt.syncwich.ui.common.NavigationTitle
 import dev.pschmitt.syncwich.ui.navigation.TopLevelDestination
 
@@ -133,6 +135,7 @@ fun CookbooksScreen(
                                     cookbook = cookbook,
                                     recipes = recipePreviews[cookbook.id].orEmpty(),
                                     serverUrl = viewModel.serverUrl,
+                                    searchQuery = searchQuery,
                                     onClick = { onCookbookClick(cookbook.id) },
                                 )
                             }
@@ -149,6 +152,7 @@ private fun CookbookCard(
     cookbook: CookbookEntity,
     recipes: List<RecipeSummaryEntity>,
     serverUrl: String,
+    searchQuery: String,
     onClick: () -> Unit,
 ) {
     val previewRecipes = cookbookPreviewRecipes(recipes, serverUrl)
@@ -169,7 +173,15 @@ private fun CookbookCard(
                 )
             }
             Text(
-                text = cookbook.name,
+                text =
+                    highlightedSearchText(
+                        cookbook.name,
+                        searchQuery,
+                        SpanStyle(
+                            background = MaterialTheme.colorScheme.tertiaryContainer,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        ),
+                    ),
                 style = MaterialTheme.typography.titleMedium,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -177,7 +189,15 @@ private fun CookbookCard(
             )
             if (cookbook.description.isNotBlank()) {
                 Text(
-                    text = cookbook.description,
+                    text =
+                        highlightedSearchText(
+                            cookbook.description,
+                            searchQuery,
+                            SpanStyle(
+                                background = MaterialTheme.colorScheme.tertiaryContainer,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                            ),
+                        ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,

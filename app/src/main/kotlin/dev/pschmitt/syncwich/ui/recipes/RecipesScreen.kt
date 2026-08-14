@@ -1,6 +1,7 @@
 package dev.pschmitt.syncwich.ui.recipes
 
 import androidx.compose.foundation.background
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,14 +32,20 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -48,6 +55,7 @@ import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
 import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
 import dev.pschmitt.syncwich.ui.common.SearchField
+import dev.pschmitt.syncwich.ui.common.highlightedSearchText
 import dev.pschmitt.syncwich.ui.common.NavigationTitle
 import dev.pschmitt.syncwich.ui.navigation.TopLevelDestination
 
@@ -58,9 +66,15 @@ fun RecipesScreen(
     modifier: Modifier = Modifier,
     onCreateClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
+    initialTagId: String? = null,
     viewModel: RecipesViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var tagsExpanded by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(initialTagId) {
+        initialTagId?.let(viewModel::selectTag)
+    }
 
     Scaffold(
         modifier = modifier,
@@ -105,11 +119,11 @@ fun RecipesScreen(
                     )
                 }
                 if (uiState.tags.isNotEmpty()) {
-                    FilterChipRow(
-                        entries = uiState.tags,
-                        key = { it.id },
-                        label = { it.name },
-                        selectedId = uiState.selectedTagId,
+                    TagFilterSection(
+                        tags = uiState.tags,
+                        selectedTagId = uiState.selectedTagId,
+                        expanded = tagsExpanded,
+                        onExpandedChange = { tagsExpanded = it },
                         onSelected = viewModel::onTagSelected,
                     )
                 }
@@ -153,6 +167,7 @@ fun RecipesScreen(
                             RecipeCard(
                                 recipe = recipe,
                                 serverUrl = uiState.serverUrl,
+                                searchQuery = uiState.searchQuery,
                                 onClick = { onRecipeClick(recipe) },
                             )
                         }
@@ -162,6 +177,58 @@ fun RecipesScreen(
         }
     }
 }
+
+@Composable
+internal fun TagFilterSection(
+    tags: List<dev.pschmitt.syncwich.data.db.entity.TagEntity>,
+    selectedTagId: String?,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    onSelected: (String) -> Unit,
+) {
+    val selectedTag = tags.firstOrNull { it.id == selectedTagId }
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = if (selectedTag == null) "Tags" else "Tag: ${selectedTag.name}",
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.weight(1f),
+        )
+        TextButton(onClick = { onExpandedChange(!expanded) }) {
+            Text(tagFilterToggleLabel(expanded, tags.size))
+        }
+    }
+    AnimatedVisibility(visible = expanded) {
+        FilterChipRow(
+            entries = tags,
+            key = { it.id },
+            label = { it.name },
+            selectedId = selectedTagId,
+            onSelected = onSelected,
+        )
+    }
+    AnimatedVisibility(visible = !expanded && selectedTag != null) {
+        selectedTag?.let { tag ->
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 2.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                item {
+                    FilterChip(
+                        selected = true,
+                        onClick = { onSelected(tag.id) },
+                        label = { Text(tag.name) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+internal fun tagFilterToggleLabel(expanded: Boolean, count: Int): String =
+    if (expanded) "Hide tags" else "Show tags ($count)"
 
 @Composable
 private fun <T> FilterChipRow(
@@ -188,7 +255,12 @@ private fun <T> FilterChipRow(
 }
 
 @Composable
-internal fun RecipeCard(recipe: RecipeSummaryEntity, serverUrl: String, onClick: () -> Unit) {
+internal fun RecipeCard(
+    recipe: RecipeSummaryEntity,
+    serverUrl: String,
+    searchQuery: String = "",
+    onClick: () -> Unit,
+) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -220,7 +292,15 @@ internal fun RecipeCard(recipe: RecipeSummaryEntity, serverUrl: String, onClick:
             }
             Column(modifier = Modifier.padding(12.dp)) {
                 Text(
-                    text = recipe.name,
+                    text =
+                        highlightedSearchText(
+                            recipe.name,
+                            searchQuery,
+                            SpanStyle(
+                                background = MaterialTheme.colorScheme.tertiaryContainer,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                            ),
+                        ),
                     style = MaterialTheme.typography.titleSmall,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,

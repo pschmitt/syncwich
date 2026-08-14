@@ -1,6 +1,7 @@
 package dev.pschmitt.syncwich.ui.theme
 
 import androidx.compose.material3.Typography
+import androidx.compose.ui.text.font.FontWeight
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -32,5 +33,11 @@ class ThemeTypographyTest {
                 assertEquals(before.fontSize.value * 1.2f, after.fontSize.value, 0.001f)
                 assertEquals(before.lineHeight.value * 1.2f, after.lineHeight.value, 0.001f)
             }
+    }
+
+    @Test
+    fun `expressive typography gives headings a stronger hierarchy`() {
+        assertEquals(FontWeight.Bold, ExpressiveTypography.displayLarge.fontWeight)
+        assertEquals(FontWeight.SemiBold, ExpressiveTypography.titleMedium.fontWeight)
     }
 }

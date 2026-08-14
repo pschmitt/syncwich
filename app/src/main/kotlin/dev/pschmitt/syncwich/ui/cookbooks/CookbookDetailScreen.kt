@@ -169,6 +169,24 @@ fun CookbookDetailScreen(
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
+                        if (currentCookbook.description.isNotBlank()) {
+                            item {
+                                Card(modifier = Modifier.fillMaxWidth()) {
+                                    Column(modifier = Modifier.padding(16.dp)) {
+                                        Text(
+                                            text = "About this cookbook",
+                                            style = MaterialTheme.typography.titleMedium,
+                                        )
+                                        Text(
+                                            text = currentCookbook.description,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.padding(top = 6.dp),
+                                        )
+                                    }
+                                }
+                            }
+                        }
                         items(recipes, key = { it.id }) { recipe ->
                             CookbookRecipeRow(
                                 recipe = recipe,

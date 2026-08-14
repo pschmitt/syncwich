@@ -7,9 +7,11 @@ import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.pschmitt.syncwich.data.api.dto.RecipeDetailDto
 import dev.pschmitt.syncwich.data.api.recipeImageUrl
+import dev.pschmitt.syncwich.data.db.entity.CookbookEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeActionEntity
 import dev.pschmitt.syncwich.data.image.RecipeImageReference
 import dev.pschmitt.syncwich.data.image.extractRecipeImageReferences
+import dev.pschmitt.syncwich.data.repository.CookbookRepository
 import dev.pschmitt.syncwich.data.repository.RecipeActionRepository
 import dev.pschmitt.syncwich.data.repository.RecipeRepository
 import dev.pschmitt.syncwich.data.repository.RecipeStepProgressRepository
@@ -47,6 +49,7 @@ sealed interface RecipeDetailUiState {
         val serverUrl: String,
         val imageIndex: RecipeImageIndex = RecipeImageIndex.EMPTY,
         val actions: RecipeActionUiState = RecipeActionUiState(),
+        val cookbooks: List<CookbookEntity> = emptyList(),
         val completedStepIndexes: Set<Int> = emptySet(),
         val ingredientChecklistEnabled: Boolean = false,
         val refreshError: String? = null,
@@ -105,6 +108,7 @@ constructor(
     private val recipeActionRepository: RecipeActionRepository,
     private val recipeTimelineRepository: RecipeTimelineRepository,
     private val stepProgressRepository: RecipeStepProgressRepository,
+    private val cookbookRepository: CookbookRepository,
     settingsRepository: SettingsRepository,
     private val json: Json,
 ) : ViewModel() {
@@ -163,6 +167,12 @@ constructor(
             else stepProgressRepository.observeCompleted(recipeId)
         }
 
+    private val cookbooks =
+        effectiveRecipeId.flatMapLatest { recipeId ->
+            if (recipeId.isBlank()) flowOf(emptyList())
+            else cookbookRepository.observeCookbooksForRecipe(recipeId)
+        }
+
     private val actions: Flow<RecipeActionUiState> =
         effectiveRecipeId
             .flatMapLatest { recipeId ->
@@ -175,20 +185,23 @@ constructor(
             }
             .distinctUntilChanged()
 
+    private val presentationSettings = combine(ingredientChecklistEnabled, cookbooks, ::Pair)
+
     val uiState: StateFlow<RecipeDetailUiState> =
         combine(
                 recipePresentation,
                 actions,
                 completedStepIndexes,
                 refreshState,
-                ingredientChecklistEnabled,
-            ) { presentation, recipeActions, completedSteps, refresh, checklistEnabled ->
+                presentationSettings,
+            ) { presentation, recipeActions, completedSteps, refresh, (checklistEnabled, books) ->
                 recipeDetailUiState(
                     recipe = presentation?.recipe,
                     actions = recipeActions,
                     serverUrl = presentation?.serverUrl.orEmpty(),
                     refresh = refresh,
                     imageIndex = presentation?.imageIndex,
+                    cookbooks = books,
                     completedStepIndexes = completedSteps,
                     ingredientChecklistEnabled = checklistEnabled,
                 )
@@ -290,6 +303,7 @@ internal fun recipeDetailUiState(
     serverUrl: String,
     refresh: RefreshState,
     imageIndex: RecipeImageIndex? = null,
+    cookbooks: List<CookbookEntity> = emptyList(),
     completedStepIndexes: Set<Int> = emptySet(),
     ingredientChecklistEnabled: Boolean = false,
 ): RecipeDetailUiState =
@@ -300,6 +314,7 @@ internal fun recipeDetailUiState(
                 serverUrl = serverUrl,
                 imageIndex = imageIndex ?: recipeImageIndex(serverUrl, recipe),
                 actions = actions,
+                cookbooks = cookbooks,
                 completedStepIndexes = completedStepIndexes,
                 ingredientChecklistEnabled = ingredientChecklistEnabled,
                 refreshError = refresh.errorMessage,

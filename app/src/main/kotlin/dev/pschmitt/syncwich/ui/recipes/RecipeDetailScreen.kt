@@ -55,6 +55,8 @@ import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material.icons.filled.TextDecrease
 import androidx.compose.material.icons.filled.TextIncrease
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.AlertDialog
@@ -123,6 +125,7 @@ import dev.pschmitt.syncwich.data.api.dto.RecipeDetailDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeIngredientDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeInstructionDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeNutritionDto
+import dev.pschmitt.syncwich.data.db.entity.CookbookEntity
 import dev.pschmitt.syncwich.data.image.RecipeImageReference
 import dev.pschmitt.syncwich.data.image.isSafeRecipeImageUrl
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
@@ -134,6 +137,8 @@ import kotlinx.coroutines.launch
 fun RecipeDetailScreen(
     onBack: () -> Unit,
     onOpenTimeline: (String) -> Unit,
+    onOpenCookbook: (String) -> Unit = {},
+    onOpenTag: (String) -> Unit = {},
     modifier: Modifier = Modifier,
     onEditClick: (recipeId: String, slug: String) -> Unit = { _, _ -> },
     onDeleted: () -> Unit = {},
@@ -253,9 +258,12 @@ fun RecipeDetailScreen(
                             imageIndex = state.imageIndex,
                             actions = state.actions,
                             completedStepIndexes = state.completedStepIndexes,
+                            cookbooks = state.cookbooks,
                             ingredientChecklistEnabled = state.ingredientChecklistEnabled,
                             onRatingSelected = viewModel::setRating,
                             onStepCompleted = viewModel::setStepCompleted,
+                            onOpenCookbook = onOpenCookbook,
+                            onOpenTag = onOpenTag,
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
@@ -357,10 +365,13 @@ private fun RecipeDetailContent(
     recipe: RecipeDetailDto,
     imageIndex: RecipeImageIndex,
     actions: RecipeActionUiState,
+    cookbooks: List<CookbookEntity>,
     completedStepIndexes: Set<Int>,
     ingredientChecklistEnabled: Boolean,
     onRatingSelected: (Int) -> Unit,
     onStepCompleted: (Int, Boolean) -> Unit,
+    onOpenCookbook: (String) -> Unit,
+    onOpenTag: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val imageUrl = imageIndex.coverUrl
@@ -392,92 +403,145 @@ private fun RecipeDetailContent(
             }
         }
 
-        item {
-            RecipeActionControls(
-                actions = actions,
-                globalRating = recipe.rating,
-                onRatingSelected = onRatingSelected,
-            )
+        if (recipe.tags.isNotEmpty() || cookbooks.isNotEmpty()) {
+            item {
+                RecipeMetadataCard(
+                    tags = recipe.tags,
+                    cookbooks = cookbooks,
+                    onOpenTag = onOpenTag,
+                    onOpenCookbook = onOpenCookbook,
+                )
+            }
         }
 
         item {
-            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                val times =
-                    listOfNotNull(
-                        recipe.prepTime?.let { "Prep" to it },
-                        recipe.cookTime?.let { "Cook" to it },
-                        recipe.performTime?.let { "Active" to it },
-                        recipe.totalTime?.let { "Total" to it },
-                    )
-                if (times.isNotEmpty()) {
-                    Column(modifier = Modifier.padding(top = 12.dp)) {
-                        times.forEach { (label, value) ->
-                            LabeledRow(icon = Icons.Filled.Schedule, label = label, value = value)
+            Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        val times =
+                            listOfNotNull(
+                                recipe.prepTime?.let { "Prep" to it },
+                                recipe.cookTime?.let { "Cook" to it },
+                                recipe.performTime?.let { "Active" to it },
+                                recipe.totalTime?.let { "Total" to it },
+                            )
+                        if (times.isNotEmpty()) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                times.forEach { (label, value) ->
+                                    LabeledRow(
+                                        icon = Icons.Filled.Schedule,
+                                        label = label,
+                                        value = value,
+                                    )
+                                }
+                            }
                         }
+                        RecipeActionControls(
+                            actions = actions,
+                            globalRating = recipe.rating,
+                            onRatingSelected = onRatingSelected,
+                            compact = true,
+                            modifier = Modifier.weight(0.82f),
+                        )
                     }
-                }
 
-                if (!recipe.description.isNullOrBlank()) {
-                    Markdown(
-                        content = recipe.description,
-                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                    )
+                    if (!recipe.description.isNullOrBlank()) {
+                        Markdown(
+                            content = recipe.description,
+                            modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                        )
+                    }
                 }
             }
         }
 
         if (recipe.recipeIngredient.isNotEmpty()) {
-            item { SectionHeader(icon = Icons.Filled.Checklist, title = "Ingredients") }
-            items(recipe.recipeIngredient) { ingredient ->
-                IngredientRow(ingredient, checklistEnabled = ingredientChecklistEnabled)
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Column {
+                        SectionHeader(icon = Icons.Filled.Checklist, title = "Ingredients")
+                        recipe.recipeIngredient.forEach { ingredient ->
+                            IngredientRow(ingredient, checklistEnabled = ingredientChecklistEnabled)
+                        }
+                    }
+                }
             }
         }
 
         if (recipe.recipeInstructions.isNotEmpty()) {
             item {
-                SectionHeader(
-                    icon = Icons.AutoMirrored.Filled.ListAlt,
-                    title = "Steps",
-                    action = {
-                        IconButton(onClick = { stepsFullScreen = true }) {
-                            Icon(
-                                Icons.Filled.Fullscreen,
-                                contentDescription = "Open steps full screen",
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Column {
+                        SectionHeader(
+                            icon = Icons.AutoMirrored.Filled.ListAlt,
+                            title = "Steps",
+                            action = {
+                                IconButton(onClick = { stepsFullScreen = true }) {
+                                    Icon(
+                                        Icons.Filled.Fullscreen,
+                                        contentDescription = "Open steps full screen",
+                                    )
+                                }
+                            },
+                        )
+                        recipe.recipeInstructions.forEachIndexed { index, instruction ->
+                            InstructionRow(
+                                number = index + 1,
+                                completed = index in completedStepIndexes,
+                                instruction = instruction,
+                                imageReferences =
+                                    imageIndex.instructionReferences.getOrNull(index).orEmpty(),
+                                onCompletedChange = { onStepCompleted(index, it) },
+                                onImageClick = {
+                                    viewerPage =
+                                        viewerImages
+                                            .indexOfFirst { image -> image.url == it }
+                                            .coerceAtLeast(0)
+                                },
                             )
                         }
-                    },
-                )
-            }
-            itemsIndexed(recipe.recipeInstructions) { index, instruction ->
-                InstructionRow(
-                    number = index + 1,
-                    completed = index in completedStepIndexes,
-                    instruction = instruction,
-                    imageReferences = imageIndex.instructionReferences.getOrNull(index).orEmpty(),
-                    onCompletedChange = { onStepCompleted(index, it) },
-                    onImageClick = {
-                        viewerPage = viewerImages.indexOfFirst { image -> image.url == it }.coerceAtLeast(0)
-                    },
-                )
+                    }
+                }
             }
         }
 
         if (recipe.nutrition != null && recipe.nutrition.hasAnyValue()) {
-            item { SectionHeader(icon = Icons.Filled.LocalFireDepartment, title = "Nutrition") }
-            item { NutritionSection(recipe.nutrition) }
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Column {
+                        SectionHeader(icon = Icons.Filled.LocalFireDepartment, title = "Nutrition")
+                        NutritionSection(recipe.nutrition)
+                    }
+                }
+            }
         }
 
         if (recipe.notes.isNotEmpty()) {
-            item { SectionHeader(icon = Icons.AutoMirrored.Filled.StickyNote2, title = "Notes") }
-            items(recipe.notes) { note ->
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
-                    if (!note.title.isNullOrBlank()) {
-                        Text(text = note.title, style = MaterialTheme.typography.titleSmall)
-                    }
-                    if (!note.text.isNullOrBlank()) {
-                        Text(text = note.text, style = MaterialTheme.typography.bodyMedium)
+                    Column {
+                        SectionHeader(icon = Icons.AutoMirrored.Filled.StickyNote2, title = "Notes")
+                        recipe.notes.forEach { note ->
+                            Column(
+                                modifier =
+                                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)
+                            ) {
+                                if (!note.title.isNullOrBlank()) {
+                                    Text(text = note.title, style = MaterialTheme.typography.titleSmall)
+                                }
+                                if (!note.text.isNullOrBlank()) {
+                                    Text(text = note.text, style = MaterialTheme.typography.bodyMedium)
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -505,15 +569,63 @@ private fun RecipeDetailContent(
 }
 
 @Composable
+internal fun RecipeMetadataCard(
+    tags: List<dev.pschmitt.syncwich.data.api.dto.OrganizerDto>,
+    cookbooks: List<CookbookEntity>,
+    onOpenTag: (String) -> Unit,
+    onOpenCookbook: (String) -> Unit,
+) {
+    Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("Recipe details", style = MaterialTheme.typography.titleMedium)
+            if (tags.isNotEmpty()) {
+                Text("Tags", style = MaterialTheme.typography.labelLarge)
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    tags.forEach { tag ->
+                        AssistChip(
+                            onClick = { onOpenTag(tag.id) },
+                            label = { Text(tag.name) },
+                        )
+                    }
+                }
+            }
+            if (cookbooks.isNotEmpty()) {
+                Text("Cookbooks", style = MaterialTheme.typography.labelLarge)
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    cookbooks.forEach { cookbook ->
+                        AssistChip(
+                            onClick = { onOpenCookbook(cookbook.id) },
+                            label = { Text(cookbook.name) },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 internal fun RecipeActionControls(
     actions: RecipeActionUiState,
     globalRating: Double? = null,
     onRatingSelected: (Int) -> Unit,
+    compact: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     var ratingDialogVisible by rememberSaveable { mutableStateOf(false) }
 
-    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+    Column(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = if (compact) 4.dp else 16.dp, vertical = 8.dp)
+    ) {
         Row(
             modifier =
                 Modifier.fillMaxWidth()

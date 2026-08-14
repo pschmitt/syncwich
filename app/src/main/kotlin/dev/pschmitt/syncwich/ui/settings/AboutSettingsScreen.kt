@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Code
@@ -36,6 +37,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import dev.pschmitt.syncwich.BuildConfig
@@ -45,6 +47,28 @@ private const val REPOSITORY_URL = "https://github.com/pschmitt/syncwich"
 private const val SPONSORS_URL = "https://github.com/sponsors/pschmitt"
 private const val PRIVACY_URL = "https://github.com/pschmitt/syncwich/blob/main/PRIVACY.md"
 private const val LICENSE_URL = "https://github.com/pschmitt/syncwich/blob/main/LICENSE"
+
+private data class Library(val name: String, val license: String)
+
+// Keep this list in sync with the libraries used by the app's runtime dependencies.
+private val LIBRARIES =
+    listOf(
+        Library("AndroidX", "Apache License 2.0"),
+        Library("Jetpack Compose", "Apache License 2.0"),
+        Library("Material 3", "Apache License 2.0"),
+        Library("Coil", "Apache License 2.0"),
+        Library("Hilt", "Apache License 2.0"),
+        Library("Kotlin", "Apache License 2.0"),
+        Library("kotlinx.coroutines", "Apache License 2.0"),
+        Library("kotlinx.datetime", "Apache License 2.0"),
+        Library("kotlinx.serialization", "Apache License 2.0"),
+        Library("Multiplatform Markdown Renderer", "Apache License 2.0"),
+        Library("OkHttp", "Apache License 2.0"),
+        Library("Retrofit", "Apache License 2.0"),
+        Library("Room", "Apache License 2.0"),
+        Library("WorkManager", "Apache License 2.0"),
+        Library("Timber", "Apache License 2.0"),
+    )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,7 +88,7 @@ fun AboutSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         },
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(innerPadding),
+            modifier = Modifier.fillMaxSize().padding(innerPadding).testTag("about-settings-list"),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -94,6 +118,11 @@ fun AboutSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         icon = Icons.Filled.DateRange,
                         title = "Build date",
                         subtitle = BuildConfig.BUILD_DATE,
+                    )
+                    AboutInfoRow(
+                        icon = Icons.Filled.Apps,
+                        title = "Build type",
+                        subtitle = aboutBuildTypeLabel(BuildConfig.DEBUG),
                     )
                 }
             }
@@ -126,9 +155,26 @@ fun AboutSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     )
                 }
             }
+            item {
+                SettingsGroupCard(
+                    title = "Libraries",
+                    icon = Icons.AutoMirrored.Filled.LibraryBooks,
+                ) {
+                    LIBRARIES.forEach { library ->
+                        AboutInfoRow(
+                            icon = Icons.AutoMirrored.Filled.LibraryBooks,
+                            title = library.name,
+                            subtitle = library.license,
+                        )
+                    }
+                }
+            }
         }
     }
 }
+
+internal fun aboutBuildTypeLabel(isDebug: Boolean): String =
+    if (isDebug) "Debug build" else "Release build"
 
 @Composable
 private fun AboutInfoRow(

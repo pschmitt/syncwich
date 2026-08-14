@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import okhttp3.ResponseBody
@@ -286,6 +287,8 @@ class CookbookRepositoryTest {
         override fun observeBySlug(slug: String): Flow<CookbookEntity?> = state.map { list ->
             list.find { it.slug == slug }
         }
+
+        override fun observeByRecipe(recipeId: String): Flow<List<CookbookEntity>> = flowOf(emptyList())
 
         override suspend fun upsertAll(cookbooks: List<CookbookEntity>) {
             val byId = state.value.associateBy { it.id }.toMutableMap()

@@ -1415,54 +1415,109 @@ checks, Android-test compilation, and the verified Zenfone build pass.
 
 ## SW-75: Add a Libraries section to About
 
-- [ ] Add a Libraries section to the About page
-- [ ] Display the used libraries and their license information
-- [ ] Prefer a dynamically generated list when the build tooling makes that practical
-- [ ] Add focused UI coverage and verify the section on the Zenfone 10
+- [x] Add a Libraries section to the About page
+- [x] Display the used libraries and their license information
+- [x] Prefer a dynamically generated list when the build tooling makes that practical
+- [x] Add focused UI coverage and verify the section on the Zenfone 10
 
-Status: not started, 2026-08-14.
+Status: **done**, 2026-08-14. About now contains a maintained offline library/license list;
+dynamic dependency extraction was not practical for the current Android build. The About UI test
+and the focused ZF10 instrumentation run passed.
 
 ## SW-76: Add a server-credentials test action
 
-- [ ] Add a “Test credentials” button to Settings → Server
-- [ ] Show the authenticated user when the check succeeds
-- [ ] Show a clear error message when the check fails
-- [ ] Add focused UI/state coverage and verify it on the Zenfone 10
+- [x] Add a “Test credentials” button to Settings → Server
+- [x] Show the authenticated user when the check succeeds
+- [x] Show a clear error message when the check fails
+- [x] Add focused UI/state coverage and verify it on the Zenfone 10
 
-Status: not started, 2026-08-14.
+Status: **done**, 2026-08-14. Settings now verifies `/api/users/self`, reports the current user or
+a useful network/HTTP error, and keeps the result transient and offline-safe. State/display unit
+coverage passed; remote checks and the installed ZF10 build are green.
 
 ## SW-77: Improve the recipes-list tag filter UX
 
-- [ ] Make the tag filter section collapsible or otherwise substantially more compact
-- [ ] Preserve access to all tags without letting the filter area dominate the sticky header
-- [ ] Keep the selected tag and search/filter state clear and accessible
-- [ ] Add focused UI coverage and verify the recipes list on the Zenfone 10
+- [x] Make the tag filter section collapsible or otherwise substantially more compact
+- [x] Preserve access to all tags without letting the filter area dominate the sticky header
+- [x] Keep the selected tag and search/filter state clear and accessible
+- [x] Add focused UI coverage and verify the recipes list on the Zenfone 10
 
-Status: not started, 2026-08-14.
+Status: **done**, 2026-08-14. Tags are collapsed by default, retain a selected-chip summary, and
+expand with animated access to every tag. Focused tag-filter instrumentation passed on ZF10.
 
 ## SW-78: Add clickable recipe metadata
 
-- [ ] Show recipe metadata such as tags and cookbook membership on the recipe view
-- [ ] Make cookbook metadata open the corresponding cookbook
-- [ ] Make tags open the recipes list filtered to the selected tag
-- [ ] Add focused navigation/UI coverage and verify it on the Zenfone 10
+- [x] Show recipe metadata such as tags and cookbook membership on the recipe view
+- [x] Make cookbook metadata open the corresponding cookbook
+- [x] Make tags open the recipes list filtered to the selected tag
+- [x] Add focused navigation/UI coverage and verify it on the Zenfone 10
 
-Status: not started, 2026-08-14.
+Status: **done**, 2026-08-14. Cached cookbook membership is joined from Room, tags and cookbooks
+render as accessible chips, and each navigates to its corresponding destination. Metadata
+instrumentation passed on ZF10.
 
 ## SW-79: Use cards in recipe and cookbook views
 
-- [ ] Identify the recipe and cookbook detail groups that benefit from Material 3 cards
-- [ ] Apply a consistent card-based layout without hiding or duplicating content
-- [ ] Preserve existing actions, image interactions, and offline-first behavior
-- [ ] Add focused UI coverage and verify the detail views on the Zenfone 10
+- [x] Identify the recipe and cookbook detail groups that benefit from Material 3 cards
+- [x] Apply a consistent card-based layout without hiding or duplicating content
+- [x] Preserve existing actions, image interactions, and offline-first behavior
+- [x] Add focused UI coverage and verify the detail views on the Zenfone 10
 
-Status: not started, 2026-08-14.
+Status: **done**, 2026-08-14. Recipe timing/description, ingredients, steps, nutrition, and notes
+now use grouped cards; cookbook descriptions and recipe rows use the same card hierarchy. Existing
+action/image tests, focused metadata tests, remote checks, and ZF10 verification pass.
 
 ## SW-80: Apply Material 3 Expressive design
 
-- [ ] Audit the app against the Material 3 Expressive guidance
-- [ ] Refresh color, typography, shapes, components, motion, and layout hierarchy where useful
-- [ ] Preserve accessibility, offline-first behavior, and existing task flows during the overhaul
-- [ ] Add focused UI coverage and verify the redesigned app on the Zenfone 10
+- [x] Audit the app against the Material 3 Expressive guidance
+- [x] Refresh color, typography, shapes, components, motion, and layout hierarchy where useful
+- [x] Preserve accessibility, offline-first behavior, and existing task flows during the overhaul
+- [x] Add focused UI coverage and verify the redesigned app on the Zenfone 10
 
-Status: not started, 2026-08-14.
+Status: **done**, 2026-08-14. The fallback palette, surface hierarchy, typography weights, varied
+shape scale, animated filter expansion, adaptive grids, carousels, and card layouts now follow the
+Expressive direction while dynamic colors and existing offline flows remain intact. Theme tests,
+remote lint/unit checks, focused instrumentation, and ZF10 smoke verification pass.
+
+## SW-81: Make navbar destinations return to their list views
+
+- [x] Make the active top-level navbar button return from a detail view to its list view
+- [x] Apply the behavior consistently to cookbooks, recipes, and other nested destinations
+- [x] Keep the selected navbar destination visibly active after returning to the list
+- [x] Add focused navigation coverage and verify the behavior on the Zenfone 10
+
+Status: **done**, 2026-08-14. Parent route types keep nested recipe, cookbook, shopping, and
+settings destinations active; tapping the active navbar item returns to its list without adding a
+duplicate list destination. Navigation unit coverage and the ZF10 smoke test pass.
+
+## SW-82: Identify debug builds in About
+
+- [x] Show clearly when the installed app is a debug build
+- [x] Keep release builds free of the debug indicator
+- [x] Add focused About-page coverage and verify the display on the Zenfone 10
+
+Status: **done**, 2026-08-14. About displays “Debug build” only when `BuildConfig.DEBUG` is true,
+with a corresponding release label otherwise. Unit and About instrumentation coverage passed on
+ZF10.
+
+## SW-83: Move recipe rating into the timing row
+
+- [x] Place the compact recipe rating alongside prep/cook/total time metadata
+- [x] Reduce the recipe view's vertical footprint without losing rating access
+- [x] Preserve the personal-rating dialog and one-decimal formatting
+- [x] Add focused layout/action coverage and verify the recipe view on the Zenfone 10
+
+Status: **done**, 2026-08-14. The compact rating control now shares the timing/description card,
+retains its dialog and one-decimal global display, and keeps offline pending feedback. Existing
+rating instrumentation, remote checks, and ZF10 verification pass.
+
+## SW-84: Highlight search matches
+
+- [x] Highlight matching query text in recipe/global search results
+- [x] Preserve case-insensitive matching, filtering, and accessibility semantics
+- [x] Keep highlighting readable across light/dark and dynamic color themes
+- [x] Add focused search-rendering coverage and verify it on the Zenfone 10
+
+Status: **done**, 2026-08-14. Recipe and cookbook result titles/descriptions use accessible
+tertiary-container match spans with case-insensitive range coverage; search filtering remains
+cache-first. Unit coverage, remote checks, and the verified ZF10 build pass.

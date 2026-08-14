@@ -1,6 +1,7 @@
 package dev.pschmitt.syncwich.ui.recipes
 
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
+import dev.pschmitt.syncwich.ui.common.searchMatchRanges
 
 /**
  * In-memory name/description search over an already-loaded (category- or tag-filtered) recipe
@@ -18,3 +19,6 @@ fun filterRecipesByQuery(
             it.description.contains(query, ignoreCase = true)
     }
 }
+
+internal fun recipeSearchMatchRanges(text: String, query: String): List<IntRange> =
+    searchMatchRanges(text, query)

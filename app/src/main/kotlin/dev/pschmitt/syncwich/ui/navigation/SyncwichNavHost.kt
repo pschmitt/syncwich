@@ -54,6 +54,8 @@ internal fun shouldResetHomeStack(destination: TopLevelDestination): Boolean =
 
 internal fun shouldNavigateToHome(isAlreadyOnHome: Boolean): Boolean = !isAlreadyOnHome
 
+internal fun shouldNavigateToTopLevel(isAlreadyOnList: Boolean): Boolean = !isAlreadyOnList
+
 private val topLevelNavItems =
     listOf(
         TopLevelNavItem(TopLevelDestination.HOME, "Home"),
@@ -145,7 +147,9 @@ fun SyncwichNavHost(
                     resolvedTopLevelNavItems.forEach { item ->
                         val selected =
                             currentDestination?.hierarchy?.any {
-                                it.hasRoute(item.destination.route::class)
+                                item.destination.routeTypes.any { routeType ->
+                                    it.hasRoute(routeType)
+                                }
                             } == true
                         NavigationBarItem(
                             selected = selected,
@@ -165,6 +169,12 @@ fun SyncwichNavHost(
                                         restoreState = false
                                     }
                                 } else {
+                                    if (!shouldNavigateToTopLevel(
+                                            currentDestination?.hasRoute(item.destination.route::class) == true
+                                        )
+                                    ) {
+                                        return@NavigationBarItem
+                                    }
                                     navController.navigate(item.destination.route) {
                                         popUpTo(navController.graph.findStartDestination().id) {
                                             saveState = true
@@ -226,6 +236,15 @@ fun SyncwichNavHost(
             }
             composable<Route.Recipes> {
                 RecipesScreen(
+                    onRecipeClick = { recipe -> openRecipe(recipe.id, recipe.slug) },
+                    onCreateClick = { navController.navigate(Route.RecipeEditor()) },
+                    onSettingsClick = { navController.navigate(Route.Settings) },
+                )
+            }
+            composable<Route.TagRecipes> { backStackEntry ->
+                val route = backStackEntry.toRoute<Route.TagRecipes>()
+                RecipesScreen(
+                    initialTagId = route.tagId,
                     onRecipeClick = { recipe -> openRecipe(recipe.id, recipe.slug) },
                     onCreateClick = { navController.navigate(Route.RecipeEditor()) },
                     onSettingsClick = { navController.navigate(Route.Settings) },
@@ -312,6 +331,10 @@ fun SyncwichNavHost(
                         navController.navigate(Route.RecipeTimeline(recipeId))
                     },
                     onDeleted = { navController.popBackStack() },
+                    onOpenCookbook = { cookbookId ->
+                        navController.navigate(Route.CookbookDetail(cookbookId))
+                    },
+                    onOpenTag = { tagId -> navController.navigate(Route.TagRecipes(tagId)) },
                 )
             }
             composable<Route.RecipeEditor> {

@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.ui.graphics.vector.ImageVector
 import dev.pschmitt.syncwich.data.settings.NavigationBarItemKeys
 import kotlinx.serialization.Serializable
+import kotlin.reflect.KClass
 
 /** Type-safe Navigation Compose destinations (see MainActivity/SyncwichNavHost). */
 sealed interface Route {
@@ -21,6 +22,8 @@ sealed interface Route {
     @Serializable data object Home : Route
 
     @Serializable data object Recipes : Route
+
+    @Serializable data class TagRecipes(val tagId: String) : Route
 
     @Serializable data object Favorites : Route
 
@@ -65,27 +68,69 @@ enum class TopLevelDestination(
     val route: Route,
     val label: String,
     val icon: ImageVector,
+    val routeTypes: Set<KClass<out Route>>,
 ) {
-    HOME(NavigationBarItemKeys.HOME, Route.Home, "Home", Icons.Filled.Home),
-    RECIPES(NavigationBarItemKeys.RECIPES, Route.Recipes, "Recipes", Icons.Filled.Restaurant),
-    FAVORITES(NavigationBarItemKeys.FAVORITES, Route.Favorites, "Favorites", Icons.Filled.Favorite),
+    HOME(
+        NavigationBarItemKeys.HOME,
+        Route.Home,
+        "Home",
+        Icons.Filled.Home,
+        setOf(Route.Home::class),
+    ),
+    RECIPES(
+        NavigationBarItemKeys.RECIPES,
+        Route.Recipes,
+        "Recipes",
+        Icons.Filled.Restaurant,
+        setOf(
+            Route.Recipes::class,
+            Route.TagRecipes::class,
+            Route.RecipeDetail::class,
+            Route.RecipeEditor::class,
+            Route.RecipeTimeline::class,
+        ),
+    ),
+    FAVORITES(
+        NavigationBarItemKeys.FAVORITES,
+        Route.Favorites,
+        "Favorites",
+        Icons.Filled.Favorite,
+        setOf(Route.Favorites::class),
+    ),
     MEAL_PLAN(
         NavigationBarItemKeys.MEAL_PLAN,
         Route.MealPlan,
         "Meal Plan",
         Icons.Filled.CalendarMonth,
+        setOf(Route.MealPlan::class),
     ),
     SHOPPING_LISTS(
         NavigationBarItemKeys.SHOPPING_LISTS,
         Route.ShoppingLists,
         "Shopping",
         Icons.Filled.ShoppingCart,
+        setOf(Route.ShoppingLists::class, Route.ShoppingListDetail::class),
     ),
     COOKBOOKS(
         NavigationBarItemKeys.COOKBOOKS,
         Route.Cookbooks,
         "Cookbooks",
         Icons.AutoMirrored.Filled.MenuBook,
+        setOf(
+            Route.Cookbooks::class,
+            Route.CookbookDetail::class,
+            Route.CookbookEditor::class,
+        ),
     ),
-    SETTINGS(NavigationBarItemKeys.SETTINGS, Route.Settings, "Settings", Icons.Filled.Settings),
+    SETTINGS(
+        NavigationBarItemKeys.SETTINGS,
+        Route.Settings,
+        "Settings",
+        Icons.Filled.Settings,
+        setOf(
+            Route.Settings::class,
+            Route.SettingsCategory::class,
+            Route.SettingsConnection::class,
+        ),
+    ),
 }

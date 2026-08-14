@@ -3,6 +3,7 @@ package dev.pschmitt.syncwich.ui.theme
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -11,7 +12,10 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import dev.pschmitt.syncwich.data.settings.DEFAULT_FONT_SCALE
 import dev.pschmitt.syncwich.data.settings.ThemeMode
 import dev.pschmitt.syncwich.data.settings.sanitizeFontScale
@@ -22,6 +26,9 @@ internal val LightColors =
         secondary = SyncwichBasil40,
         tertiary = SyncwichSaffron40,
         error = SyncwichError40,
+        background = SyncwichLightBackground,
+        surface = SyncwichLightSurface,
+        surfaceContainer = SyncwichLightSurfaceContainer,
     )
 
 internal val DarkColors =
@@ -31,6 +38,29 @@ internal val DarkColors =
         secondary = SyncwichBasil80,
         tertiary = SyncwichSaffron80,
         error = SyncwichError80,
+        background = SyncwichDarkBackground,
+        surface = SyncwichDarkSurface,
+        surfaceContainer = SyncwichDarkSurfaceContainer,
+    )
+
+/** A deliberately varied shape scale: expressive cards are soft, while controls stay compact. */
+internal val ExpressiveShapes =
+    Shapes(
+        extraSmall = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
+        small = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
+        medium = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+        large = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+        extraLarge = androidx.compose.foundation.shape.RoundedCornerShape(36.dp),
+    )
+
+internal val ExpressiveTypography =
+    Typography().copy(
+        displayLarge = Typography().displayLarge.copy(fontWeight = FontWeight.Bold),
+        headlineLarge = Typography().headlineLarge.copy(fontWeight = FontWeight.Bold),
+        headlineMedium = Typography().headlineMedium.copy(fontWeight = FontWeight.SemiBold),
+        titleLarge = Typography().titleLarge.copy(fontWeight = FontWeight.SemiBold),
+        titleMedium = Typography().titleMedium.copy(fontWeight = FontWeight.SemiBold),
+        labelLarge = Typography().labelLarge.copy(letterSpacing = 0.1.sp),
     )
 
 /**
@@ -60,7 +90,8 @@ fun SyncwichTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography().scaled(sanitizeFontScale(fontScale)),
+        typography = ExpressiveTypography.scaled(sanitizeFontScale(fontScale)),
+        shapes = ExpressiveShapes,
         content = content,
     )
 }

@@ -8,6 +8,8 @@ import dev.pschmitt.syncwich.data.onboarding.OnboardingError
 import dev.pschmitt.syncwich.data.onboarding.OnboardingValidationException
 import dev.pschmitt.syncwich.data.onboarding.OnboardingValidator
 import dev.pschmitt.syncwich.data.onboarding.PasswordTokenMinter
+import dev.pschmitt.syncwich.data.api.UsersApi
+import dev.pschmitt.syncwich.data.api.dto.UserDto
 import dev.pschmitt.syncwich.data.repository.AccountRepository
 import dev.pschmitt.syncwich.data.settings.DEFAULT_FONT_SCALE
 import dev.pschmitt.syncwich.data.settings.DEFAULT_SYNC_ON_APP_START
@@ -23,6 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 
 sealed interface ConnectionUpdateState {
     data object Idle : ConnectionUpdateState
@@ -34,6 +37,16 @@ sealed interface ConnectionUpdateState {
     data class Error(val message: String) : ConnectionUpdateState
 }
 
+sealed interface CredentialsTestState {
+    data object Idle : CredentialsTestState
+
+    data object Testing : CredentialsTestState
+
+    data class Success(val userDisplayName: String) : CredentialsTestState
+
+    data class Error(val message: String) : CredentialsTestState
+}
+
 @HiltViewModel
 class SettingsViewModel
 @Inject
@@ -42,6 +55,7 @@ constructor(
     private val accountRepository: AccountRepository,
     private val validator: OnboardingValidator,
     private val passwordTokenMinter: PasswordTokenMinter,
+    private val usersApi: UsersApi,
     private val syncScheduler: SyncScheduler,
 ) : ViewModel() {
 
@@ -51,6 +65,9 @@ constructor(
         MutableStateFlow<ConnectionUpdateState>(ConnectionUpdateState.Idle)
     val connectionUpdateState: StateFlow<ConnectionUpdateState> =
         _connectionUpdateState.asStateFlow()
+
+    private val _credentialsTestState = MutableStateFlow<CredentialsTestState>(CredentialsTestState.Idle)
+    val credentialsTestState: StateFlow<CredentialsTestState> = _credentialsTestState.asStateFlow()
 
     private val _isSigningOut = MutableStateFlow(false)
     val isSigningOut: StateFlow<Boolean> = _isSigningOut.asStateFlow()
@@ -202,6 +219,21 @@ constructor(
         }
     }
 
+    fun testCredentials() {
+        if (_credentialsTestState.value is CredentialsTestState.Testing) return
+        _credentialsTestState.value = CredentialsTestState.Testing
+        viewModelScope.launch {
+            runCatching { usersApi.getSelf() }
+                .onSuccess { user ->
+                    _credentialsTestState.value =
+                        CredentialsTestState.Success(user.displayName())
+                }
+                .onFailure { error ->
+                    _credentialsTestState.value = CredentialsTestState.Error(error.toTestMessage())
+                }
+        }
+    }
+
     fun signOut(onSignedOut: () -> Unit) {
         if (_isSigningOut.value) return
         _isSigningOut.value = true
@@ -248,6 +280,13 @@ constructor(
             else -> message?.takeIf { it.isNotBlank() } ?: "Couldn't connect to that server."
         }
 
+    private fun Throwable.toTestMessage(): String =
+        when (this) {
+            is HttpException -> "The server rejected the saved credentials (HTTP ${code()})."
+            else ->
+                "Couldn't verify the saved credentials. Check the server connection and try again."
+        }
+
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
 
@@ -257,3 +296,6 @@ constructor(
         }
     }
 }
+
+internal fun UserDto.displayName(): String =
+    listOf(fullName, username, email, id).firstOrNull { !it.isNullOrBlank() } ?: "authenticated user"

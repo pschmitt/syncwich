@@ -12,5 +12,7 @@ class ThemeColorTest {
         assertEquals(launcherAccent, SyncwichTerracotta40)
         assertEquals(launcherAccent, LightColors.primary)
         assertEquals(SyncwichTerracotta80, DarkColors.primary)
+        assertEquals(SyncwichLightBackground, LightColors.background)
+        assertEquals(SyncwichDarkSurfaceContainer, DarkColors.surfaceContainer)
     }
 }

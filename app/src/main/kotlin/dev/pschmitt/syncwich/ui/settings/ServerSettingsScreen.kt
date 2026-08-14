@@ -11,6 +11,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.PersonSearch
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -44,6 +45,7 @@ fun ServerSettingsScreen(
 ) {
     val credentials by viewModel.credentials.collectAsStateWithLifecycle()
     val isSigningOut by viewModel.isSigningOut.collectAsStateWithLifecycle()
+    val credentialsTestState by viewModel.credentialsTestState.collectAsStateWithLifecycle()
     var showSignOutConfirmation by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -81,6 +83,20 @@ fun ServerSettingsScreen(
                         onClick = onChangeConnection,
                     )
                     SettingsActionRow(
+                        title =
+                            if (credentialsTestState is CredentialsTestState.Testing) {
+                                "Testing credentials…"
+                            } else {
+                                "Test credentials"
+                            },
+                        subtitle = credentialsTestSubtitle(credentialsTestState),
+                        onClick = viewModel::testCredentials,
+                        enabled = credentialsTestState !is CredentialsTestState.Testing,
+                        icon = {
+                            Icon(Icons.Filled.PersonSearch, contentDescription = null)
+                        },
+                    )
+                    SettingsActionRow(
                         title = if (isSigningOut) "Signing out…" else "Sign out",
                         subtitle = "Remove this connection and clear its offline cache",
                         onClick = { showSignOutConfirmation = true },
@@ -115,6 +131,15 @@ fun ServerSettingsScreen(
         )
     }
 }
+
+internal fun credentialsTestSubtitle(state: CredentialsTestState): String =
+    when (state) {
+        CredentialsTestState.Idle ->
+            "Verify the saved API token and show the current user"
+        CredentialsTestState.Testing -> "Contacting the Mealie server…"
+        is CredentialsTestState.Success -> "Signed in as ${state.userDisplayName}"
+        is CredentialsTestState.Error -> state.message
+    }
 
 @Composable
 private fun ConnectionDetailRow(credentials: MealieCredentials) {

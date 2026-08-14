@@ -18,4 +18,20 @@ class HomeNavigationTest {
         assertFalse(shouldNavigateToHome(isAlreadyOnHome = true))
         assertTrue(shouldNavigateToHome(isAlreadyOnHome = false))
     }
+
+    @Test
+    fun `top-level tap returns to the list from a detail destination`() {
+        assertTrue(shouldNavigateToTopLevel(isAlreadyOnList = false))
+        assertFalse(shouldNavigateToTopLevel(isAlreadyOnList = true))
+    }
+
+    @Test
+    fun `nested destinations keep their parent navigation item active`() {
+        assertTrue(
+            TopLevelDestination.COOKBOOKS.routeTypes.contains(Route.CookbookDetail::class)
+        )
+        assertTrue(TopLevelDestination.RECIPES.routeTypes.contains(Route.RecipeDetail::class))
+        assertTrue(TopLevelDestination.SHOPPING_LISTS.routeTypes.contains(Route.ShoppingListDetail::class))
+        assertTrue(TopLevelDestination.SETTINGS.routeTypes.contains(Route.SettingsCategory::class))
+    }
 }

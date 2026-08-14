@@ -55,6 +55,9 @@ constructor(
 
     fun observeCookbookBySlug(slug: String): Flow<CookbookEntity?> = cookbookDao.observeBySlug(slug)
 
+    fun observeCookbooksForRecipe(recipeId: String): Flow<List<CookbookEntity>> =
+        cookbookDao.observeByRecipe(recipeId)
+
     fun observeCookbookRecipes(cookbookId: String): Flow<List<RecipeSummaryEntity>> =
         recipeDao.observeByCookbook(cookbookId)
 

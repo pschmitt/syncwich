@@ -163,4 +163,8 @@ constructor(
                 tagId = if (selection.value.tagId == tagId) null else tagId,
             )
     }
+
+    fun selectTag(tagId: String) {
+        selection.value = selection.value.copy(categoryId = null, tagId = tagId)
+    }
 }
