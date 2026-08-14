@@ -653,12 +653,14 @@ verification remains pending.
 
 ## SW-28: Remove duplicate recipe-detail title card
 
-- [ ] Keep the recipe name in the detail header and remove the duplicate title card below the
+- [x] Keep the recipe name in the detail header and remove the duplicate title card below the
       hero/title image
-- [ ] Preserve the remaining recipe metadata and content spacing
+- [x] Preserve the remaining recipe metadata and content spacing
 - [ ] Verify the simplified recipe detail layout on the Zenfone 10
 
-Status: not started.
+Status: mostly done, 2026-08-14. Removed the duplicate title while retaining the hero image,
+metadata, content sections, spacing, accessibility, and cache-first behavior; remote `just check`
+passed. Zenfone visual verification remains pending.
 
 ## SW-29: Add a swipeable recipe image viewer
 

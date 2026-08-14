@@ -147,8 +147,6 @@ private fun RecipeDetailContent(
 
         item {
             Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                Text(text = recipe.name, style = MaterialTheme.typography.headlineSmall)
-
                 val times =
                     listOfNotNull(
                         recipe.prepTime?.let { "Prep" to it },
