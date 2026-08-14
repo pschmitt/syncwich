@@ -369,15 +369,25 @@ Status: not started.
 
 ## SW-11: Populate the top app bar
 
-- [ ] Each top-level screen (Recipes/Meal Plan/Shopping Lists/Cookbooks) currently renders with an
+- [x] Each top-level screen (Recipes/Meal Plan/Shopping Lists/Cookbooks) currently renders with an
       empty header - add a proper `TopAppBar` per screen with at minimum a title reflecting the
       current destination
-- [ ] Add a settings cog icon action to the top app bar that navigates to `Route.Settings`
+- [x] Add a settings cog icon action to the top app bar that navigates to `Route.Settings`
       (`SettingsScreen` already exists but nothing currently links to it from the top-level screens)
-- [ ] Consider what else belongs in the header per-screen (e.g. Recipes' search bar - see SW-9 -
-      may want to live in/near this bar rather than inline in the list content)
+- [x] Consider what else belongs in the header per-screen (e.g. Recipes' search bar - see SW-9 -
+      may want to live in/near this bar rather than inline in the list content) - left as-is for
+      now, SW-9 can move it later without this change precluding that
 
-Status: not started.
+Status: **done**, 2026-08-14. Went with a `TopAppBar` owned by each of the four top-level screens
+(`RecipesScreen`/`MealPlanScreen`/`ShoppingListsScreen`/`CookbooksScreen`), not a shared bar hosted
+by `SyncwichNavHost` - `ShoppingListsScreen` and the existing detail screens
+(`RecipeDetailScreen`/`CookbookDetailScreen`) already followed this per-screen `Scaffold(topBar =
+...)` pattern, and `SyncwichNavHost`'s own doc comment already anticipated per-screen bars. Each
+screen gained an `onSettingsClick: () -> Unit = {}` param wired in `SyncwichNavHost` to
+`navController.navigate(Route.Settings)` - a minimal, additive diff to that shared file (default
+param values keep existing call sites source-compatible). `just check` green on rofl-13; verified
+on Zenfone 10 (`just deploy-zenfone`) - all four tabs show a title and the settings cog navigates
+to Settings and back via system back.
 
 ## SW-12: Fix onboarding server URL placeholder
 

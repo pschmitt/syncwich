@@ -53,8 +53,8 @@ private val topLevelNavItems =
 
 /**
  * The app's main scaffold: a Material 3 bottom navigation bar switching between the four v1
- * top-level destinations, plus a Settings entry point reachable from each screen's top app bar
- * (added alongside real per-screen top bars in SW-3+ - not wired yet in this scaffold).
+ * top-level destinations, plus a Settings entry point reachable from each screen's own top app
+ * bar (see SW-11 - each top-level screen owns its `TopAppBar`, not this outer `Scaffold`).
  *
  * @param startDestination [Route.Onboarding] until a server URL + API token are saved, otherwise
  *   [Route.Recipes] - see `MainActivity`, which reads `SettingsRepository.isConfigured` for this.
@@ -117,28 +117,32 @@ fun SyncwichNavHost(modifier: Modifier = Modifier, startDestination: Route = Rou
                 RecipesScreen(
                     onRecipeClick = { recipe ->
                         navController.navigate(Route.RecipeDetail(recipe.id, recipe.slug))
-                    }
+                    },
+                    onSettingsClick = { navController.navigate(Route.Settings) },
                 )
             }
             composable<Route.MealPlan> {
                 MealPlanScreen(
                     onRecipeClick = { recipeId, slug ->
                         navController.navigate(Route.RecipeDetail(recipeId, slug))
-                    }
+                    },
+                    onSettingsClick = { navController.navigate(Route.Settings) },
                 )
             }
             composable<Route.ShoppingLists> {
                 ShoppingListsScreen(
                     onListClick = { listId ->
                         navController.navigate(Route.ShoppingListDetail(listId))
-                    }
+                    },
+                    onSettingsClick = { navController.navigate(Route.Settings) },
                 )
             }
             composable<Route.Cookbooks> {
                 CookbooksScreen(
                     onCookbookClick = { cookbookId ->
                         navController.navigate(Route.CookbookDetail(cookbookId))
-                    }
+                    },
+                    onSettingsClick = { navController.navigate(Route.Settings) },
                 )
             }
             composable<Route.CookbookDetail> {

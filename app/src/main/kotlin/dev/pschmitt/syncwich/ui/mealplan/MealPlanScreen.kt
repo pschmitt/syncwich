@@ -25,15 +25,19 @@ import androidx.compose.material.icons.filled.Icecream
 import androidx.compose.material.icons.filled.LocalBar
 import androidx.compose.material.icons.filled.LunchDining
 import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tapas
 import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -49,16 +53,30 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MealPlanScreen(
     modifier: Modifier = Modifier,
     onRecipeClick: (String, String) -> Unit = { _, _ -> },
+    onSettingsClick: () -> Unit = {},
     viewModel: MealPlanViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    if (uiState.entries.isEmpty() && !uiState.isRefreshing) {
-        Column(modifier = modifier.fillMaxSize()) {
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = { Text("Meal Plan") },
+                actions = {
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                    }
+                },
+            )
+        },
+    ) { innerPadding ->
+        Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
             WeekHeader(
                 weekStart = uiState.weekStart,
                 weekEnd = uiState.weekEnd,
@@ -67,39 +85,30 @@ fun MealPlanScreen(
                 onNextWeek = viewModel::showNextWeek,
                 onToday = viewModel::showCurrentWeek,
             )
-            PlaceholderScreen(
-                icon = Icons.Filled.CalendarMonth,
-                title = "Nothing planned this week",
-                subtitle =
-                    "Meal plan entries synced from your household's Mealie meal plan show up here.",
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
-        return
-    }
-
-    Column(modifier = modifier.fillMaxSize()) {
-        WeekHeader(
-            weekStart = uiState.weekStart,
-            weekEnd = uiState.weekEnd,
-            isRefreshing = uiState.isRefreshing,
-            onPreviousWeek = viewModel::showPreviousWeek,
-            onNextWeek = viewModel::showNextWeek,
-            onToday = viewModel::showCurrentWeek,
-        )
-        val entriesByDate = uiState.entries.groupBy { it.date }
-        val days = generateSequence(uiState.weekStart) { it.plusDays(1) }.take(7).toList()
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            items(days) { day ->
-                DayCard(
-                    day = day,
-                    entries = entriesByDate[day.toString()].orEmpty(),
-                    onRecipeClick = onRecipeClick,
+            if (uiState.entries.isEmpty() && !uiState.isRefreshing) {
+                PlaceholderScreen(
+                    icon = Icons.Filled.CalendarMonth,
+                    title = "Nothing planned this week",
+                    subtitle =
+                        "Meal plan entries synced from your household's Mealie meal plan show up here.",
+                    modifier = Modifier.fillMaxSize(),
                 )
+            } else {
+                val entriesByDate = uiState.entries.groupBy { it.date }
+                val days = generateSequence(uiState.weekStart) { it.plusDays(1) }.take(7).toList()
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    items(days) { day ->
+                        DayCard(
+                            day = day,
+                            entries = entriesByDate[day.toString()].orEmpty(),
+                            onRecipeClick = onRecipeClick,
+                        )
+                    }
+                }
             }
         }
     }

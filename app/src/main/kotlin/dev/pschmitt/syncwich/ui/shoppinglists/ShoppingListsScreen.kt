@@ -8,10 +8,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -29,13 +31,23 @@ import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
 fun ShoppingListsScreen(
     onListClick: (String) -> Unit,
     modifier: Modifier = Modifier,
+    onSettingsClick: () -> Unit = {},
     viewModel: ShoppingListsViewModel = hiltViewModel(),
 ) {
     val lists by viewModel.lists.collectAsStateWithLifecycle()
 
     Scaffold(
         modifier = modifier,
-        topBar = { TopAppBar(title = { Text("Shopping lists") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Shopping Lists") },
+                actions = {
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                    }
+                },
+            )
+        },
     ) { innerPadding ->
         if (lists.isEmpty()) {
             PlaceholderScreen(

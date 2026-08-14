@@ -11,10 +11,15 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -25,33 +30,48 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import dev.pschmitt.syncwich.data.db.entity.CookbookEntity
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CookbooksScreen(
     modifier: Modifier = Modifier,
     onCookbookClick: (String) -> Unit = {},
+    onSettingsClick: () -> Unit = {},
     viewModel: CookbooksViewModel = hiltViewModel(),
 ) {
     val cookbooks by viewModel.cookbooks.collectAsState()
 
-    if (cookbooks.isEmpty()) {
-        PlaceholderScreen(
-            icon = Icons.AutoMirrored.Filled.MenuBook,
-            title = "No cookbooks yet",
-            subtitle = "Cookbooks you curate in Mealie will show up here once synced.",
-            modifier = modifier,
-        )
-        return
-    }
-
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 160.dp),
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        items(cookbooks, key = { it.id }) { cookbook ->
-            CookbookCard(cookbook = cookbook, onClick = { onCookbookClick(cookbook.id) })
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = { Text("Cookbooks") },
+                actions = {
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                    }
+                },
+            )
+        },
+    ) { innerPadding ->
+        if (cookbooks.isEmpty()) {
+            PlaceholderScreen(
+                icon = Icons.AutoMirrored.Filled.MenuBook,
+                title = "No cookbooks yet",
+                subtitle = "Cookbooks you curate in Mealie will show up here once synced.",
+                modifier = Modifier.fillMaxSize().padding(innerPadding),
+            )
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 160.dp),
+                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                contentPadding = PaddingValues(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                items(cookbooks, key = { it.id }) { cookbook ->
+                    CookbookCard(cookbook = cookbook, onClick = { onCookbookClick(cookbook.id) })
+                }
+            }
         }
     }
 }
