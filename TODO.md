@@ -1821,3 +1821,11 @@ Status: **done**, 2026-08-15. Recipe-list cards now use a consistent media/conte
 cached favorite state drives an accessible heart badge in the media corner, including placeholder
 media. Remote checks, Android-test compilation, and the focused card test on the wired Zenfone 10
 pass; the verified debug build was deployed to all attached devices.
+
+## SW-112: Add icons to home recipe-section titles
+
+- [ ] Add appropriate icons to the Recently viewed, Recently added, Cooked recently, and Favorites section titles
+- [ ] Keep section titles and actions accessible and visually aligned
+- [ ] Add focused UI coverage for the home-section title icons
+
+Status: not started.

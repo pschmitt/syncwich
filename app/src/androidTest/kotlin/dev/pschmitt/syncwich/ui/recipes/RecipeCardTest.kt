@@ -41,10 +41,7 @@ class RecipeCardTest {
         composeTestRule.onNodeWithText("No image").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Favorite recipe").assertIsDisplayed()
 
-        val cards =
-            composeTestRule
-                .onAllNodesWithTag("recipe-card")
-                .fetchSemanticsNodes()
+        val cards = composeTestRule.onAllNodesWithTag("recipe-card").fetchSemanticsNodes()
         assertEquals(2, cards.size)
         assertEquals(cards[0].boundsInRoot.height, cards[1].boundsInRoot.height, 0.1f)
     }

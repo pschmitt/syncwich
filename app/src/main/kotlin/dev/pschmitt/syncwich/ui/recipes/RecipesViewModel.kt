@@ -119,8 +119,7 @@ constructor(
                 categoriesAndTags,
                 (query, categoryId, tagId),
                 credentials,
-                refresh,
-                ->
+                refresh ->
                 val (categories, tags) = categoriesAndTags
                 RecipesUiState(
                     recipes = recipes,
