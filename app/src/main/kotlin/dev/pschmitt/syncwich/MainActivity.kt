@@ -16,6 +16,9 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
@@ -25,9 +28,11 @@ import dagger.hilt.android.AndroidEntryPoint
 import dev.pschmitt.syncwich.data.settings.DEFAULT_FONT_SCALE
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import dev.pschmitt.syncwich.data.settings.ThemeMode
+import dev.pschmitt.syncwich.data.crash.StartupCrashReporter
 import dev.pschmitt.syncwich.sync.SyncNotifier
 import dev.pschmitt.syncwich.ui.navigation.Route
 import dev.pschmitt.syncwich.ui.navigation.SyncwichNavHost
+import dev.pschmitt.syncwich.ui.recovery.StartupCrashRecoveryScreen
 import dev.pschmitt.syncwich.ui.theme.SyncwichTheme
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +42,7 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var settingsRepository: SettingsRepository
     @Inject lateinit var syncNotifier: SyncNotifier
+    @Inject lateinit var startupCrashReporter: StartupCrashReporter
     private val incomingIntent = MutableStateFlow<Intent?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,19 +52,9 @@ class MainActivity : ComponentActivity() {
         incomingIntent.value = intent
 
         setContent {
+            var pendingCrash by remember { mutableStateOf(startupCrashReporter.pending()) }
             val notificationPermissionLauncher =
                 rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
-            LaunchedEffect(Unit) {
-                if (
-                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                        ContextCompat.checkSelfPermission(
-                            this@MainActivity,
-                            Manifest.permission.POST_NOTIFICATIONS,
-                        ) != PackageManager.PERMISSION_GRANTED
-                ) {
-                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                }
-            }
             val fontScale by
                 settingsRepository.fontScale.collectAsStateWithLifecycle(
                     initialValue = DEFAULT_FONT_SCALE
@@ -69,27 +65,50 @@ class MainActivity : ComponentActivity() {
                 )
             val pendingIntent by incomingIntent.collectAsStateWithLifecycle()
             SyncwichTheme(themeMode = themeMode, fontScale = fontScale) {
-                val initialSyncCompleted by
-                    settingsRepository.initialSyncCompleted.collectAsStateWithLifecycle(
-                        initialValue = null
+                if (pendingCrash != null) {
+                    StartupCrashRecoveryScreen(
+                        report = pendingCrash!!,
+                        onContinue = {
+                            startupCrashReporter.clear()
+                            pendingCrash = null
+                        },
                     )
-                when {
-                    !settingsRepository.isConfigured ->
-                        SyncwichNavHost(
-                            startDestination = Route.Onboarding,
-                            incomingIntent = pendingIntent,
+                } else {
+                    LaunchedEffect(Unit) {
+                        if (
+                            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                                ContextCompat.checkSelfPermission(
+                                    this@MainActivity,
+                                    Manifest.permission.POST_NOTIFICATIONS,
+                                ) != PackageManager.PERMISSION_GRANTED
+                        ) {
+                            notificationPermissionLauncher.launch(
+                                Manifest.permission.POST_NOTIFICATIONS
+                            )
+                        }
+                    }
+                    val initialSyncCompleted by
+                        settingsRepository.initialSyncCompleted.collectAsStateWithLifecycle(
+                            initialValue = null
                         )
-                    initialSyncCompleted == null -> StartupLoadingScreen()
-                    initialSyncCompleted == true ->
-                        SyncwichNavHost(
-                            startDestination = Route.Home,
-                            incomingIntent = pendingIntent,
-                        )
-                    else ->
-                        SyncwichNavHost(
-                            startDestination = Route.InitialSync,
-                            incomingIntent = pendingIntent,
-                        )
+                    when {
+                        !settingsRepository.isConfigured ->
+                            SyncwichNavHost(
+                                startDestination = Route.Onboarding,
+                                incomingIntent = pendingIntent,
+                            )
+                        initialSyncCompleted == null -> StartupLoadingScreen()
+                        initialSyncCompleted == true ->
+                            SyncwichNavHost(
+                                startDestination = Route.Home,
+                                incomingIntent = pendingIntent,
+                            )
+                        else ->
+                            SyncwichNavHost(
+                                startDestination = Route.InitialSync,
+                                incomingIntent = pendingIntent,
+                            )
+                    }
                 }
             }
         }

@@ -2,6 +2,7 @@ package dev.pschmitt.syncwich.data.db.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.compose.runtime.Immutable
 
 /**
  * One `/api/recipes` list item. Real columns for everything the recipe list/search/sort/filter UI
@@ -11,6 +12,7 @@ import androidx.room.PrimaryKey
  * [RecipeDetailEntity].
  */
 @Entity(tableName = "recipe_summaries")
+@Immutable
 data class RecipeSummaryEntity(
     @PrimaryKey val id: String,
     val slug: String,

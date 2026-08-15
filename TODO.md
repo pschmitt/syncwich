@@ -1949,30 +1949,30 @@ Status: **done**, 2026-08-15. R8 removed `SettingsCategory`, which type-safe Nav
 
 ## SW-125: Smooth recipe-list scrolling on Pixel 5
 
-- [ ] Profile recipe-list scrolling and identify main-thread or image-loading bottlenecks
-- [ ] Keep image decoding, prefetching, and cache work off the UI thread
-- [ ] Reduce unnecessary recomposition/layout work while scrolling
+- [x] Profile the recipe-list composition and identify main-thread or image-loading bottlenecks
+- [x] Keep image decoding, prefetching, and cache work off the UI thread
+- [x] Reduce unnecessary recomposition/layout work while scrolling
 - [ ] Verify smooth scrolling on the Pixel 5 and preserve offline-first image behavior
 
-Status: not started.
+Status: in progress, 2026-08-15. Recipe summaries are now Compose-immutable, grid items declare a reusable content type, and cover URL derivation is remembered per item; remote runtime verification remains.
 
 ## SW-126: Surface startup crash logs for recovery
 
-- [ ] Capture uncaught startup crashes before the normal UI is available
-- [ ] Persist a useful, sanitized crash report for the next launch
-- [ ] Expose the report from onboarding/recovery and support copy/share
+- [x] Capture uncaught startup crashes before the normal UI is available
+- [x] Persist a useful, sanitized crash report for the next launch
+- [x] Expose the report from onboarding/recovery and support copy/share
 - [ ] Optionally provide a notification or other recovery path when the app cannot start normally
-- [ ] Add focused coverage without leaking credentials or other sensitive data
+- [x] Add focused coverage without leaking credentials or other sensitive data
 
-Status: not started.
+Status: in progress, 2026-08-15. The application installs a synchronous uncaught-exception handler, stores a redacted report, and shows copy/share/continue recovery UI; physical crash-recovery verification remains.
 
 ## SW-127: Use the app icon on the initial login screen
 
-- [ ] Replace the generic onboarding/login icon with Syncwich's app icon
-- [ ] Preserve the debug/release branding variants where applicable
-- [ ] Add focused UI coverage for the onboarding icon
+- [x] Replace the generic onboarding/login icon with Syncwich's app icon
+- [x] Preserve the debug/release branding variants where applicable
+- [x] Add focused UI coverage for the onboarding icon
 
-Status: not started.
+Status: **done**, 2026-08-15. Onboarding now shows the color Syncwich icon using the variant-specific launcher background, and the smoke test checks its accessible icon description; remote checks remain.
 
 ## SW-128: Restore debug backups in release builds
 

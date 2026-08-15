@@ -54,6 +54,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -197,7 +198,11 @@ fun RecipesScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier.fillMaxSize(),
                     ) {
-                        gridItems(uiState.recipes, key = { it.id }) { recipe ->
+                        gridItems(
+                            uiState.recipes,
+                            key = { it.id },
+                            contentType = { "recipe-card" },
+                        ) { recipe ->
                             RecipeCard(
                                 recipe = recipe,
                                 serverUrl = uiState.serverUrl,
@@ -446,13 +451,15 @@ internal fun RecipeCard(
     isFavorite: Boolean = false,
     onClick: () -> Unit,
 ) {
+    val imageUrl = remember(serverUrl, recipe.id, recipe.image) {
+        recipeImageUrl(serverUrl, recipe.id, recipe.image)
+    }
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth().height(RECIPE_CARD_HEIGHT).testTag("recipe-card"),
         shape = MaterialTheme.shapes.large,
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            val imageUrl = recipeImageUrl(serverUrl, recipe.id, recipe.image)
             Box(
                 modifier =
                     Modifier.fillMaxWidth()

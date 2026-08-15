@@ -30,6 +30,7 @@ class MainActivitySmokeTest {
         check(device.hasObject(By.text("Server URL")))
         check(device.hasObject(By.text("API token")))
         check(device.hasObject(By.text("Connect")))
+        check(device.hasObject(By.desc("Syncwich app icon")))
 
         val titleTop = device.findObject(By.text("Connect to Mealie")).visibleBounds.top
         val statusBarHeight =
