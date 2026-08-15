@@ -7,9 +7,11 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
+import androidx.work.WorkManager
 import dagger.hilt.android.EntryPointAccessors
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import dev.pschmitt.syncwich.di.SettingsEntryPoint
+import dev.pschmitt.syncwich.sync.SyncScheduler
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -46,7 +48,13 @@ class ScreenshotTest {
     @Before
     fun seedConnection() {
         settingsRepository.save("https://mealie.invalid", "screenshot-test-token")
-        runBlocking { settingsRepository.recordInitialSyncSuccess() }
+        runBlocking {
+            settingsRepository.recordInitialSyncSuccess()
+            settingsRepository.setSyncOnAppStart(false)
+        }
+        WorkManager
+            .getInstance(ApplicationProvider.getApplicationContext())
+            .cancelUniqueWork(SyncScheduler.STARTUP_WORK_NAME)
     }
 
     @After
