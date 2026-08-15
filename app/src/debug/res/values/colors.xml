@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Keep debug installs visually distinct from the terracotta release app. -->
+    <color name="icon_background">#6A1B9A</color>
+</resources>

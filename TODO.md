@@ -1921,3 +1921,11 @@ Status: **done**, 2026-08-15. The persisted developer flag is eagerly loaded wit
 - [x] Add focused UI coverage for the updated icon presentation
 
 Status: **done**, 2026-08-15. The About-page icon now sits on a circular `SyncwichTerracotta40` background matching the splash/icon `#E4572E` color. Remote checks, Android-test compilation, and the focused ZF10 About test passed; the APK is installed on ZF10 and PX5.
+
+## SW-122: Distinguish debug launcher branding
+
+- [x] Use a distinct debug-only launcher icon color
+- [x] Label the debug app `Syncwich (debug)` in the launcher
+- [x] Add focused coverage for the debug variant resources
+
+Status: **done**, 2026-08-15. Debug-only resources use a purple adaptive-icon background and the launcher label `Syncwich (debug)`, while release resources remain unchanged. Remote checks, Android-test compilation, and the focused ZF10 branding test passed; the updated APK is installed on ZF10, Mi Pad 4, and PX5.

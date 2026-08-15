@@ -32,6 +32,9 @@ class SettingsScreenTest {
             SyncwichTheme { SettingsScreen(onBack = {}, onCategoryClick = {}) }
         }
 
+        composeTestRule
+            .onAllNodesWithText("Tune Syncwich to your kitchen and your workflow.")
+            .assertCountEquals(0)
         composeTestRule.onAllNodesWithText("Account & Sync").assertCountEquals(1)
         composeTestRule.onAllNodesWithText("Account").assertCountEquals(0)
         composeTestRule.onAllNodesWithText("Data & sync").assertCountEquals(0)

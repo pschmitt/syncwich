@@ -1,7 +1,7 @@
 # Syncwich
 
 <p align="center">
-  <img src="docs/branding/syncwich-icon-preview.png" alt="Syncwich icon" width="160">
+  <img src="docs/branding/syncwich-icon-preview.png" alt="Syncwich icon" width="160" height="160" style="border-radius: 50%;">
 </p>
 
 <p align="center"><strong>A beautiful, offline-first Material You client for your own Mealie server.</strong></p>

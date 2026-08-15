@@ -157,9 +157,9 @@ fun AboutSettingsScreen(
                     headerContent = {
                         Box(
                             modifier =
-                                Modifier.size(72.dp)
+                                Modifier.size(64.dp)
                                     .background(SyncwichTerracotta40, CircleShape)
-                                    .padding(8.dp)
+                                    .padding(4.dp)
                                     .testTag("about-app-icon-background")
                         ) {
                             Image(

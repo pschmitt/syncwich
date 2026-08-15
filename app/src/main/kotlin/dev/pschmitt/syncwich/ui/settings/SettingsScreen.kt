@@ -83,13 +83,6 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             item {
-                Text(
-                    "Tune Syncwich to your kitchen and your workflow.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            item {
                 SettingsGroupCard(title = "Account & Sync", icon = Icons.Filled.Sync) {
                     SettingsCategoryRow(SettingsCategory.Server, onCategoryClick)
                     SettingsCategoryRow(SettingsCategory.Sync, onCategoryClick)
