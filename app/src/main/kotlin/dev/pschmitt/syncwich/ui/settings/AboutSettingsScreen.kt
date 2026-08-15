@@ -5,8 +5,8 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -160,7 +160,7 @@ fun AboutSettingsScreen(
                                 Modifier.size(72.dp)
                                     .background(SyncwichTerracotta40, CircleShape)
                                     .padding(8.dp)
-                                    .testTag("about-app-icon-background"),
+                                    .testTag("about-app-icon-background")
                         ) {
                             Image(
                                 painter = painterResource(R.drawable.syncwich_icon),

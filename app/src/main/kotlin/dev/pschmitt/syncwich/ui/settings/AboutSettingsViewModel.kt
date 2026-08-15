@@ -41,7 +41,10 @@ constructor(private val settingsRepository: SettingsRepository) : ViewModel() {
         if (unlockInProgress) return
         when (
             val action =
-                tapState.onTap(SystemClock.elapsedRealtime(), developerMode.value || developerModeUnlocked)
+                tapState.onTap(
+                    SystemClock.elapsedRealtime(),
+                    developerMode.value || developerModeUnlocked,
+                )
         ) {
             DeveloperModeTapAction.AlreadyDeveloper ->
                 _developerModeToast.tryEmit(ALREADY_DEVELOPER_MESSAGE)
@@ -74,7 +77,9 @@ constructor(private val settingsRepository: SettingsRepository) : ViewModel() {
 
 internal sealed interface DeveloperModeTapAction {
     data object AlreadyDeveloper : DeveloperModeTapAction
+
     data object Unlock : DeveloperModeTapAction
+
     data class Progress(val remainingTaps: Int) : DeveloperModeTapAction
 }
 
