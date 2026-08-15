@@ -148,20 +148,6 @@ fun AboutSettingsScreen(
             }
             item {
                 SettingsGroupCard(title = "Project", icon = Icons.Filled.Code) {
-                    SettingsListItem(
-                        modifier =
-                            Modifier.fillMaxWidth()
-                                .clickable(role = Role.Button, onClick = onShowLibraries)
-                                .semantics { role = Role.Button },
-                        leadingContent = {
-                            Icon(Icons.AutoMirrored.Filled.LibraryBooks, contentDescription = null)
-                        },
-                        headlineContent = { Text("Libraries") },
-                        supportingContent = { Text("Open-source dependencies and their licenses") },
-                        trailingContent = {
-                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
-                        },
-                    )
                     ExternalLinkRow(
                         context = context,
                         url = REPOSITORY_URL,
@@ -186,6 +172,20 @@ fun AboutSettingsScreen(
                         url = LICENSE_URL,
                         title = "License",
                         subtitle = "Syncwich is free software under GPL-3.0",
+                    )
+                    SettingsListItem(
+                        modifier =
+                            Modifier.fillMaxWidth()
+                                .clickable(role = Role.Button, onClick = onShowLibraries)
+                                .semantics { role = Role.Button },
+                        leadingContent = {
+                            Icon(Icons.AutoMirrored.Filled.LibraryBooks, contentDescription = null)
+                        },
+                        headlineContent = { Text("Libraries") },
+                        supportingContent = { Text("Open-source dependencies and their licenses") },
+                        trailingContent = {
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
+                        },
                     )
                 }
             }
