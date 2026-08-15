@@ -2,9 +2,19 @@ package dev.pschmitt.syncwich.data.settings
 
 import kotlinx.serialization.Serializable
 
-/** Non-secret DataStore values included in a portable Syncwich backup. */
+const val SETTINGS_BACKUP_VERSION = 2
+
+/** All settings stores included in a portable Syncwich backup. */
 @Serializable
 data class SettingsBackupSnapshot(
+    /** Version of the generic preference maps, separate from the outer archive format version. */
+    val settingsVersion: Int = 1,
+    val preferences: Map<String, BackupPreferenceValue> = emptyMap(),
+    val securePreferences: Map<String, BackupPreferenceValue> = emptyMap(),
+    /**
+     * The following fields are retained for imports of pre-v2 backups. New exports use the
+     * generic maps above, so adding a preference no longer requires changing this class.
+     */
     val navigationBarOrder: List<String> = emptyList(),
     val navigationBarHiddenItems: Set<String> = emptySet(),
     val navigationBarShownItems: Set<String> = emptySet(),
@@ -13,6 +23,7 @@ data class SettingsBackupSnapshot(
     val fontScale: Float = DEFAULT_FONT_SCALE,
     val themeMode: String? = null,
     val ingredientChecklistEnabled: Boolean = false,
+    val developerMode: Boolean = false,
     val initialSyncCompleted: Boolean = false,
     val lastSyncAt: Long? = null,
     val lastSyncError: String? = null,
@@ -23,6 +34,8 @@ data class SettingsBackupSnapshot(
     val scheduledBackupEnabled: Boolean = false,
     val scheduledBackupFrequency: String = BackupFrequency.Weekly.storageValue,
     val scheduledBackupFolderUri: String? = null,
+    /** Stored in the encrypted backup envelope when the export itself is password-protected. */
+    val scheduledBackupPassword: String? = null,
     val lastBackupAt: Long? = null,
     val lastBackupError: String? = null,
 )

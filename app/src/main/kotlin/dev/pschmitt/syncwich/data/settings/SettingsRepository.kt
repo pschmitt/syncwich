@@ -133,6 +133,10 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
     val lastBackupError: Flow<String?> =
         context.syncwichDataStore.data.map { it[KEY_LAST_BACKUP_ERROR] }
 
+    /** Whether newly created ad-hoc and scheduled backups include the offline cache and images. */
+    val backupIncludeCache: Flow<Boolean> =
+        context.syncwichDataStore.data.map { it[KEY_BACKUP_INCLUDE_CACHE] ?: false }
+
     private val _scheduledBackupPasswordSet =
         MutableStateFlow(loadScheduledBackupPassword().isNotEmpty())
     val scheduledBackupPasswordSet: StateFlow<Boolean> = _scheduledBackupPasswordSet.asStateFlow()
@@ -256,6 +260,10 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         }
     }
 
+    suspend fun setBackupIncludeCache(enabled: Boolean) {
+        context.syncwichDataStore.edit { prefs -> prefs[KEY_BACKUP_INCLUDE_CACHE] = enabled }
+    }
+
     fun scheduledBackupPassword(): String? =
         loadScheduledBackupPassword().takeIf(String::isNotEmpty)
 
@@ -281,53 +289,59 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
     suspend fun exportBackupSettings(
         navigationBarCacheState: NavigationBarCacheState? = null,
     ): SettingsBackupSnapshot {
-        val prefs = context.syncwichDataStore.data.first()
-        val navigationBarOrder = navigationBarOrderFromString(prefs[KEY_NAV_BAR_ORDER])
+        val dataStorePreferences = context.syncwichDataStore.data.first()
+        val navigationBarOrder =
+            navigationBarOrderFromString(dataStorePreferences[KEY_NAV_BAR_ORDER])
         val navigationBarHiddenItems =
-            navigationBarOrderFromString(prefs[KEY_NAV_BAR_HIDDEN_ITEMS]).toSet()
+            navigationBarOrderFromString(dataStorePreferences[KEY_NAV_BAR_HIDDEN_ITEMS]).toSet()
         val navigationBarShownItems =
-            navigationBarOrderFromString(prefs[KEY_NAV_BAR_SHOWN_ITEMS]).toSet()
+            navigationBarOrderFromString(dataStorePreferences[KEY_NAV_BAR_SHOWN_ITEMS]).toSet()
+        val navigationBarVisibleItems =
+            navigationBarCacheState
+                ?.let { cache ->
+                    resolveNavBarOrder(
+                            natural = NavigationBarItemKeys.all,
+                            persisted = navigationBarOrder,
+                            hidden = navigationBarHiddenItems,
+                            pinned = setOf(NavigationBarItemKeys.RECIPES),
+                            defaultHidden = cache.defaultHiddenItems(),
+                            explicitlyShown = navigationBarShownItems,
+                        )
+                        .toSet()
+                }
+                .orEmpty()
         return SettingsBackupSnapshot(
+            settingsVersion = SETTINGS_BACKUP_VERSION,
+            preferences = dataStorePreferences.toBackupPreferences(),
+            securePreferences = prefs.all.toBackupPreferences(),
             navigationBarOrder = navigationBarOrder,
             navigationBarHiddenItems = navigationBarHiddenItems,
             navigationBarShownItems = navigationBarShownItems,
-            navigationBarVisibleItems =
-                navigationBarCacheState
-                    ?.let { cache ->
-                        resolveNavBarOrder(
-                                natural = NavigationBarItemKeys.all,
-                                persisted = navigationBarOrder,
-                                hidden = navigationBarHiddenItems,
-                                pinned = setOf(NavigationBarItemKeys.RECIPES),
-                                defaultHidden = cache.defaultHiddenItems(),
-                                explicitlyShown = navigationBarShownItems,
-                            )
-                            .toSet()
-                    }
-                    .orEmpty(),
-            fontScale = sanitizeFontScale(prefs[KEY_FONT_SCALE] ?: DEFAULT_FONT_SCALE),
-            themeMode = prefs[KEY_THEME_MODE],
-            ingredientChecklistEnabled = prefs[KEY_INGREDIENT_CHECKLIST] ?: false,
-            initialSyncCompleted = prefs[KEY_INITIAL_SYNC_COMPLETED] ?: false,
-            lastSyncAt = prefs[KEY_LAST_SYNC_AT],
-            lastSyncError = prefs[KEY_LAST_SYNC_ERROR],
-            syncOnlyOnWifi = prefs[KEY_SYNC_ONLY_ON_WIFI] ?: false,
-            syncWhileRoaming = prefs[KEY_SYNC_WHILE_ROAMING] ?: true,
-            syncIntervalHours =
-                sanitizeSyncIntervalHours(
-                    prefs[KEY_SYNC_INTERVAL_HOURS] ?: DEFAULT_SYNC_INTERVAL_HOURS
-                ),
-            syncOnAppStart = prefs[KEY_SYNC_ON_APP_START] ?: DEFAULT_SYNC_ON_APP_START,
-            scheduledBackupEnabled = prefs[KEY_BACKUP_ENABLED] ?: false,
-            scheduledBackupFrequency =
-                BackupFrequency.fromStorage(prefs[KEY_BACKUP_FREQUENCY]).storageValue,
-            scheduledBackupFolderUri = prefs[KEY_BACKUP_FOLDER_URI],
-            lastBackupAt = prefs[KEY_LAST_BACKUP_AT],
-            lastBackupError = prefs[KEY_LAST_BACKUP_ERROR],
+            navigationBarVisibleItems = navigationBarVisibleItems,
         )
     }
 
     suspend fun restoreBackupSettings(snapshot: SettingsBackupSnapshot) {
+        if (snapshot.settingsVersion >= SETTINGS_BACKUP_VERSION) {
+            context.syncwichDataStore.edit { dataStorePreferences ->
+                dataStorePreferences.clear()
+                snapshot.preferences.restoreInto(dataStorePreferences)
+                if (snapshot.navigationBarVisibleItems.isNotEmpty()) {
+                    val restored = snapshot.restoredNavigationBarVisibility()
+                    dataStorePreferences[KEY_NAV_BAR_HIDDEN_ITEMS] =
+                        navigationBarOrderToString(restored.hiddenItems.toList())
+                    dataStorePreferences[KEY_NAV_BAR_SHOWN_ITEMS] =
+                        navigationBarOrderToString(restored.shownItems.toList())
+                }
+            }
+            val secureEditor = prefs.edit().clear()
+            snapshot.securePreferences.restoreInto(secureEditor)
+            secureEditor.apply()
+            _credentials.value = loadCredentials()
+            _scheduledBackupPasswordSet.value = loadScheduledBackupPassword().isNotEmpty()
+            return
+        }
+
         val restoredNavigationBarVisibility = snapshot.restoredNavigationBarVisibility()
         context.syncwichDataStore.edit { prefs ->
             prefs[KEY_NAV_BAR_ORDER] = navigationBarOrderToString(snapshot.navigationBarOrder)
@@ -340,6 +354,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
             prefs[KEY_FONT_SCALE] = sanitizeFontScale(snapshot.fontScale)
             snapshot.themeMode?.let { prefs[KEY_THEME_MODE] = it } ?: prefs.remove(KEY_THEME_MODE)
             prefs[KEY_INGREDIENT_CHECKLIST] = snapshot.ingredientChecklistEnabled
+            prefs[KEY_DEVELOPER_MODE] = snapshot.developerMode
             prefs[KEY_INITIAL_SYNC_COMPLETED] = snapshot.initialSyncCompleted
             snapshot.lastSyncAt?.let { prefs[KEY_LAST_SYNC_AT] = it }
                 ?: prefs.remove(KEY_LAST_SYNC_AT)
@@ -359,6 +374,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
             snapshot.lastBackupError?.let { prefs[KEY_LAST_BACKUP_ERROR] = it }
                 ?: prefs.remove(KEY_LAST_BACKUP_ERROR)
         }
+        setScheduledBackupPassword(snapshot.scheduledBackupPassword)
     }
 
     /** Atomically records the first sync as complete and updates the ordinary sync metadata. */
@@ -415,6 +431,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         val KEY_BACKUP_FOLDER_URI = stringPreferencesKey("scheduled_backup_folder_uri")
         val KEY_LAST_BACKUP_AT = longPreferencesKey("last_backup_at")
         val KEY_LAST_BACKUP_ERROR = stringPreferencesKey("last_backup_error")
+        val KEY_BACKUP_INCLUDE_CACHE = booleanPreferencesKey("backup_include_cache")
         const val KEY_BACKUP_PASSWORD = "scheduled_backup_password"
     }
 }

@@ -36,7 +36,11 @@ constructor(
                         "application/octet-stream",
                         syncwichBackupFileName(),
                     ) ?: error("Could not create a backup file in the selected folder")
-                backupManager.write(uri, settingsRepository.scheduledBackupPassword())
+                backupManager.write(
+                    uri,
+                    settingsRepository.scheduledBackupPassword(),
+                    settingsRepository.backupIncludeCache.first(),
+                )
                 settingsRepository.recordBackupSuccess()
                 Result.success()
             } catch (error: Exception) {

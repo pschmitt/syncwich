@@ -40,16 +40,20 @@ constructor(
     private val _operation = MutableStateFlow<BackupOperationState>(BackupOperationState.Idle)
     val operation: StateFlow<BackupOperationState> = _operation.asStateFlow()
 
-    fun export(uri: Uri, password: String?) {
+    fun export(uri: Uri, password: String?, includeCache: Boolean) {
         viewModelScope.launch {
             _operation.value = BackupOperationState.Working
-            runCatching { backupManager.write(uri, password) }
+            runCatching { backupManager.write(uri, password, includeCache) }
                 .onSuccess {
                     settingsRepository.recordBackupSuccess()
                     _operation.value = BackupOperationState.Success("Backup created")
                 }
                 .onFailure { _operation.value = BackupOperationState.Error(it.toUserMessage()) }
         }
+    }
+
+    fun setIncludeCache(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setBackupIncludeCache(enabled) }
     }
 
     fun restore(uri: Uri, password: String? = null) {

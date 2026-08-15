@@ -2010,16 +2010,31 @@ run `31891038114`; the published Play release is therefore verified through that
 
 ## SW-131: Match scheduled-backup card styling
 
-- [ ] Remove the unexpected dark background from scheduled-backup card items
-- [ ] Match the card-item surface styling used by the other Settings cards
+- [x] Remove the unexpected dark background from scheduled-backup card items
+- [x] Match the card-item surface styling used by the other Settings cards
 - [ ] Add focused UI coverage or a visual verification for the corrected surface
 
-Status: not started.
+Status: mostly done, 2026-08-15. Scheduled-backup entries now use the same transparent
+`SettingsListItem` surface as the rest of the settings cards; remote tests and lint are green.
+Focused visual coverage remains.
 
 ## SW-132: Restore navbar visibility from backup
 
-- [ ] Include navbar visibility/preferences in backup data
-- [ ] Restore the Cookbooks navbar item when it was enabled before export
-- [ ] Add cross-variant backup/restore coverage for navbar preferences
+- [x] Preserve every user-configurable app setting in backup data
+- [x] Restore effective navbar visibility, including the Cookbooks item, across cache timing
+- [x] Preserve developer mode and scheduled-backup password settings safely
+- [ ] Add cross-variant backup/restore coverage for all settings
+
+Status: mostly done, 2026-08-15. New v2 snapshots serialize all DataStore and encrypted
+SharedPreferences values through typed generic maps, carry app/settings version metadata, restore
+the effective visible navbar destinations, and support legacy named-field snapshots. Remote unit
+tests and lint pass; cross-variant physical restore coverage remains.
+
+## SW-133: Release Syncwich 1.0.1
+
+- [ ] Finish the remaining open work and verify the release candidate
+- [ ] Confirm CI tests, lint, and release build are green
+- [ ] Create and push the `v1.0.1` Git tag after all release gates pass
+- [ ] Verify the GitHub and Play Store release artifacts
 
 Status: not started.

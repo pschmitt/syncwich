@@ -21,6 +21,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -73,6 +74,8 @@ fun BackupSettingsScreen(
     val lastBackupAt by viewModel.settingsRepository.lastBackupAt.collectAsStateWithLifecycle(null)
     val lastBackupError by
         viewModel.settingsRepository.lastBackupError.collectAsStateWithLifecycle(null)
+    val includeCache by
+        viewModel.settingsRepository.backupIncludeCache.collectAsStateWithLifecycle(false)
     val operation by viewModel.operation.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var exportPassword by rememberSaveable { mutableStateOf("") }
@@ -84,7 +87,9 @@ fun BackupSettingsScreen(
         rememberLauncherForActivityResult(
             ActivityResultContracts.CreateDocument("application/octet-stream")
         ) { uri ->
-            uri?.let { viewModel.export(it, exportPassword.takeIf(String::isNotEmpty)) }
+            uri?.let {
+                viewModel.export(it, exportPassword.takeIf(String::isNotEmpty), includeCache)
+            }
         }
     val restoreLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -164,8 +169,8 @@ fun BackupSettingsScreen(
         ) {
             item {
                 Text(
-                    "Backups include your connection, preferences, offline recipe cache, and cached images. " +
-                        "Use a password when the file may leave this device.",
+                    "Backups include your connection and preferences. Optionally include the offline " +
+                        "recipe cache and cached images. Use a password when the file may leave this device.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -180,6 +185,17 @@ fun BackupSettingsScreen(
                         visualTransformation = PasswordVisualTransformation(),
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
+                    )
+                    SettingsListItem(
+                        leadingContent = { Icon(Icons.Filled.Folder, contentDescription = null) },
+                        headlineContent = { Text("Include offline cache and images") },
+                        supportingContent = { Text("Off by default; makes larger, self-contained backups") },
+                        trailingContent = {
+                            Checkbox(
+                                checked = includeCache,
+                                onCheckedChange = viewModel::setIncludeCache,
+                            )
+                        },
                     )
                     Button(
                         onClick = { exportLauncher.launch(syncwichBackupFileName()) },
@@ -217,6 +233,19 @@ fun BackupSettingsScreen(
                                     Modifier.semantics {
                                         contentDescription = "Enable scheduled backups"
                                     },
+                            )
+                        },
+                    )
+                    SettingsListItem(
+                        leadingContent = { Icon(Icons.Filled.Folder, contentDescription = null) },
+                        headlineContent = { Text("Include offline cache and images") },
+                        supportingContent = {
+                            Text(if (includeCache) "Scheduled backups include cached data" else "Off by default")
+                        },
+                        trailingContent = {
+                            Checkbox(
+                                checked = includeCache,
+                                onCheckedChange = viewModel::setIncludeCache,
                             )
                         },
                     )

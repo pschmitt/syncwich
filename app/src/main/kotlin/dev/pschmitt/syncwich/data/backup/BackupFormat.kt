@@ -9,6 +9,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.pschmitt.syncwich.BuildConfig
 import dev.pschmitt.syncwich.data.db.AppDatabase
+import dev.pschmitt.syncwich.data.settings.SETTINGS_BACKUP_VERSION
 import dev.pschmitt.syncwich.data.settings.SettingsBackupSnapshot
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import dev.pschmitt.syncwich.data.settings.NavigationBarCacheAvailability
@@ -44,6 +45,8 @@ data class BackupManifest(
     val applicationId: String = BuildConfig.APPLICATION_ID,
     val appVersionName: String = BuildConfig.VERSION_NAME,
     val appVersionCode: Int = BuildConfig.VERSION_CODE,
+    /** Version of the generic settings maps in settings.json. */
+    val settingsVersion: Int = 1,
     val createdAt: Long,
     val roomSchemaVersion: Int = AppDatabase.SCHEMA_VERSION,
     val includesCache: Boolean = false,
@@ -164,9 +167,9 @@ constructor(
         prettyPrint = false
     }
 
-    suspend fun write(uri: Uri, password: String?) {
+    suspend fun write(uri: Uri, password: String?, includeCache: Boolean? = null) {
         withContext(Dispatchers.IO) {
-            val archive = createArchive()
+            val archive = createArchive(includeCache ?: settingsRepository.backupIncludeCache.first())
             val encoded = BackupCrypto.encode(archive, password?.takeIf(String::isNotEmpty))
             context.contentResolver.openOutputStream(uri)?.use { it.write(encoded) }
                 ?: throw IOException("Could not open the selected file for writing")
@@ -180,7 +183,7 @@ constructor(
                     input.readBytes().also { require(it.size <= MAX_ARCHIVE_BYTES) }
                 } ?: throw IOException("Could not open the selected backup")
             val payload = decodeArchive(BackupCrypto.decode(bytes, password))
-            validate(payload.manifest)
+            validate(payload.manifest, payload.settings)
             if (payload.credentials.serverUrl.isBlank() || payload.credentials.apiToken.isBlank()) {
                 throw BackupFormatException("The backup has no usable Mealie connection")
             }
@@ -198,18 +201,23 @@ constructor(
             BackupCrypto.isEncrypted(bytes)
         }
 
-    private suspend fun createArchive(): ByteArray {
-        checkpointDatabase()
+    private suspend fun createArchive(includeCache: Boolean): ByteArray {
+        if (includeCache) checkpointDatabase()
         val settings =
             settingsRepository.exportBackupSettings(navigationBarCacheAvailability.state.first())
         val credentials = settingsRepository.credentials.value
-        val dbFile = context.getDatabasePath(DATABASE_NAME).takeIf(File::exists)
+        val dbFile = context.getDatabasePath(DATABASE_NAME).takeIf { includeCache && it.exists() }
         val imageRoot = context.cacheDir.resolve(IMAGE_CACHE_DIRECTORY)
         val imageFiles =
-            imageRoot.walkTopDown().filter { it.isFile && it.length() <= MAX_ENTRY_BYTES }.toList()
+            if (includeCache) {
+                imageRoot.walkTopDown().filter { it.isFile && it.length() <= MAX_ENTRY_BYTES }.toList()
+            } else {
+                emptyList()
+            }
         val manifest =
             BackupManifest(
                 createdAt = System.currentTimeMillis(),
+                settingsVersion = SETTINGS_BACKUP_VERSION,
                 roomSchemaVersion = AppDatabase.SCHEMA_VERSION,
                 includesCache = dbFile != null,
                 imageCount = imageFiles.size,
@@ -305,10 +313,16 @@ constructor(
         }
     }
 
-    private fun validate(manifest: BackupManifest) {
+    private fun validate(manifest: BackupManifest, settings: SettingsBackupSnapshot) {
         if (manifest.format != BACKUP_FORMAT) throw BackupFormatException("Not a Syncwich backup")
         if (manifest.formatVersion > BACKUP_FORMAT_VERSION) {
             throw BackupFormatException("This backup was created by a newer Syncwich version")
+        }
+        if (settings.settingsVersion > SETTINGS_BACKUP_VERSION) {
+            throw BackupFormatException("This backup contains settings from a newer Syncwich version")
+        }
+        if (manifest.settingsVersion > SETTINGS_BACKUP_VERSION) {
+            throw BackupFormatException("This backup contains settings from a newer Syncwich version")
         }
         if (!isCompatibleApplicationId(manifest.applicationId, BuildConfig.APPLICATION_ID)) {
             throw BackupFormatException("This backup belongs to a different application")
