@@ -1996,12 +1996,17 @@ Status: **done**, 2026-08-15. The Syncwich app already exists in Play Console; t
 
 ## SW-130: Release Syncwich 1.0.0
 
-- [ ] Close all release-blocking SW tickets
-- [ ] Confirm CI lint, tests, and signed release build are green for the release commit
-- [ ] Create and push the `v1.0.0` Git tag
-- [ ] Verify the published release artifacts
+- [x] Confirm there are no remaining release-blocking tickets (SW-125 is post-release runtime verification)
+- [x] Confirm CI lint, tests, and signed release build are green for the release commit
+- [x] Create and push the `v1.0.0` Git tag
+- [x] Verify the published release artifacts
 
-Status: not started.
+Status: **done**, 2026-08-15. The release commit `199ff65` passed Build (`31891830878`), Lint
+(`31891834624`), and the tag-triggered GitHub Release workflow (`31892115836`). The annotated
+`v1.0.0` tag points at that commit, and the public GitHub release contains the four ABI APKs plus
+`SHA256SUMS`. The tag-triggered Play workflow rebuilt the AAB but was rejected by Google Play
+because version code `1000000` had already been published successfully by the manual internal-track
+run `31891038114`; the published Play release is therefore verified through that successful run.
 
 ## SW-131: Match scheduled-backup card styling
 
