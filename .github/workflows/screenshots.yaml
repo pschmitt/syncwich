@@ -62,8 +62,25 @@ jobs:
       - name: Install fastlane
         run: gem install fastlane --no-document
 
+      - name: Cache Mealie Docker image
+        uses: actions/cache@v4
+        with:
+          path: /tmp/syncwich-mealie-v3.22.0.tar.gz
+          key: syncwich-mealie-v3.22.0-${{ runner.os }}-v1
+
+      - name: Load or pull Mealie Docker image
+        run: |
+          image="ghcr.io/mealie-recipes/mealie:v3.22.0"
+          archive=/tmp/syncwich-mealie-v3.22.0.tar.gz
+          if [ -s "$archive" ]; then
+            gzip -dc "$archive" | docker load
+          else
+            docker pull "$image"
+            docker save "$image" | gzip -1 > "$archive"
+          fi
+
       - name: Start disposable Mealie fixture
-        run: docker compose -f ci/mealie/docker-compose.yml up --detach --wait --wait-timeout 600
+        run: docker compose -f ci/mealie/docker-compose.yml up --no-build --detach --wait --wait-timeout 600
 
       - name: Seed deterministic screenshot recipes
         run: |
