@@ -66,8 +66,17 @@ jobs:
         run: |
           ./gradlew assembleDebug assembleDebugAndroidTest --stacktrace
           mkdir -p dist
-          cp app/build/outputs/apk/debug/app-debug.apk dist/
-          cp app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk dist/
+          shopt -s nullglob
+          debug_apks=(app/build/outputs/apk/debug/*-arm64-v8a-debug.apk)
+          test_apks=(app/build/outputs/apk/androidTest/debug/*-androidTest.apk)
+          if [[ ${#debug_apks[@]} -ne 1 || ${#test_apks[@]} -ne 1 ]]
+          then
+            printf 'Expected one arm64 debug APK and one androidTest APK, found %d and %d\n' \
+              "${#debug_apks[@]}" "${#test_apks[@]}" >&2
+            exit 1
+          fi
+          cp "${debug_apks[0]}" dist/app-debug.apk
+          cp "${test_apks[0]}" dist/app-debug-androidTest.apk
 
       # GitHub-hosted runners ship /dev/kvm but don't grant the job user access to it, so the
       # emulator silently falls back to software-only emulation and takes ~15+ minutes to boot.
