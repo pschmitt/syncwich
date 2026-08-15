@@ -1725,3 +1725,13 @@ Status: not started.
 - [ ] Add focused UI and editor coverage
 
 Status: not started.
+
+## SW-104: Add required tools to recipes
+
+- [ ] Display a recipe’s required tools in the recipe view
+- [ ] Allow creating tools from the recipe editor
+- [ ] Allow editing and deleting existing tools
+- [ ] Preserve tool data through recipe updates and offline cache refreshes
+- [ ] Add focused display and editor coverage
+
+Status: not started.
