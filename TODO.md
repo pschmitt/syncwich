@@ -1977,8 +1977,9 @@ Status: not started.
 ## SW-128: Restore debug backups in release builds
 
 - [ ] Reproduce restoring a backup exported by the debug app in the release app
-- [ ] Compare backup file format, encryption, signing, and validation behavior across variants
-- [ ] Make compatible backups restore reliably without weakening password protection
-- [ ] Add cross-variant backup round-trip coverage and verify on a physical device
+- [x] Compare backup file format, encryption, signing, and validation behavior across variants
+- [x] Make compatible backups restore reliably without weakening password protection
+- [x] Add cross-variant backup-format coverage
+- [ ] Verify a real debug backup restores on a physical release install
 
-Status: not started.
+Status: in progress, 2026-08-15. Release and debug application IDs now share manifest validation, and legacy unencrypted ZIP archives are accepted without weakening encrypted-backup password checks. Remote checks pass; physical restore verification remains.

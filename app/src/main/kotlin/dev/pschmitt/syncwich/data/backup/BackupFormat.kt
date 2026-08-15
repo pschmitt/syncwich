@@ -73,6 +73,8 @@ class BackupWrongPasswordException : Exception("Incorrect backup password")
 object BackupCrypto {
     private val magic =
         byteArrayOf('S'.code.toByte(), 'W'.code.toByte(), 'B'.code.toByte(), '1'.code.toByte())
+    private val zipMagic =
+        byteArrayOf('P'.code.toByte(), 'K'.code.toByte(), 3.toByte(), 4.toByte())
     private const val plainFlag: Byte = 0
     private const val encryptedFlag: Byte = 1
     private const val saltSize = 16
@@ -92,6 +94,10 @@ object BackupCrypto {
 
     fun decode(bytes: ByteArray, password: String?): ByteArray {
         if (bytes.size < magic.size + 1 || !bytes.copyOfRange(0, magic.size).contentEquals(magic)) {
+            // Early development builds wrote the ZIP archive directly before the SWB1 envelope
+            // was introduced. Keep those unencrypted backups restorable, but never treat an
+            // unknown file as a password-protected backup.
+            if (isRawZip(bytes) && password.isNullOrEmpty()) return bytes
             throw BackupFormatException("Not a valid Syncwich backup")
         }
         val payload = bytes.copyOfRange(magic.size + 1, bytes.size)
@@ -124,10 +130,15 @@ object BackupCrypto {
 
     fun isEncrypted(bytes: ByteArray): Boolean {
         if (bytes.size < magic.size + 1 || !bytes.copyOfRange(0, magic.size).contentEquals(magic)) {
+            if (isRawZip(bytes)) return false
             throw BackupFormatException("Not a valid Syncwich backup")
         }
         return bytes[magic.size] == encryptedFlag
     }
+
+    private fun isRawZip(bytes: ByteArray): Boolean =
+        bytes.size >= zipMagic.size &&
+            bytes.copyOfRange(0, zipMagic.size).contentEquals(zipMagic)
 
     private fun deriveKey(password: String, salt: ByteArray): SecretKeySpec {
         val spec = PBEKeySpec(password.toCharArray(), salt, iterations, keyBits)
@@ -296,11 +307,7 @@ constructor(
         if (manifest.formatVersion > BACKUP_FORMAT_VERSION) {
             throw BackupFormatException("This backup was created by a newer Syncwich version")
         }
-        if (
-            manifest.applicationId != BuildConfig.APPLICATION_ID &&
-                manifest.applicationId != BuildConfig.APPLICATION_ID.removeSuffix(".debug") &&
-                BuildConfig.APPLICATION_ID != manifest.applicationId.removeSuffix(".debug")
-        ) {
+        if (!isCompatibleApplicationId(manifest.applicationId, BuildConfig.APPLICATION_ID)) {
             throw BackupFormatException("This backup belongs to a different application")
         }
         if (manifest.includesCache && manifest.roomSchemaVersion != AppDatabase.SCHEMA_VERSION) {
@@ -435,6 +442,12 @@ constructor(
             )
     }
 }
+
+internal fun isCompatibleApplicationId(
+    backupApplicationId: String,
+    currentApplicationId: String,
+): Boolean =
+    backupApplicationId.removeSuffix(".debug") == currentApplicationId.removeSuffix(".debug")
 
 private fun ZipInputStream.copyTo(output: ByteArrayOutputStream, limit: Long) {
     val buffer = ByteArray(DEFAULT_BUFFER_SIZE)

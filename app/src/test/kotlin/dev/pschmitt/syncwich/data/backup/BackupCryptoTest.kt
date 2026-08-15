@@ -1,5 +1,8 @@
 package dev.pschmitt.syncwich.data.backup
 
+import java.io.ByteArrayOutputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -32,5 +35,24 @@ class BackupCryptoTest {
     @Test(expected = BackupWrongPasswordException::class)
     fun encryptedBackupWithWrongPasswordIsRejected() {
         BackupCrypto.decode(BackupCrypto.encode(byteArrayOf(1, 2, 3), "secret"), "wrong")
+    }
+
+    @Test
+    fun legacyUnencryptedZipIsAccepted() {
+        val legacyArchive = ByteArrayOutputStream().apply {
+            ZipOutputStream(this).use { zip ->
+                zip.putNextEntry(ZipEntry("manifest.json"))
+                zip.write("{}".toByteArray())
+                zip.closeEntry()
+            }
+        }.toByteArray()
+
+        assertFalse(BackupCrypto.isEncrypted(legacyArchive))
+        assertArrayEquals(legacyArchive, BackupCrypto.decode(legacyArchive, null))
+    }
+
+    @Test(expected = BackupFormatException::class)
+    fun unknownFileIsRejected() {
+        BackupCrypto.decode("not a backup".toByteArray(), null)
     }
 }
