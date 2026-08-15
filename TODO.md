@@ -2060,3 +2060,12 @@ explicit version is supplied, and the debug/release workflows pass and verify th
 while excluding the moving `latest` tag. Remote ktfmt, unit tests, Android Lint, Android-test
 compilation, release BuildConfig generation, and debug APK metadata verification passed. The
 corrected debug APK was installed successfully on ZF10, Mi Pad 4, and PX5.
+
+## SW-135: Polish About-page project details across Syncwich and Nyetbox
+
+- [ ] Move Syncwich’s libraries list into a dedicated About subview linked from the Project section
+- [ ] Add the app icon to Nyetbox’s About page
+- [ ] Give Nyetbox license and build type their own About rows
+- [ ] Add focused UI coverage and verify both applications
+
+Status: not started.
