@@ -1,10 +1,10 @@
 package dev.pschmitt.syncwich.data.backup
 
-import org.junit.Assert.assertEquals
-import org.junit.Test
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import org.junit.Assert.assertEquals
+import org.junit.Test
 
 class BackupFileNameTest {
 
