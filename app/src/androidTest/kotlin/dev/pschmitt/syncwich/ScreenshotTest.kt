@@ -75,6 +75,9 @@ class ScreenshotTest {
             }
             check(device.wait(Until.hasObject(By.text("Home")), 30_000))
             check(device.wait(Until.hasObject(By.text("Gochujang Tofu Bowls")), 60_000))
+            // Home cards start their Coil requests when they enter composition; give those
+            // requests a moment to finish before capturing the listing image.
+            Thread.sleep(5_000)
             Screengrab.screenshot("01_home")
 
             device.findObject(By.text("Recipes")).click()
