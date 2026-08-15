@@ -455,6 +455,24 @@ internal fun RecipeCard(
         remember(serverUrl, recipe.id, recipe.image) {
             recipeImageUrl(serverUrl, recipe.id, recipe.image)
         }
+    val colors = MaterialTheme.colorScheme
+    val highlightedName =
+        remember(
+            recipe.name,
+            searchQuery,
+            colors.tertiaryContainer,
+            colors.onTertiaryContainer,
+        ) {
+            highlightedSearchText(
+                recipe.name,
+                searchQuery,
+                SpanStyle(
+                    background = colors.tertiaryContainer,
+                    color = colors.onTertiaryContainer,
+                ),
+            )
+        }
+    val formattedRating = remember(recipe.rating) { recipe.rating?.let(::formatRating) }
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth().height(RECIPE_CARD_HEIGHT).testTag("recipe-card"),
@@ -506,22 +524,14 @@ internal fun RecipeCard(
             }
             Column(modifier = Modifier.padding(12.dp)) {
                 Text(
-                    text =
-                        highlightedSearchText(
-                            recipe.name,
-                            searchQuery,
-                            SpanStyle(
-                                background = MaterialTheme.colorScheme.tertiaryContainer,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer,
-                            ),
-                        ),
+                    text = highlightedName,
                     style = MaterialTheme.typography.titleSmall,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
                 if (recipe.rating != null || recipe.totalTime != null) {
                     Column(modifier = Modifier.padding(top = 4.dp)) {
-                        recipe.rating?.let { rating ->
+                        formattedRating?.let { rating ->
                             Row {
                                 Icon(
                                     imageVector = Icons.Filled.Star,
@@ -530,7 +540,7 @@ internal fun RecipeCard(
                                     modifier = Modifier.size(16.dp),
                                 )
                                 Text(
-                                    text = " ${formatRating(rating)}",
+                                    text = " $rating",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
