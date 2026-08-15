@@ -96,6 +96,20 @@ class NavigationBarOrderTest {
     }
 
     @Test
+    fun `backup restores destinations that were visible through cache defaults`() {
+        val restored =
+            SettingsBackupSnapshot(
+                navigationBarHiddenItems = setOf(NavigationBarItemKeys.COOKBOOKS),
+                navigationBarVisibleItems = setOf(NavigationBarItemKeys.COOKBOOKS),
+            )
+
+        val visibility = restored.restoredNavigationBarVisibility()
+
+        assertEquals(emptySet<String>(), visibility.hiddenItems)
+        assertEquals(setOf(NavigationBarItemKeys.COOKBOOKS), visibility.shownItems)
+    }
+
+    @Test
     fun `settings and favorites can be opted into without changing existing defaults`() {
         val natural =
             listOf(

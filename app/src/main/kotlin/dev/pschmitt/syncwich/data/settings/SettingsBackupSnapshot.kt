@@ -8,6 +8,8 @@ data class SettingsBackupSnapshot(
     val navigationBarOrder: List<String> = emptyList(),
     val navigationBarHiddenItems: Set<String> = emptySet(),
     val navigationBarShownItems: Set<String> = emptySet(),
+    /** The destinations visible at export time, including cache-derived defaults. */
+    val navigationBarVisibleItems: Set<String> = emptySet(),
     val fontScale: Float = DEFAULT_FONT_SCALE,
     val themeMode: String? = null,
     val ingredientChecklistEnabled: Boolean = false,

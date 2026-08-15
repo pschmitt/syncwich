@@ -11,6 +11,39 @@ object NavigationBarItemKeys {
     const val SHOPPING_LISTS = "shopping_lists"
     const val COOKBOOKS = "cookbooks"
     const val SETTINGS = "settings"
+
+    val all =
+        listOf(
+            HOME,
+            RECIPES,
+            FAVORITES,
+            MEAL_PLAN,
+            SHOPPING_LISTS,
+            COOKBOOKS,
+            SETTINGS,
+        )
+}
+
+fun NavigationBarCacheState.defaultHiddenItems(): Set<String> =
+    buildSet {
+        add(NavigationBarItemKeys.FAVORITES)
+        add(NavigationBarItemKeys.SETTINGS)
+        if (!hasMealPlanData) add(NavigationBarItemKeys.MEAL_PLAN)
+        if (!hasShoppingLists) add(NavigationBarItemKeys.SHOPPING_LISTS)
+        if (!hasCookbooks) add(NavigationBarItemKeys.COOKBOOKS)
+    }
+
+data class RestoredNavigationBarVisibility(
+    val hiddenItems: Set<String>,
+    val shownItems: Set<String>,
+)
+
+fun SettingsBackupSnapshot.restoredNavigationBarVisibility(): RestoredNavigationBarVisibility {
+    val visibleItems = navigationBarVisibleItems
+    return RestoredNavigationBarVisibility(
+        hiddenItems = navigationBarHiddenItems - visibleItems,
+        shownItems = navigationBarShownItems + visibleItems,
+    )
 }
 
 /** Preferences used by the cache-aware bottom-navigation resolver. */

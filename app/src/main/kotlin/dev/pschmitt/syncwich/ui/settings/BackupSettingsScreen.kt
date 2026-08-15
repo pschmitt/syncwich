@@ -26,7 +26,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -202,7 +201,7 @@ fun BackupSettingsScreen(
             }
             item {
                 SettingsGroupCard(title = "Scheduled backups", icon = Icons.Filled.Schedule) {
-                    ListItem(
+                    SettingsListItem(
                         headlineContent = { Text("Create backups automatically") },
                         supportingContent = {
                             Text(
@@ -221,7 +220,7 @@ fun BackupSettingsScreen(
                             )
                         },
                     )
-                    ListItem(
+                    SettingsListItem(
                         modifier = Modifier.fillMaxWidth(),
                         leadingContent = { Icon(Icons.Filled.Folder, contentDescription = null) },
                         headlineContent = { Text("Backup folder") },
@@ -230,7 +229,7 @@ fun BackupSettingsScreen(
                             TextButton(onClick = { folderLauncher.launch(null) }) { Text("Choose") }
                         },
                     )
-                    ListItem(
+                    SettingsListItem(
                         leadingContent = { Icon(Icons.Filled.Schedule, contentDescription = null) },
                         headlineContent = { Text("Frequency") },
                         supportingContent = { Text(frequency.label) },
@@ -252,7 +251,7 @@ fun BackupSettingsScreen(
                             TextButton(onClick = { frequencyExpanded = true }) { Text("Change") }
                         },
                     )
-                    ListItem(
+                    SettingsListItem(
                         leadingContent = { Icon(Icons.Filled.Lock, contentDescription = null) },
                         headlineContent = { Text("Scheduled backup password") },
                         supportingContent = {
@@ -276,7 +275,7 @@ fun BackupSettingsScreen(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                     )
                     lastBackupAt?.let { timestamp ->
-                        ListItem(
+                        SettingsListItem(
                             headlineContent = { Text("Last backup") },
                             supportingContent = {
                                 Text(DateFormat.getDateTimeInstance().format(Date(timestamp)))

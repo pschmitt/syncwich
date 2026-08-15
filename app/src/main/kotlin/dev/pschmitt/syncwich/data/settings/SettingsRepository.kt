@@ -278,14 +278,33 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         }
     }
 
-    suspend fun exportBackupSettings(): SettingsBackupSnapshot {
+    suspend fun exportBackupSettings(
+        navigationBarCacheState: NavigationBarCacheState? = null,
+    ): SettingsBackupSnapshot {
         val prefs = context.syncwichDataStore.data.first()
+        val navigationBarOrder = navigationBarOrderFromString(prefs[KEY_NAV_BAR_ORDER])
+        val navigationBarHiddenItems =
+            navigationBarOrderFromString(prefs[KEY_NAV_BAR_HIDDEN_ITEMS]).toSet()
+        val navigationBarShownItems =
+            navigationBarOrderFromString(prefs[KEY_NAV_BAR_SHOWN_ITEMS]).toSet()
         return SettingsBackupSnapshot(
-            navigationBarOrder = navigationBarOrderFromString(prefs[KEY_NAV_BAR_ORDER]),
-            navigationBarHiddenItems =
-                navigationBarOrderFromString(prefs[KEY_NAV_BAR_HIDDEN_ITEMS]).toSet(),
-            navigationBarShownItems =
-                navigationBarOrderFromString(prefs[KEY_NAV_BAR_SHOWN_ITEMS]).toSet(),
+            navigationBarOrder = navigationBarOrder,
+            navigationBarHiddenItems = navigationBarHiddenItems,
+            navigationBarShownItems = navigationBarShownItems,
+            navigationBarVisibleItems =
+                navigationBarCacheState
+                    ?.let { cache ->
+                        resolveNavBarOrder(
+                                natural = NavigationBarItemKeys.all,
+                                persisted = navigationBarOrder,
+                                hidden = navigationBarHiddenItems,
+                                pinned = setOf(NavigationBarItemKeys.RECIPES),
+                                defaultHidden = cache.defaultHiddenItems(),
+                                explicitlyShown = navigationBarShownItems,
+                            )
+                            .toSet()
+                    }
+                    .orEmpty(),
             fontScale = sanitizeFontScale(prefs[KEY_FONT_SCALE] ?: DEFAULT_FONT_SCALE),
             themeMode = prefs[KEY_THEME_MODE],
             ingredientChecklistEnabled = prefs[KEY_INGREDIENT_CHECKLIST] ?: false,
@@ -309,12 +328,15 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
     }
 
     suspend fun restoreBackupSettings(snapshot: SettingsBackupSnapshot) {
+        val restoredNavigationBarVisibility = snapshot.restoredNavigationBarVisibility()
         context.syncwichDataStore.edit { prefs ->
             prefs[KEY_NAV_BAR_ORDER] = navigationBarOrderToString(snapshot.navigationBarOrder)
             prefs[KEY_NAV_BAR_HIDDEN_ITEMS] =
-                navigationBarOrderToString(snapshot.navigationBarHiddenItems.toList())
+                navigationBarOrderToString(
+                    restoredNavigationBarVisibility.hiddenItems.toList()
+                )
             prefs[KEY_NAV_BAR_SHOWN_ITEMS] =
-                navigationBarOrderToString(snapshot.navigationBarShownItems.toList())
+                navigationBarOrderToString(restoredNavigationBarVisibility.shownItems.toList())
             prefs[KEY_FONT_SCALE] = sanitizeFontScale(snapshot.fontScale)
             snapshot.themeMode?.let { prefs[KEY_THEME_MODE] = it } ?: prefs.remove(KEY_THEME_MODE)
             prefs[KEY_INGREDIENT_CHECKLIST] = snapshot.ingredientChecklistEnabled

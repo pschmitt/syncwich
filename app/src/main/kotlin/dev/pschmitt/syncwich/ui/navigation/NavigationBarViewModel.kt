@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.pschmitt.syncwich.data.settings.NavigationBarCacheAvailability
 import dev.pschmitt.syncwich.data.settings.NavigationBarItemKeys
 import dev.pschmitt.syncwich.data.settings.NavigationBarPreferences
+import dev.pschmitt.syncwich.data.settings.defaultHiddenItems
 import dev.pschmitt.syncwich.data.settings.resolveNavBarOrder
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -29,18 +30,11 @@ constructor(
                 cacheAvailability.state,
             ) { persisted, hidden, explicitlyShown, cache ->
                 resolveNavBarOrder(
-                    natural = NATURAL_KEYS,
+                    natural = NavigationBarItemKeys.all,
                     persisted = persisted,
                     hidden = hidden,
                     pinned = setOf(NavigationBarItemKeys.RECIPES),
-                    defaultHidden =
-                        buildSet {
-                            add(NavigationBarItemKeys.FAVORITES)
-                            add(NavigationBarItemKeys.SETTINGS)
-                            if (!cache.hasMealPlanData) add(NavigationBarItemKeys.MEAL_PLAN)
-                            if (!cache.hasShoppingLists) add(NavigationBarItemKeys.SHOPPING_LISTS)
-                            if (!cache.hasCookbooks) add(NavigationBarItemKeys.COOKBOOKS)
-                        },
+                    defaultHidden = cache.defaultHiddenItems(),
                     explicitlyShown = explicitlyShown,
                 )
             }
@@ -52,6 +46,5 @@ constructor(
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
-        val NATURAL_KEYS = TopLevelDestination.entries.map { it.key }
     }
 }

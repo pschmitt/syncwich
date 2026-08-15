@@ -11,6 +11,7 @@ import dev.pschmitt.syncwich.BuildConfig
 import dev.pschmitt.syncwich.data.db.AppDatabase
 import dev.pschmitt.syncwich.data.settings.SettingsBackupSnapshot
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
+import dev.pschmitt.syncwich.data.settings.NavigationBarCacheAvailability
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -27,6 +28,7 @@ import javax.crypto.spec.SecretKeySpec
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -153,6 +155,7 @@ class BackupManager
 constructor(
     private val settingsRepository: SettingsRepository,
     private val database: AppDatabase,
+    private val navigationBarCacheAvailability: NavigationBarCacheAvailability,
     @ApplicationContext private val context: Context,
 ) {
     private val json = Json {
@@ -197,7 +200,8 @@ constructor(
 
     private suspend fun createArchive(): ByteArray {
         checkpointDatabase()
-        val settings = settingsRepository.exportBackupSettings()
+        val settings =
+            settingsRepository.exportBackupSettings(navigationBarCacheAvailability.state.first())
         val credentials = settingsRepository.credentials.value
         val dbFile = context.getDatabasePath(DATABASE_NAME).takeIf(File::exists)
         val imageRoot = context.cacheDir.resolve(IMAGE_CACHE_DIRECTORY)
