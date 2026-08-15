@@ -1983,3 +1983,12 @@ Status: not started.
 - [ ] Verify a real debug backup restores on a physical release install
 
 Status: in progress, 2026-08-15. Release and debug application IDs now share manifest validation, and legacy unencrypted ZIP archives are accepted without weakening encrypted-backup password checks. Remote checks pass; physical restore verification remains.
+
+## SW-129: Publish the Play Store release
+
+- [ ] Upload the current Play Store listing assets
+- [ ] Build and verify the signed release APK/AAB
+- [ ] Publish the release to Google Play
+- [ ] Record the Play Console release and verification result
+
+Status: not started.
