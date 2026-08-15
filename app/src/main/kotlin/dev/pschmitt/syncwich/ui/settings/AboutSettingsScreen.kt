@@ -18,8 +18,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.LibraryBooks
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DateRange
@@ -62,66 +63,13 @@ private const val SPONSORS_URL = "https://github.com/sponsors/pschmitt"
 private const val PRIVACY_URL = "https://github.com/pschmitt/syncwich/blob/main/PRIVACY.md"
 private const val LICENSE_URL = "https://github.com/pschmitt/syncwich/blob/main/LICENSE"
 
-private data class Library(val name: String, val license: String, val url: String)
-
-// Keep this list in sync with the libraries used by the app's runtime dependencies.
-private val LIBRARIES =
-    listOf(
-        Library("AndroidX", "Apache License 2.0", "https://github.com/androidx/androidx"),
-        Library(
-            "Jetpack Compose",
-            "Apache License 2.0",
-            "https://github.com/androidx/androidx/tree/androidx-main/compose",
-        ),
-        Library(
-            "Material 3",
-            "Apache License 2.0",
-            "https://github.com/androidx/androidx/tree/androidx-main/compose/material3",
-        ),
-        Library("Coil", "Apache License 2.0", "https://github.com/coil-kt/coil"),
-        Library("Hilt", "Apache License 2.0", "https://github.com/google/dagger"),
-        Library("Kotlin", "Apache License 2.0", "https://github.com/JetBrains/kotlin"),
-        Library(
-            "kotlinx.coroutines",
-            "Apache License 2.0",
-            "https://github.com/Kotlin/kotlinx.coroutines",
-        ),
-        Library(
-            "kotlinx.datetime",
-            "Apache License 2.0",
-            "https://github.com/Kotlin/kotlinx-datetime",
-        ),
-        Library(
-            "kotlinx.serialization",
-            "Apache License 2.0",
-            "https://github.com/Kotlin/kotlinx.serialization",
-        ),
-        Library(
-            "Multiplatform Markdown Renderer",
-            "Apache License 2.0",
-            "https://github.com/mikepenz/multiplatform-markdown-renderer",
-        ),
-        Library("OkHttp", "Apache License 2.0", "https://github.com/square/okhttp"),
-        Library("Retrofit", "Apache License 2.0", "https://github.com/square/retrofit"),
-        Library(
-            "Room",
-            "Apache License 2.0",
-            "https://github.com/androidx/androidx/tree/androidx-main/room",
-        ),
-        Library(
-            "WorkManager",
-            "Apache License 2.0",
-            "https://github.com/androidx/androidx/tree/androidx-main/work",
-        ),
-        Library("Timber", "Apache License 2.0", "https://github.com/JakeWharton/timber"),
-    )
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutSettingsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     onBuildTap: () -> Unit = {},
+    onShowLibraries: () -> Unit = {},
     developerModeToast: Flow<String> = emptyFlow(),
 ) {
     val context = LocalContext.current
@@ -200,6 +148,20 @@ fun AboutSettingsScreen(
             }
             item {
                 SettingsGroupCard(title = "Project", icon = Icons.Filled.Code) {
+                    SettingsListItem(
+                        modifier =
+                            Modifier.fillMaxWidth()
+                                .clickable(role = Role.Button, onClick = onShowLibraries)
+                                .semantics { role = Role.Button },
+                        leadingContent = {
+                            Icon(Icons.AutoMirrored.Filled.LibraryBooks, contentDescription = null)
+                        },
+                        headlineContent = { Text("Libraries") },
+                        supportingContent = { Text("Open-source dependencies and their licenses") },
+                        trailingContent = {
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
+                        },
+                    )
                     ExternalLinkRow(
                         context = context,
                         url = REPOSITORY_URL,
@@ -225,22 +187,6 @@ fun AboutSettingsScreen(
                         title = "License",
                         subtitle = "Syncwich is free software under GPL-3.0",
                     )
-                }
-            }
-            item {
-                SettingsGroupCard(
-                    title = "Libraries",
-                    icon = Icons.AutoMirrored.Filled.LibraryBooks,
-                ) {
-                    LIBRARIES.forEach { library ->
-                        ExternalLinkRow(
-                            context = context,
-                            url = library.url,
-                            title = library.name,
-                            subtitle = library.license,
-                            icon = Icons.AutoMirrored.Filled.LibraryBooks,
-                        )
-                    }
                 }
             }
         }

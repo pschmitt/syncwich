@@ -39,5 +39,6 @@ class HomeNavigationTest {
             TopLevelDestination.SHOPPING_LISTS.routeTypes.contains(Route.ShoppingListDetail::class)
         )
         assertTrue(TopLevelDestination.SETTINGS.routeTypes.contains(Route.SettingsCategory::class))
+        assertTrue(TopLevelDestination.SETTINGS.routeTypes.contains(Route.Libraries::class))
     }
 }

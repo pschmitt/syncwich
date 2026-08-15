@@ -39,6 +39,7 @@ import dev.pschmitt.syncwich.ui.recipes.RecipeEditorScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipeTimelineScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipesScreen
 import dev.pschmitt.syncwich.ui.settings.ConnectionSettingsScreen
+import dev.pschmitt.syncwich.ui.settings.LibrariesScreen
 import dev.pschmitt.syncwich.ui.settings.SettingsCategoryScreen
 import dev.pschmitt.syncwich.ui.settings.SettingsScreen
 import dev.pschmitt.syncwich.ui.shoppinglists.ShoppingListDetailScreen
@@ -350,10 +351,14 @@ fun SyncwichNavHost(
                     category = route.category,
                     onBack = { navController.popBackStack() },
                     onChangeConnection = { navController.navigate(Route.SettingsConnection) },
+                    onShowLibraries = { navController.navigate(Route.Libraries) },
                     onSignedOut = {
                         navController.navigate(Route.Onboarding) { popUpTo(0) { inclusive = true } }
                     },
                 )
+            }
+            composable<Route.Libraries> {
+                LibrariesScreen(onBack = { navController.popBackStack() })
             }
             composable<Route.SettingsConnection> {
                 ConnectionSettingsScreen(

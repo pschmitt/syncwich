@@ -61,6 +61,9 @@ sealed interface Route {
 
     @Serializable data object Settings : Route
 
+    /** Open-source dependency and license list, reached from Settings > About. */
+    @Serializable data object Libraries : Route
+
     @Serializable
     data class SettingsCategory(val category: dev.pschmitt.syncwich.ui.settings.SettingsCategory) :
         Route
@@ -138,6 +141,7 @@ enum class TopLevelDestination(
             Route.Settings::class,
             Route.SettingsCategory::class,
             Route.SettingsConnection::class,
+            Route.Libraries::class,
         ),
     ),
 }

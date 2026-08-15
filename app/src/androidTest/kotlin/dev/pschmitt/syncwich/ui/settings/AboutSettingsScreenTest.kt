@@ -9,7 +9,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollToIndex
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.pschmitt.syncwich.ui.theme.SyncwichTheme
 import org.junit.Assert.assertEquals
@@ -40,11 +39,18 @@ class AboutSettingsScreenTest {
     }
 
     @Test
-    fun aboutScreenShowsLibrariesAndLicensesOffline() {
+    fun aboutScreenLinksToLibrariesAndShowsProjectLinksOffline() {
         composeTestRule.setContent { SyncwichTheme { AboutSettingsScreen(onBack = {}) } }
 
-        composeTestRule.onNodeWithTag("about-settings-list").performScrollToIndex(2)
         composeTestRule.onNodeWithText("Libraries").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Libraries").assertHasClickAction()
+    }
+
+    @Test
+    fun librariesScreenShowsDependenciesAndLicensesOffline() {
+        composeTestRule.setContent { SyncwichTheme { LibrariesScreen(onBack = {}) } }
+
+        composeTestRule.onNodeWithTag("libraries-list").assertExists()
         composeTestRule.onNodeWithText("AndroidX").assertExists()
         composeTestRule.onNodeWithText("Jetpack Compose").assertExists()
         composeTestRule.onNodeWithText("Multiplatform Markdown Renderer").assertExists()

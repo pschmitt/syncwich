@@ -206,6 +206,7 @@ fun SettingsCategoryScreen(
     onBack: () -> Unit,
     onChangeConnection: () -> Unit,
     onSignedOut: () -> Unit,
+    onShowLibraries: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -239,6 +240,7 @@ fun SettingsCategoryScreen(
                 onBack = onBack,
                 modifier = modifier,
                 onBuildTap = aboutViewModel::onBuildRowTap,
+                onShowLibraries = onShowLibraries,
                 developerModeToast = aboutViewModel.developerModeToast,
             )
         }
