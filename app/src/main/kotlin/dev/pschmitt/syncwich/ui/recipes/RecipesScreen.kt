@@ -191,27 +191,13 @@ fun RecipesScreen(
                         onRetry = if (!hasFilter) viewModel::refresh else null,
                     )
                 } else {
-                    LazyVerticalGrid(
-                        columns = GridCells.Adaptive(minSize = 160.dp),
-                        contentPadding = PaddingValues(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        gridItems(
-                            uiState.recipes,
-                            key = { it.id },
-                            contentType = { "recipe-card" },
-                        ) { recipe ->
-                            RecipeCard(
-                                recipe = recipe,
-                                serverUrl = uiState.serverUrl,
-                                searchQuery = uiState.searchQuery,
-                                isFavorite = recipe.id in uiState.favoriteRecipeIds,
-                                onClick = { onRecipeClick(recipe) },
-                            )
-                        }
-                    }
+                    RecipeGrid(
+                        recipes = uiState.recipes,
+                        serverUrl = uiState.serverUrl,
+                        searchQuery = uiState.searchQuery,
+                        favoriteRecipeIds = uiState.favoriteRecipeIds,
+                        onRecipeClick = onRecipeClick,
+                    )
                 }
             }
         }
@@ -262,6 +248,39 @@ fun RecipesScreen(
                 TextButton(onClick = { importDialogVisible = false }) { Text("Cancel") }
             },
         )
+    }
+}
+
+/** The cache-only, keyed recipe grid kept separate so its scroll behavior can be instrumented. */
+@Composable
+internal fun RecipeGrid(
+    recipes: List<RecipeSummaryEntity>,
+    serverUrl: String,
+    searchQuery: String = "",
+    favoriteRecipeIds: Set<String> = emptySet(),
+    onRecipeClick: (RecipeSummaryEntity) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = 160.dp),
+        contentPadding = PaddingValues(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = modifier.fillMaxSize().testTag("recipes-grid"),
+    ) {
+        gridItems(
+            recipes,
+            key = { it.id },
+            contentType = { "recipe-card" },
+        ) { recipe ->
+            RecipeCard(
+                recipe = recipe,
+                serverUrl = serverUrl,
+                searchQuery = searchQuery,
+                isFavorite = recipe.id in favoriteRecipeIds,
+                onClick = { onRecipeClick(recipe) },
+            )
+        }
     }
 }
 
