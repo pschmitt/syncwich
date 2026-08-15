@@ -1713,7 +1713,7 @@ test compilation pass.
 - [ ] Hide the row when serving information is unavailable
 - [ ] Add focused layout and formatting coverage
 
-Status: not started.
+Status: in progress.
 
 ## SW-103: Add category metadata and editing support
 
@@ -1724,7 +1724,7 @@ Status: not started.
 - [ ] Preserve navigation from category and tag metadata buttons
 - [ ] Add focused UI and editor coverage
 
-Status: not started.
+Status: in progress.
 
 ## SW-104: Add required tools to recipes
 
@@ -1733,5 +1733,15 @@ Status: not started.
 - [ ] Allow editing and deleting existing tools
 - [ ] Preserve tool data through recipe updates and offline cache refreshes
 - [ ] Add focused display and editor coverage
+
+Status: in progress.
+
+## SW-105: Make navbar buttons return to destination home pages
+
+- [ ] Make Recipes always navigate to the recipes list
+- [ ] Make Cookbooks always navigate to the cookbook list
+- [ ] Make Shopping, Meal Plan, Favorites, and Settings return to their root pages
+- [ ] Avoid no-op taps when currently inside a nested destination
+- [ ] Add focused navigation coverage for nested routes
 
 Status: not started.
