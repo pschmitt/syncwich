@@ -1908,11 +1908,11 @@ Status: **done**, 2026-08-15. Leading Markdown/HTML ordered-list markers are str
 
 ## SW-120: Restore the developer-mode status toast
 
-- [ ] Show a “You are already a developer” toast when the easter egg is triggered after activation
-- [ ] Preserve the internally persisted developer-mode state without displaying it elsewhere
-- [ ] Add focused coverage for first activation and repeated activation
+- [x] Show a “You are already a developer” toast when the easter egg is triggered after activation
+- [x] Preserve the internally persisted developer-mode state without displaying it elsewhere
+- [x] Add focused coverage for first activation and repeated activation
 
-Status: not started.
+Status: in progress. The tap state now distinguishes unlock, progress, and already-enabled paths; remote validation and device verification are pending.
 
 ## SW-121: Match the About icon to the app icon
 

@@ -22,7 +22,7 @@ constructor(private val settingsRepository: SettingsRepository) : ViewModel() {
     private val developerMode: StateFlow<Boolean> =
         settingsRepository.developerMode.stateIn(
             viewModelScope,
-            SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
+            SharingStarted.Eagerly,
             false,
         )
 
@@ -33,34 +33,68 @@ constructor(private val settingsRepository: SettingsRepository) : ViewModel() {
         )
     val developerModeToast = _developerModeToast.asSharedFlow()
 
-    private var buildRowTapCount = 0
-    private var lastBuildRowTapAt = 0L
+    private val tapState = DeveloperModeTapState()
+    private var developerModeUnlocked = false
     private var unlockInProgress = false
 
     fun onBuildRowTap() {
-        val now = SystemClock.elapsedRealtime()
-        if (now - lastBuildRowTapAt > TAP_WINDOW_MILLIS) buildRowTapCount = 0
-        lastBuildRowTapAt = now
-        buildRowTapCount++
-        if (developerMode.value || unlockInProgress) return
-        if (buildRowTapCount >= REQUIRED_TAPS) {
-            buildRowTapCount = 0
-            unlockInProgress = true
-            viewModelScope.launch {
-                settingsRepository.setDeveloperMode(true)
-                _developerModeToast.tryEmit("Developer mode enabled")
-                unlockInProgress = false
+        if (unlockInProgress) return
+        when (
+            val action =
+                tapState.onTap(SystemClock.elapsedRealtime(), developerMode.value || developerModeUnlocked)
+        ) {
+            DeveloperModeTapAction.AlreadyDeveloper ->
+                _developerModeToast.tryEmit(ALREADY_DEVELOPER_MESSAGE)
+            is DeveloperModeTapAction.Progress ->
+                _developerModeToast.tryEmit(
+                    "${action.remainingTaps} more taps to become a developer"
+                )
+            DeveloperModeTapAction.Unlock -> {
+                unlockInProgress = true
+                viewModelScope.launch {
+                    var enabled = false
+                    try {
+                        settingsRepository.setDeveloperMode(true)
+                        enabled = true
+                        _developerModeToast.tryEmit(DEVELOPER_MODE_ENABLED_MESSAGE)
+                    } finally {
+                        if (enabled) developerModeUnlocked = true
+                        unlockInProgress = false
+                    }
+                }
             }
-        } else {
-            _developerModeToast.tryEmit(
-                "${REQUIRED_TAPS - buildRowTapCount} more taps to become a developer"
-            )
         }
     }
 
     private companion object {
-        const val REQUIRED_TAPS = 7
-        const val TAP_WINDOW_MILLIS = 2_000L
-        const val STOP_TIMEOUT_MS = 5_000L
+        const val ALREADY_DEVELOPER_MESSAGE = "You are already a developer"
+        const val DEVELOPER_MODE_ENABLED_MESSAGE = "Developer mode enabled"
+    }
+}
+
+internal sealed interface DeveloperModeTapAction {
+    data object AlreadyDeveloper : DeveloperModeTapAction
+    data object Unlock : DeveloperModeTapAction
+    data class Progress(val remainingTaps: Int) : DeveloperModeTapAction
+}
+
+internal class DeveloperModeTapState(
+    private val requiredTaps: Int = 7,
+    private val tapWindowMillis: Long = 2_000L,
+) {
+    private var tapCount = 0
+    private var lastTapAt = 0L
+
+    fun onTap(now: Long, developerModeEnabled: Boolean): DeveloperModeTapAction {
+        if (developerModeEnabled) return DeveloperModeTapAction.AlreadyDeveloper
+        if (now - lastTapAt > tapWindowMillis) tapCount = 0
+        lastTapAt = now
+        tapCount++
+        return if (tapCount >= requiredTaps) {
+            tapCount = 0
+            DeveloperModeTapAction.Unlock
+        } else {
+            DeveloperModeTapAction.Progress(requiredTaps - tapCount)
+        }
     }
 }
