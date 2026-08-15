@@ -64,6 +64,9 @@ class ScreenshotTest {
             // package-service can all be ready while the app's own first Compose frame still
             // isn't up yet. Give it more room than the later waits, which run against an
             // already-warm process.
+            if (device.wait(Until.hasObject(By.text("Allow")), 5_000)) {
+                device.findObject(By.text("Allow")).click()
+            }
             check(device.wait(Until.hasObject(By.text("Home")), 30_000))
             Screengrab.screenshot("01_home")
 
