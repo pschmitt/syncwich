@@ -57,6 +57,20 @@ class SyncStatusTest {
     }
 
     @Test
+    fun `successful sync uses the compact synced headline`() {
+        val status =
+            resolveSyncStatus(
+                isSyncing = false,
+                lastSyncAt = 10_000L,
+                errorMessage = null,
+                nowMillis = 10_000L,
+            )
+
+        assertEquals(SyncStatusState.SYNCED, status.state)
+        assertEquals("Synced", syncStatusHeadline(status))
+    }
+
+    @Test
     fun `relative sync time handles missing and recent timestamps`() {
         assertEquals("Last synced: never", formatRelativeSyncTime(null, 10_000L))
         assertEquals("Last synced just now", formatRelativeSyncTime(9_500L, 10_000L))

@@ -1,9 +1,16 @@
 package dev.pschmitt.syncwich.ui.home
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.NewReleases
+import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
@@ -40,6 +47,55 @@ class HomeRecipeCardTest {
 
         assertEquals(2, cards.size)
         assertEquals(cards[0].boundsInRoot.height, cards[1].boundsInRoot.height, 0.1f)
+    }
+
+    @Test
+    fun homeSectionHeadersShowTheirIconsAlongsideAccessibleTitles() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                Column {
+                    HomeSectionHeader(
+                        title = "Recently viewed",
+                        icon = Icons.Filled.History,
+                        iconTestTag = "recently-viewed",
+                        actionLabel = "View all recipes",
+                        onAction = {},
+                    )
+                    HomeSectionHeader(
+                        title = "Recently added",
+                        icon = Icons.Filled.NewReleases,
+                        iconTestTag = "recently-added",
+                        actionLabel = "View all recipes",
+                        onAction = {},
+                    )
+                    HomeSectionHeader(
+                        title = "Cooked recently",
+                        icon = Icons.Filled.RestaurantMenu,
+                        iconTestTag = "cooked-recently",
+                        actionLabel = "View all recipes",
+                        onAction = {},
+                    )
+                    HomeSectionHeader(
+                        title = "Favorites",
+                        icon = Icons.Filled.Favorite,
+                        iconTestTag = "favorites",
+                        actionLabel = "View all favorites",
+                        onAction = {},
+                    )
+                }
+            }
+        }
+
+        listOf(
+                "Recently viewed" to "recently-viewed",
+                "Recently added" to "recently-added",
+                "Cooked recently" to "cooked-recently",
+                "Favorites" to "favorites",
+            )
+            .forEach { (title, iconTag) ->
+                composeTestRule.onNodeWithText(title).assertIsDisplayed()
+                composeTestRule.onNodeWithTag("home-section-icon-$iconTag").assertIsDisplayed()
+            }
     }
 
     private fun recipe(name: String, rating: Double?): RecipeSummaryEntity =

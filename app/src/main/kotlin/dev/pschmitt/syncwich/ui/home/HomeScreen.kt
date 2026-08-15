@@ -17,8 +17,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
@@ -35,6 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
@@ -118,6 +123,8 @@ fun HomeScreen(
                     item {
                         RecipeSection(
                             title = "Recently viewed",
+                            icon = Icons.Filled.History,
+                            iconTestTag = "recently-viewed",
                             recipes = uiState.recentlyViewedRecipes,
                             serverUrl = uiState.serverUrl,
                             onRecipeClick = onRecipeClick,
@@ -129,6 +136,8 @@ fun HomeScreen(
                     item {
                         RecipeSection(
                             title = "Recently added",
+                            icon = Icons.Filled.NewReleases,
+                            iconTestTag = "recently-added",
                             recipes = uiState.recentlyAddedRecipes,
                             serverUrl = uiState.serverUrl,
                             onRecipeClick = onRecipeClick,
@@ -140,6 +149,8 @@ fun HomeScreen(
                     item {
                         RecipeSection(
                             title = "Cooked recently",
+                            icon = Icons.Filled.RestaurantMenu,
+                            iconTestTag = "cooked-recently",
                             recipes = uiState.recentlyCookedRecipes,
                             serverUrl = uiState.serverUrl,
                             onRecipeClick = onRecipeClick,
@@ -165,13 +176,21 @@ fun HomeScreen(
 @Composable
 private fun RecipeSection(
     title: String,
+    icon: ImageVector,
+    iconTestTag: String,
     recipes: List<RecipeSummaryEntity>,
     serverUrl: String,
     onRecipeClick: (RecipeSummaryEntity) -> Unit,
     onSeeAll: () -> Unit,
 ) {
     Column {
-        SectionHeader(title = title, actionLabel = "View all recipes", onAction = onSeeAll)
+        HomeSectionHeader(
+            title = title,
+            icon = icon,
+            iconTestTag = iconTestTag,
+            actionLabel = "View all recipes",
+            onAction = onSeeAll,
+        )
         Spacer(Modifier.height(8.dp))
         RecipeRow(
             recipes = recipes,
@@ -189,8 +208,10 @@ private fun FavoriteSection(
     onOpenFavorites: () -> Unit,
 ) {
     Column {
-        SectionHeader(
+        HomeSectionHeader(
             title = "Favorites",
+            icon = Icons.Filled.Favorite,
+            iconTestTag = "favorites",
             actionLabel = "View all favorites",
             onAction = onOpenFavorites,
         )
@@ -204,8 +225,20 @@ private fun FavoriteSection(
 }
 
 @Composable
-private fun SectionHeader(title: String, actionLabel: String, onAction: () -> Unit) {
+internal fun HomeSectionHeader(
+    title: String,
+    icon: ImageVector,
+    iconTestTag: String,
+    actionLabel: String,
+    onAction: () -> Unit,
+) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(24.dp).testTag("home-section-icon-$iconTestTag"),
+        )
+        Spacer(Modifier.width(8.dp))
         Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
         TextButton(onClick = onAction) { Text(actionLabel) }
     }

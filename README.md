@@ -46,6 +46,13 @@ point it at. When Syncwich creates an API token on your behalf, it names it
 Not published on Google Play or F-Droid yet. Install and auto-update via Obtainium, or download
 an APK directly from the [releases page](https://github.com/pschmitt/syncwich/releases).
 
+[<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="60">][obtainium-link]
+
+The badge tracks the signed `release` APK from the rolling `latest` pre-release. Obtainium
+selects the APK architecture automatically; the debug APKs remain available for development.
+
+[obtainium-link]: https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22dev.pschmitt.syncwich%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fpschmitt%2Fsyncwich%22%2C%22author%22%3A%22pschmitt%22%2C%22name%22%3A%22Syncwich%22%2C%22preferredApkIndex%22%3A0%2C%22additionalSettings%22%3A%22%7B%5C%22includePrereleases%5C%22%3Atrue%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22apkFilterRegEx%5C%22%3A%5C%22syncwich-.%2A-app-.%2A-release%5C%5C%5C%5C.apk%24%5C%22%2C%5C%22invertAPKFilter%5C%22%3Afalse%2C%5C%22autoApkFilterByArch%5C%22%3Atrue%2C%5C%22trackOnly%5C%22%3Afalse%7D%22%7D
+
 Managing apps declaratively with [declaroid](https://github.com/pschmitt/declaroid) instead? Add:
 
 ```yaml
@@ -74,6 +81,10 @@ Before the first tag, complete the one-time setup:
 5. Finish the Play Console app content, store listing, declarations, and internal-testers setup.
 
 Privacy policy: [PRIVACY.md](https://github.com/pschmitt/syncwich/blob/main/PRIVACY.md).
+
+Custom Mealie instances can associate their recipe and cookbook URLs with Syncwich using Android
+App Links. See [docs/deep-links.md](docs/deep-links.md) for the required `assetlinks.json` and
+server configuration.
 
 ## Development
 

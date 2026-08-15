@@ -80,7 +80,7 @@ internal fun syncStatusHeadline(status: SyncStatus): String =
         SyncStatusState.STALE -> "Cache may be stale"
         SyncStatusState.NEVER_SYNCED ->
             if (status.hasCachedData) "Saved recipes ready" else "Not synced yet"
-        SyncStatusState.SYNCED -> "Recipes up to date"
+        SyncStatusState.SYNCED -> "Synced"
     }
 
 internal fun syncStatusDetails(

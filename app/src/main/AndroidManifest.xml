@@ -46,14 +46,16 @@
             </intent-filter>
 
             <!-- Mealie's public recipe/cookbook links are portable across self-hosted domains. -->
-            <intent-filter tools:ignore="AppLinkWarning,IntentFilterUniqueDataAttributes">
+            <intent-filter
+                android:autoVerify="true"
+                tools:ignore="AppLinkWarning,IntentFilterUniqueDataAttributes">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="*" android:pathPattern="/g/home/r/.*" />
-                <data android:scheme="https" android:host="*" android:pathPattern="/g/home/c/.*" />
-                <data android:scheme="http" android:host="*" android:pathPattern="/g/home/r/.*" />
-                <data android:scheme="http" android:host="*" android:pathPattern="/g/home/c/.*" />
+                <data android:scheme="https" android:host="nom.brkn.lol" android:pathPattern="/g/home/r/.*" />
+                <data android:scheme="https" android:host="nom.brkn.lol" android:pathPattern="/g/home/c/.*" />
+                <data android:scheme="http" android:host="nom.brkn.lol" android:pathPattern="/g/home/r/.*" />
+                <data android:scheme="http" android:host="nom.brkn.lol" android:pathPattern="/g/home/c/.*" />
             </intent-filter>
 
             <!-- Receive shared text/assets; URL text is routed immediately and image handling is

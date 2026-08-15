@@ -1824,8 +1824,41 @@ pass; the verified debug build was deployed to all attached devices.
 
 ## SW-112: Add icons to home recipe-section titles
 
-- [ ] Add appropriate icons to the Recently viewed, Recently added, Cooked recently, and Favorites section titles
-- [ ] Keep section titles and actions accessible and visually aligned
-- [ ] Add focused UI coverage for the home-section title icons
+- [x] Add appropriate icons to the Recently viewed, Recently added, Cooked recently, and Favorites section titles
+- [x] Keep section titles and actions accessible and visually aligned
+- [x] Add focused UI coverage for the home-section title icons
 
-Status: not started.
+Status: **done**, 2026-08-15. Home recipe sections now show distinct Material icons beside their
+titles without duplicating the accessible text labels. Focused header coverage passes on the wired
+Zenfone 10, and the verified debug build was deployed to ZF10 and Mi Pad 4; the Pixel 5 ADB
+endpoint was unavailable during the final deployment retry.
+
+## SW-113: Add an Obtainium badge to the README
+
+- [x] Add an Obtainium badge to the README matching the sibling nyetbox presentation
+- [x] Point the badge at the correct Syncwich repository/release source
+- [x] Verify the badge renders and its link works
+
+Status: **done**, 2026-08-15. README now includes the Obtainium badge and a pre-release APK
+configuration for `dev.pschmitt.syncwich`; the badge asset and redirect endpoint respond
+successfully.
+
+## SW-114: Document and configure Mealie app links
+
+- [x] Document the Syncwich deep-link and `assetlinks.json` requirements for associating the custom Mealie instance with the app
+- [x] Add the required asset-links hosting/configuration to `/home/pschmitt/devel/private/pschmitt/nixos-config.git`
+- [ ] Verify the Android package, signing certificate, URL paths, and hosted asset-links response
+- [x] Record deployment and verification instructions for future signing-key changes
+
+Status: mostly done, 2026-08-15. The manifest now enables verified links for `nom.brkn.lol`,
+documents the recipe/cookbook paths and release fingerprint, and the Nix Mealie vhost generates
+the matching JSON. Android Lint, Nix formatting, and statix pass; the live endpoint still returns
+404 because the Nix change has not been deployed.
+
+## SW-115: Shorten the home sync-card status label
+
+- [x] Change the home sync-card label from “Recipes are up to date” to “Synced”
+- [x] Preserve the existing sync-state behavior and focused coverage
+
+Status: **done**, 2026-08-15. The successful-sync headline is now the compact “Synced” label;
+sync-state details and focused unit coverage remain unchanged.
