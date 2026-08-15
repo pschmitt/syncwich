@@ -1987,12 +1987,12 @@ Status: **done**, 2026-08-15. Backup manifests now encode their defaults, includ
 ## SW-129: Publish the Play Store release
 
 - [x] Upload the current Play Store listing text, icon, and feature graphic
-- [ ] Capture listing screenshots from a disposable CI Mealie fixture only
+- [x] Capture listing screenshots from a disposable CI Mealie fixture only
 - [ ] Build and verify the signed release AAB
 - [ ] Publish the release to Google Play
 - [ ] Record the Play Console release and verification result
 
-Status: in progress, 2026-08-15. The Syncwich app already exists in Play Console; the en-US listing text, icon, and feature graphic were uploaded successfully, and the signed release APK was installed and launched on ZF10, Mi Pad 4, and PX5. Screenshot capture is being moved to a disposable Mealie v3.22.0 CI fixture; no personal Mealie endpoint or data is used. The Play publishing service-account secret is configured in GitHub; the 1.0.0 tag-triggered AAB publish remains.
+Status: in progress, 2026-08-15. The Syncwich app already exists in Play Console; the en-US listing text, icon, and feature graphic were uploaded successfully, and the signed release APK was installed and launched on ZF10, Mi Pad 4, and PX5. Screenshots were captured successfully from a disposable Mealie v3.22.0 CI fixture with deterministic generated cover images; no personal Mealie endpoint or data is used. The fixture image is cached in GitHub Actions by its pinned version. The Play publishing service-account secret is configured in GitHub; screenshot upload and the 1.0.0 tag-triggered AAB publish remain.
 
 ## SW-130: Release Syncwich 1.0.0
 
