@@ -1992,3 +1992,12 @@ Status: in progress, 2026-08-15. Release and debug application IDs now share man
 - [ ] Record the Play Console release and verification result
 
 Status: not started.
+
+## SW-130: Release Syncwich 1.0.0
+
+- [ ] Close all release-blocking SW tickets
+- [ ] Confirm CI lint, tests, and signed release build are green for the release commit
+- [ ] Create and push the `v1.0.0` Git tag
+- [ ] Verify the published release artifacts
+
+Status: not started.
