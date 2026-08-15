@@ -1956,8 +1956,9 @@ Status: **done**, 2026-08-15. R8 removed `SettingsCategory`, which type-safe Nav
 
 Status: **done**, 2026-08-15. Recipe summaries are Compose-immutable, the grid uses stable keys and
 content types, image URL derivation and card presentation are remembered per item, and filtering
-plus image prefetching stay off the UI thread. Remote unit/lint checks pass and the optimized debug
-build was deployed to ZF10, Mi Pad 4, and PX5 without changing the offline-first image cache path.
+plus image prefetching stay off the UI thread. The production grid has a 120-item cached-list
+scroll regression test; remote unit/lint checks pass and the optimized debug build was deployed to
+ZF10, Mi Pad 4, and PX5 without changing the offline-first image cache path.
 
 ## SW-126: Surface startup crash logs for recovery
 
@@ -2036,9 +2037,12 @@ cross-variant path.
 
 ## SW-133: Release Syncwich 1.0.1
 
-- [ ] Finish the remaining open work and verify the release candidate
-- [ ] Confirm CI tests, lint, and release build are green
-- [ ] Create and push the `v1.0.1` Git tag after all release gates pass
-- [ ] Verify the GitHub and Play Store release artifacts
+- [x] Finish the remaining open work and verify the release candidate
+- [x] Confirm CI tests, lint, and release build are green
+- [x] Create and push the `v1.0.1` Git tag after all release gates pass
+- [x] Verify the GitHub and Play Store release artifacts
 
-Status: not started.
+Status: **done**, 2026-08-15. Tag `v1.0.1` points at `e1c56e0`. GitHub Release run
+`31894603548` passed and published the four signed release APKs plus `SHA256SUMS`; Play Store run
+`31894603529` passed and published version code `1000001` / version name `1.0.1` to internal
+testing.
