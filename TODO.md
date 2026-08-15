@@ -1705,3 +1705,12 @@ Status: **done**, 2026-08-15. Home no longer queues a duplicate startup pass; au
 waits two seconds when Room already contains recipes, starts immediately for an empty cache, and
 the sync card reports cached readiness instead of “Not synced yet”. Remote unit/lint and Android
 test compilation pass.
+
+## SW-102: Display recipe serving information
+
+- [ ] Show the recipe’s “Serves x” value in the recipe metadata/details area
+- [ ] Format whole and fractional serving counts naturally
+- [ ] Hide the row when serving information is unavailable
+- [ ] Add focused layout and formatting coverage
+
+Status: not started.
