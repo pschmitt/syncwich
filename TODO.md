@@ -1929,3 +1929,11 @@ Status: **done**, 2026-08-15. The About-page icon now sits on a circular `Syncwi
 - [x] Add focused coverage for the debug variant resources
 
 Status: **done**, 2026-08-15. Debug-only resources use a purple adaptive-icon background and the launcher label `Syncwich (debug)`, while release resources remain unchanged. Remote checks, Android-test compilation, and the focused ZF10 branding test passed; the updated APK is installed on ZF10, Mi Pad 4, and PX5.
+
+## SW-123: Include device and date in backup filenames
+
+- [x] Include a sanitized device name in manually exported backup filenames
+- [x] Include a timestamp in both manual and scheduled backup filenames
+- [x] Add focused filename-format coverage
+
+Status: **done**, 2026-08-15. Manual and scheduled backups now use `Syncwich-<device>-<yyyyMMdd-HHmmss>.syncwich` with a safe fallback for unnamed devices. Remote formatting, unit tests, and debug lint passed.

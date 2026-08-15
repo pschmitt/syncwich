@@ -49,6 +49,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.pschmitt.syncwich.data.backup.syncwichBackupFileName
 import dev.pschmitt.syncwich.data.settings.BackupFrequency
 import java.text.DateFormat
 import java.util.Date
@@ -182,7 +183,7 @@ fun BackupSettingsScreen(
                         modifier = Modifier.fillMaxWidth(),
                     )
                     Button(
-                        onClick = { exportLauncher.launch("Syncwich-backup.syncwich") },
+                        onClick = { exportLauncher.launch(syncwichBackupFileName()) },
                         enabled = operation !is BackupOperationState.Working,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
