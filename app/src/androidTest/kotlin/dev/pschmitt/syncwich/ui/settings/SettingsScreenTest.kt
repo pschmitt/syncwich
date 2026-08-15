@@ -32,7 +32,9 @@ class SettingsScreenTest {
             SyncwichTheme { SettingsScreen(onBack = {}, onCategoryClick = {}) }
         }
 
-        composeTestRule.onNodeWithTag("settings-list").performScrollToNode(hasText("Navigation bar"))
+        composeTestRule
+            .onNodeWithTag("settings-list")
+            .performScrollToNode(hasText("Navigation bar"))
         composeTestRule.onAllNodesWithText("Navigation bar").assertCountEquals(1)
         composeTestRule.onAllNodesWithText("Theme, text, and recipe display").assertCountEquals(1)
         composeTestRule
