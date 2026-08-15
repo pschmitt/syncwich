@@ -54,6 +54,9 @@ class ScreenshotTest {
         }
         WorkManager.getInstance(ApplicationProvider.getApplicationContext())
             .cancelUniqueWork(SyncScheduler.STARTUP_WORK_NAME)
+        WorkManager.getInstance(ApplicationProvider.getApplicationContext())
+            .cancelUniqueWork(SyncScheduler.PERIODIC_WORK_NAME)
+        runBlocking { settingsRepository.recordInitialSyncSuccess() }
     }
 
     @After
