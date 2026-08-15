@@ -43,6 +43,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -78,7 +79,7 @@ fun SettingsScreen(
         },
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(innerPadding),
+            modifier = Modifier.fillMaxSize().padding(innerPadding).testTag("settings-list"),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
@@ -103,6 +104,7 @@ fun SettingsScreen(
             item {
                 SettingsGroupCard(title = "Personalization", icon = Icons.Filled.Palette) {
                     SettingsCategoryRow(SettingsCategory.Appearance, onCategoryClick)
+                    SettingsCategoryRow(SettingsCategory.NavigationBar, onCategoryClick)
                 }
             }
             item {
@@ -234,6 +236,12 @@ fun SettingsCategoryScreen(
                 modifier = modifier,
                 viewModel = viewModel,
             )
+        SettingsCategory.NavigationBar ->
+            NavigationBarSettingsScreen(
+                onBack = onBack,
+                modifier = modifier,
+                viewModel = viewModel,
+            )
         SettingsCategory.Sync ->
             SyncSettingsScreen(onBack = onBack, modifier = modifier, viewModel = viewModel)
         SettingsCategory.Backup -> BackupSettingsScreen(onBack = onBack, modifier = modifier)
@@ -255,19 +263,11 @@ private fun AppearanceSettingsScreen(
     onBack: () -> Unit,
     modifier: Modifier,
     viewModel: SettingsViewModel,
-    navigationBarViewModel: NavigationBarViewModel = hiltViewModel(),
 ) {
-    val persistedOrder by viewModel.navigationBarOrder.collectAsStateWithLifecycle()
     val fontScale by viewModel.fontScale.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val ingredientChecklistEnabled by
         viewModel.ingredientChecklistEnabled.collectAsStateWithLifecycle()
-    val visibleItems by navigationBarViewModel.visibleItemKeys.collectAsStateWithLifecycle()
-    val naturalKeys = TopLevelDestination.entries.map { it.key }
-    val orderedKeys = resolveNavBarOrder(naturalKeys, persistedOrder, emptySet())
-    val orderedDestinations = orderedKeys.mapNotNull { key ->
-        TopLevelDestination.entries.firstOrNull { it.key == key }
-    }
 
     Scaffold(
         modifier = modifier,
@@ -354,8 +354,46 @@ private fun AppearanceSettingsScreen(
                     )
                 }
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NavigationBarSettingsScreen(
+    onBack: () -> Unit,
+    modifier: Modifier,
+    viewModel: SettingsViewModel,
+    navigationBarViewModel: NavigationBarViewModel = hiltViewModel(),
+) {
+    val persistedOrder by viewModel.navigationBarOrder.collectAsStateWithLifecycle()
+    val visibleItems by navigationBarViewModel.visibleItemKeys.collectAsStateWithLifecycle()
+    val naturalKeys = TopLevelDestination.entries.map { it.key }
+    val orderedKeys = resolveNavBarOrder(naturalKeys, persistedOrder, emptySet())
+    val orderedDestinations = orderedKeys.mapNotNull { key ->
+        TopLevelDestination.entries.firstOrNull { it.key == key }
+    }
+
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = { Text("Navigation bar") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+            )
+        },
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             item {
-                SettingsGroupCard(title = "Bottom navigation", icon = Icons.Filled.ViewCarousel) {
+                SettingsGroupCard(title = "Destinations", icon = Icons.Filled.ViewCarousel) {
                     SettingsListItem(
                         supportingContent = {
                             Text(

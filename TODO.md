@@ -1878,11 +1878,14 @@ endpoint was unavailable.
 
 ## SW-117: Move navbar settings into Personalization
 
-- [ ] Add a dedicated navbar settings view
-- [ ] Place the navbar settings entry under the Personalization section
-- [ ] Preserve existing navbar customization behavior and focused coverage
+- [x] Add a dedicated navbar settings view
+- [x] Place the navbar settings entry under the Personalization section
+- [x] Preserve existing navbar customization behavior and focused coverage
 
-Status: not started.
+Status: **done**, 2026-08-15. Navigation-bar destination visibility and ordering now live in a
+dedicated settings view under Personalization instead of Appearance. Remote checks, Android-test
+compilation, and the focused ZF10 settings suite pass; the updated debug APK is installed on ZF10
+and PX5. Mi Pad 4's SSH endpoint was unavailable during deployment.
 
 ## SW-118: Merge account and data-sync settings
 
