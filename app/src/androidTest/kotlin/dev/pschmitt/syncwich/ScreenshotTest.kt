@@ -10,6 +10,7 @@ import androidx.test.uiautomator.Until
 import dagger.hilt.android.EntryPointAccessors
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import dev.pschmitt.syncwich.di.SettingsEntryPoint
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.ClassRule
@@ -20,14 +21,13 @@ import tools.fastlane.screengrab.UiAutomatorScreenshotStrategy
 import tools.fastlane.screengrab.locale.LocaleTestRule
 
 /**
- * Captures Play Store listing screenshots (en-US only, see fastlane/Screengrabfile) of each
- * bottom-nav destination. Update the captured labels/journey as real screens replace the SW-1
- * placeholders in later phases.
+ * Captures Play Store listing screenshots (en-US only, see fastlane/Screengrabfile) from the
+ * current Home, Recipes, and Settings destinations.
  *
- * Seeds a placeholder connection directly via [SettingsRepository] before launching the activity
- * (SW-2's onboarding gate would otherwise land a fresh install on onboarding, not the bottom-nav
- * shell) - safe because every SW-1 placeholder screen captured here is still static and doesn't
- * touch the network, so no real Mealie server is needed to render them.
+ * Seeds a placeholder connection and marks the cache as initialized directly via
+ * [SettingsRepository] before launching the activity. This keeps the capture offline-first and
+ * deterministic: no real Mealie server is needed, and a clean emulator does not stop at the first
+ * sync screen.
  */
 @RunWith(AndroidJUnit4::class)
 class ScreenshotTest {
@@ -46,6 +46,7 @@ class ScreenshotTest {
     @Before
     fun seedConnection() {
         settingsRepository.save("https://mealie.invalid", "screenshot-test-token")
+        runBlocking { settingsRepository.recordInitialSyncSuccess() }
     }
 
     @After
@@ -63,22 +64,16 @@ class ScreenshotTest {
             // package-service can all be ready while the app's own first Compose frame still
             // isn't up yet. Give it more room than the later waits, which run against an
             // already-warm process.
-            check(device.wait(Until.hasObject(By.text("Recipes")), 30_000))
-            Screengrab.screenshot("01_recipes")
+            check(device.wait(Until.hasObject(By.text("Home")), 30_000))
+            Screengrab.screenshot("01_home")
 
-            device.findObject(By.text("Meal Plan")).click()
-            check(device.wait(Until.hasObject(By.text("Meal plan calendar")), 15_000))
-            Screengrab.screenshot("02_meal_plan")
+            device.findObject(By.text("Recipes")).click()
+            check(device.wait(Until.hasObject(By.text("Search recipes")), 15_000))
+            Screengrab.screenshot("02_recipes")
 
-            device.findObject(By.text("Shopping")).click()
-            check(device.wait(Until.hasObject(By.text("Shopping lists")), 15_000))
-            Screengrab.screenshot("03_shopping_lists")
-
-            device.findObject(By.text("Cookbooks")).click()
-            check(
-                device.wait(Until.hasObject(By.textContains("curated recipe collections")), 15_000)
-            )
-            Screengrab.screenshot("04_cookbooks")
+            device.findObject(By.desc("Settings")).click()
+            check(device.wait(Until.hasObject(By.text("Settings")), 15_000))
+            Screengrab.screenshot("03_settings")
         }
     }
 }
