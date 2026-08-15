@@ -1912,7 +1912,7 @@ Status: **done**, 2026-08-15. Leading Markdown/HTML ordered-list markers are str
 - [x] Preserve the internally persisted developer-mode state without displaying it elsewhere
 - [x] Add focused coverage for first activation and repeated activation
 
-Status: in progress. The tap state now distinguishes unlock, progress, and already-enabled paths; remote validation and device verification are pending.
+Status: **done**, 2026-08-15. The persisted developer flag is eagerly loaded without being exposed in UI state, repeated build-row taps emit “You are already a developer”, and the unlock/progress paths are covered by deterministic tap-state tests. Remote checks, Android-test compilation, and the focused ZF10 About test passed; the APK is installed on ZF10 and PX5.
 
 ## SW-121: Match the About icon to the app icon
 
