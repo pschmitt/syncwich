@@ -4,8 +4,9 @@ Repository instructions for AI coding agents working on Syncwich.
 
 ## Project shape
 
-Syncwich is a Kotlin/Jetpack Compose Android app: a beautiful, Material You, **offline-first**,
-**read-only** (for now) client for a self-hosted [Mealie](https://mealie.io) recipe manager.
+Syncwich is a Kotlin/Jetpack Compose Android app: a beautiful, Material You, **offline-first**
+client for a self-hosted [Mealie](https://mealie.io) recipe manager, with cached browsing and
+supported recipe, cookbook, meal-plan, and shopping-item editing.
 Package `dev.pschmitt.syncwich`, debug applicationId `dev.pschmitt.syncwich.debug`, GPL-3.0.
 Single `:app` Gradle module - this app doesn't need a multi-module split.
 
@@ -25,6 +26,10 @@ Single `:app` Gradle module - this app doesn't need a multi-module split.
   new `SW-N` entry to `TODO.md` for whatever follows the prefix, rather than acting on it
   immediately - file the backlog entry (not started, with a checklist inferred from the ask) and
   confirm back to the user, instead of implementing it in that turn.
+- Keep `README.md` aligned with the current user-facing behavior, setup instructions, commands,
+  links, screenshots/assets, and release process. When a code or configuration change makes the
+  README stale, update it in the same change (and review the README before marking the related
+  ticket done); do not defer documentation drift to an unspecified later pass.
 
 ## Git publishing
 
@@ -100,8 +105,8 @@ Single `:app` Gradle module - this app doesn't need a multi-module split.
   token) - same pattern as the sibling nyetbox app's `DynamicBaseUrlInterceptor`.
 - Offline cache via Room. Recipe list/filter fields are real columns; the full recipe detail
   response (ingredients, instructions, nutrition) is stored as a JSON column and decoded with
-  kotlinx.serialization at read time - deliberately not deep-normalized into many join tables for
-  a read-only client. Recipe images are cached via Coil's disk cache, not duplicated into Room.
+  kotlinx.serialization at read time - deliberately not deep-normalized into many join tables.
+  Recipe images are cached via Coil's disk cache, not duplicated into Room.
 - **Before writing JSON-parsing code against a Mealie endpoint whose exact response shape you
   don't already have confirmed in this repo, query the user's real instance first** (base URL +
   credentials from the rbw item `"Mealie (AI Agent)"`, read-only `GET`s only - never write/mutate

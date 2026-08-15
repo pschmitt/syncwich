@@ -1755,22 +1755,6 @@ route when it is present, or open a fresh root route when it is not, while prese
 intentional no-op behavior when already on Home. Navigation unit coverage passes; remote
 `just check` and Android-test APK compilation are green.
 
-## SW-107: Update the README
-
-- [ ] Review the README against the current app behavior and project structure
-- [ ] Update stale setup, feature, and usage information
-- [ ] Verify links, commands, and screenshots/assets referenced by the README
-
-Status: not started.
-
-## SW-108: Keep the README current by repository policy
-
-- [ ] Update AGENTS.md to require keeping the README aligned with implemented behavior
-- [ ] Define when README updates should be made alongside code changes
-- [ ] Preserve the existing documentation verification expectations
-
-Status: not started.
-
 ## SW-106: Move recipe group and tag filters into a bottom sheet
 
 - [x] Remove the always-visible group-selection and tag-selection rows from the recipe list/search view
@@ -1783,3 +1767,22 @@ Status: **done**, 2026-08-15. Recipe search now keeps category and tag controls 
 Material bottom-sheet Filters button, with immediate selection, clear, and done actions. Remote
 `just check` plus Android-test compilation passed, and both focused filter tests passed on the
 wired Zenfone 10. The verified debug build was deployed to the Zenfone 10, Mi Pad 4, and Pixel 5.
+
+## SW-107: Update the README
+
+- [x] Review the README against the current app behavior and project structure
+- [x] Update stale setup, feature, and usage information
+- [x] Verify links, commands, and screenshots/assets referenced by the README
+
+Status: **done**, 2026-08-15. README now describes the current editing, filtering, sharing,
+backup, sync, offline-cache, and device-deployment behavior; tracked local link/assets checks and
+`git diff --check` pass.
+
+## SW-108: Keep the README current by repository policy
+
+- [x] Update AGENTS.md to require keeping the README aligned with implemented behavior
+- [x] Define when README updates should be made alongside code changes
+- [x] Preserve the existing documentation verification expectations
+
+Status: **done**, 2026-08-15. AGENTS.md now requires README review and same-change updates whenever
+user-facing behavior, setup, commands, links, assets, or release instructions change.

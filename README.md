@@ -7,22 +7,28 @@
 <p align="center"><strong>A beautiful, offline-first Material You client for your own Mealie server.</strong></p>
 
 Syncwich connects to a self-hosted [Mealie](https://mealie.io) instance and syncs your recipes,
-meal plans, shopping lists, and cookbooks for fully offline browsing. No Syncwich account, no
-ads, no tracking - your data stays between your phone and your own server.
+meal plans, shopping lists, and cookbooks for offline-first browsing and editing. No Syncwich
+account, no ads, no tracking - your data stays between your phone and your own server.
 
-Currently **read-only**: browse and search, nothing more. Editing capabilities are planned for a
-later release - see [TODO.md](TODO.md).
+Syncwich is an independent Mealie client. It is still under active development; see
+[TODO.md](TODO.md) for the remaining backlog.
 
 ## Features
 
-- Browse and search recipes, with category and tag filters
-- Rich recipe detail: ingredients, steps, images, and nutrition
-- Meal plan calendar (view)
-- Shopping lists and their items (view)
-- Cookbooks and their recipe collections (view)
+- Home dashboard with sync status, favorites, recently viewed, and recent recipes
+- Browse and search recipes, with category and tag filters in a bottom sheet
+- Create, edit, import, and delete recipes, cookbooks, meal-plan entries, and shopping items
+- Rich recipe detail: ingredients, required tools, steps, images, servings, nutrition, and metadata
+- Recipe image galleries, inline step images, offline image caching, and a full-screen steps view
+- Recipe actions including favorites, ratings, “I made this”, timeline events, sharing, and browser links
+- Import recipes from URLs and open shared Mealie URLs/assets in Syncwich
+- Meal plan calendar and shopping lists
+- Cookbooks and their recipe collections
+- Customizable navigation bar, light/dark/automatic themes, font size, and sync policy
+- Optional encrypted backups with password and schedule support
 - Full Material You theming (dynamic, wallpaper-derived color on Android 12+)
-- Everything works fully offline once synced - a network call is only ever a best-effort
-  background refresh, never a requirement
+- Cached content remains fully usable offline once synced - a network call is only ever a
+  best-effort background refresh, never a requirement for browsing saved data
 
 ## Connecting to your Mealie server
 
@@ -32,7 +38,8 @@ Syncwich never asks for or stores your Mealie account password. Instead:
 2. In Syncwich, enter your server's URL and paste that token.
 
 The server URL is never hardcoded into the app - Syncwich works with any Mealie instance you
-point it at.
+point it at. When Syncwich creates an API token on your behalf, it names it
+`Syncwich (<DEVICE NAME>)` so it is easy to identify and revoke in Mealie.
 
 ## Install
 
@@ -74,13 +81,22 @@ Gradle builds intentionally run on `rofl-13` or `rofl-14`, not on the local work
 
 ```sh
 just check
-just build
-just deploy-all
+just build debug
+just deploy-all debug
 ```
 
-`just deploy-all` fetches the remote debug APK and installs it on every attached ADB device.
-The debug application id is `dev.pschmitt.syncwich.debug`.
+`just check` runs ktfmt checks, unit tests, and Android Lint remotely. `just build-fetch debug`
+builds remotely and copies the debug APK to `./dist`; `just deploy-all debug` then installs it on
+every attached ADB device (Zenfone 10, Mi Pad 4, and Pixel 5 when connected). The debug
+application id is `dev.pschmitt.syncwich.debug`.
 
-See [AGENTS.md](AGENTS.md) for repository conventions and [TODO.md](TODO.md) for the running
-backlog. This project is licensed under [GPL-3.0](LICENSE) and is not affiliated with the Mealie
-project.
+Android instrumentation APKs can be compiled remotely with:
+
+```sh
+just gradle rofl-13.brkn.lol :app:assembleDebugAndroidTest
+```
+
+Do not run Gradle directly on the local workstation. See [AGENTS.md](AGENTS.md) for device
+deployment, signing, offline-first architecture, and repository contribution conventions.
+
+This project is licensed under [GPL-3.0](LICENSE) and is not affiliated with the Mealie project.
