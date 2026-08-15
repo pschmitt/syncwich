@@ -156,6 +156,7 @@ constructor(
     @ApplicationContext private val context: Context,
 ) {
     private val json = Json {
+        encodeDefaults = true
         ignoreUnknownKeys = true
         prettyPrint = false
     }

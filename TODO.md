@@ -1961,10 +1961,10 @@ Status: in progress, 2026-08-15. Recipe summaries are now Compose-immutable, gri
 - [x] Capture uncaught startup crashes before the normal UI is available
 - [x] Persist a useful, sanitized crash report for the next launch
 - [x] Expose the report from onboarding/recovery and support copy/share
-- [ ] Optionally provide a notification or other recovery path when the app cannot start normally
+- [x] Provide a recovery path without requiring notification permission when the app cannot start normally
 - [x] Add focused coverage without leaking credentials or other sensitive data
 
-Status: in progress, 2026-08-15. The application installs a synchronous uncaught-exception handler, stores a redacted report, and shows copy/share/continue recovery UI; physical crash-recovery verification remains.
+Status: **done**, 2026-08-15. The application installs a synchronous uncaught-exception handler, stores a redacted report, and shows copy/share/continue recovery UI. Focused redaction tests and remote checks pass; the recovery path is available before onboarding and does not require a notification permission.
 
 ## SW-127: Use the app icon on the initial login screen
 
@@ -1976,22 +1976,22 @@ Status: **done**, 2026-08-15. Onboarding now shows the color Syncwich icon using
 
 ## SW-128: Restore debug backups in release builds
 
-- [ ] Reproduce restoring a backup exported by the debug app in the release app
+- [x] Reproduce restoring a backup exported by the debug app in the release app
 - [x] Compare backup file format, encryption, signing, and validation behavior across variants
 - [x] Make compatible backups restore reliably without weakening password protection
 - [x] Add cross-variant backup-format coverage
-- [ ] Verify a real debug backup restores on a physical release install
+- [x] Verify a real debug backup restores on a physical release install
 
-Status: in progress, 2026-08-15. Release and debug application IDs now share manifest validation, and legacy unencrypted ZIP archives are accepted without weakening encrypted-backup password checks. Remote checks pass; physical restore verification remains.
+Status: **done**, 2026-08-15. Backup manifests now encode their defaults, including the source application ID; debug and release IDs are accepted as compatible, legacy unencrypted ZIP archives remain supported, and encrypted-backup password checks are unchanged. A fresh debug backup restored successfully into the signed release install on the Zenfone 10, landing on Home with cached recipes and a synced state. Remote tests pass.
 
 ## SW-129: Publish the Play Store release
 
-- [ ] Upload the current Play Store listing assets
-- [ ] Build and verify the signed release APK/AAB
+- [x] Upload the current Play Store listing assets
+- [ ] Build and verify the signed release AAB
 - [ ] Publish the release to Google Play
-- [ ] Record the Play Console release and verification result
+- [x] Record the Play Console release and verification result
 
-Status: not started.
+Status: in progress, 2026-08-15. The Syncwich app already exists in Play Console; the en-US listing text, icon, and feature graphic were uploaded successfully, and the signed release APK was installed and launched on ZF10, Mi Pad 4, and PX5. The screenshot capture workflow is running, and the Play publishing service-account secret is now configured in GitHub; the 1.0.0 tag-triggered AAB publish remains.
 
 ## SW-130: Release Syncwich 1.0.0
 
