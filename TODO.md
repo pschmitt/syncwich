@@ -2063,9 +2063,9 @@ corrected debug APK was installed successfully on ZF10, Mi Pad 4, and PX5.
 
 ## SW-135: Polish About-page project details across Syncwich and Nyetbox
 
-- [ ] Move Syncwich’s libraries list into a dedicated About subview linked from the Project section
-- [ ] Add the app icon to Nyetbox’s About page
-- [ ] Give Nyetbox license and build type their own About rows
-- [ ] Add focused UI coverage and verify both applications
+- [x] Move Syncwich’s libraries list into a dedicated About subview linked from the Project section
+- [x] Add the app icon to Nyetbox’s About page
+- [x] Give Nyetbox license and build type their own About rows
+- [x] Add focused UI coverage and verify both applications
 
-Status: not started.
+Status: **done** (2026-08-15; Syncwich CI runs 31910398107/31910398129/31910398164 and Nyetbox CI runs 31910324321/31910324373/31910324429 passed; debug APKs installed on ZF10, Mi Pad 4, and PX5).
