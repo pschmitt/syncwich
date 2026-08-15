@@ -52,8 +52,7 @@ class ScreenshotTest {
             settingsRepository.recordInitialSyncSuccess()
             settingsRepository.setSyncOnAppStart(false)
         }
-        WorkManager
-            .getInstance(ApplicationProvider.getApplicationContext())
+        WorkManager.getInstance(ApplicationProvider.getApplicationContext())
             .cancelUniqueWork(SyncScheduler.STARTUP_WORK_NAME)
     }
 
