@@ -73,8 +73,7 @@ class BackupWrongPasswordException : Exception("Incorrect backup password")
 object BackupCrypto {
     private val magic =
         byteArrayOf('S'.code.toByte(), 'W'.code.toByte(), 'B'.code.toByte(), '1'.code.toByte())
-    private val zipMagic =
-        byteArrayOf('P'.code.toByte(), 'K'.code.toByte(), 3.toByte(), 4.toByte())
+    private val zipMagic = byteArrayOf('P'.code.toByte(), 'K'.code.toByte(), 3.toByte(), 4.toByte())
     private const val plainFlag: Byte = 0
     private const val encryptedFlag: Byte = 1
     private const val saltSize = 16
@@ -137,8 +136,7 @@ object BackupCrypto {
     }
 
     private fun isRawZip(bytes: ByteArray): Boolean =
-        bytes.size >= zipMagic.size &&
-            bytes.copyOfRange(0, zipMagic.size).contentEquals(zipMagic)
+        bytes.size >= zipMagic.size && bytes.copyOfRange(0, zipMagic.size).contentEquals(zipMagic)
 
     private fun deriveKey(password: String, salt: ByteArray): SecretKeySpec {
         val spec = PBEKeySpec(password.toCharArray(), salt, iterations, keyBits)

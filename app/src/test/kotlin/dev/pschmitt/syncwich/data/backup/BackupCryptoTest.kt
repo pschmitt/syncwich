@@ -39,13 +39,16 @@ class BackupCryptoTest {
 
     @Test
     fun legacyUnencryptedZipIsAccepted() {
-        val legacyArchive = ByteArrayOutputStream().apply {
-            ZipOutputStream(this).use { zip ->
-                zip.putNextEntry(ZipEntry("manifest.json"))
-                zip.write("{}".toByteArray())
-                zip.closeEntry()
-            }
-        }.toByteArray()
+        val legacyArchive =
+            ByteArrayOutputStream()
+                .apply {
+                    ZipOutputStream(this).use { zip ->
+                        zip.putNextEntry(ZipEntry("manifest.json"))
+                        zip.write("{}".toByteArray())
+                        zip.closeEntry()
+                    }
+                }
+                .toByteArray()
 
         assertFalse(BackupCrypto.isEncrypted(legacyArchive))
         assertArrayEquals(legacyArchive, BackupCrypto.decode(legacyArchive, null))
