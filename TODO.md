@@ -2046,3 +2046,11 @@ Status: **done**, 2026-08-15. Tag `v1.0.1` points at `e1c56e0`. GitHub Release r
 `31894603548` passed and published the four signed release APKs plus `SHA256SUMS`; Play Store run
 `31894603529` passed and published version code `1000001` / version name `1.0.1` to internal
 testing.
+
+## SW-134: Show the actual build version in About
+
+- [ ] Reproduce the About-page version mismatch between `0.1.0` and the installed build version
+- [ ] Make About use the same authoritative version metadata as release builds
+- [ ] Add debug/release regression coverage for the displayed version
+
+Status: not started.
