@@ -1916,8 +1916,8 @@ Status: not started.
 
 ## SW-121: Match the About icon to the app icon
 
-- [ ] Add an orange circular background around the About-page app icon
-- [ ] Match the splash/app-icon background color and visual treatment
-- [ ] Add focused UI coverage for the updated icon presentation
+- [x] Add an orange circular background around the About-page app icon
+- [x] Match the splash/app-icon background color and visual treatment
+- [x] Add focused UI coverage for the updated icon presentation
 
-Status: not started.
+Status: **done**, 2026-08-15. The About-page icon now sits on a circular `SyncwichTerracotta40` background matching the splash/icon `#E4572E` color. Remote checks, Android-test compilation, and the focused ZF10 About test passed; the APK is installed on ZF10 and PX5.

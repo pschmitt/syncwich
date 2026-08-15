@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -26,6 +27,10 @@ class AboutSettingsScreenTest {
         composeTestRule.setContent { SyncwichTheme { AboutSettingsScreen(onBack = {}) } }
 
         composeTestRule.onNodeWithText("Syncwich").assertIsDisplayed()
+        composeTestRule
+            .onNodeWithTag("about-app-icon-background", useUnmergedTree = true)
+            .assertExists()
+        composeTestRule.onNodeWithContentDescription("Syncwich app icon").assertExists()
         composeTestRule.onNodeWithText("Version").assertIsDisplayed()
         composeTestRule.onNodeWithText("GitHub repository").assertIsDisplayed()
         composeTestRule.onNodeWithText("Sponsor the project").assertIsDisplayed()

@@ -6,13 +6,16 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
@@ -49,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import dev.pschmitt.syncwich.BuildConfig
 import dev.pschmitt.syncwich.R
+import dev.pschmitt.syncwich.ui.theme.SyncwichTerracotta40
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
@@ -151,11 +155,19 @@ fun AboutSettingsScreen(
                     title = "Syncwich",
                     icon = Icons.Filled.Info,
                     headerContent = {
-                        Image(
-                            painter = painterResource(R.drawable.syncwich_icon),
-                            contentDescription = "Syncwich app icon",
-                            modifier = Modifier.size(64.dp),
-                        )
+                        Box(
+                            modifier =
+                                Modifier.size(72.dp)
+                                    .background(SyncwichTerracotta40, CircleShape)
+                                    .padding(8.dp)
+                                    .testTag("about-app-icon-background"),
+                        ) {
+                            Image(
+                                painter = painterResource(R.drawable.syncwich_icon),
+                                contentDescription = "Syncwich app icon",
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
                     },
                 ) {
                     AboutInfoRow(
