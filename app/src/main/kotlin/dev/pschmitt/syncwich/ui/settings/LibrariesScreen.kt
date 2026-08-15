@@ -134,7 +134,9 @@ private fun LibraryRow(context: Context, library: Library) {
                     )
                 }
                 .semantics { role = Role.Button },
-        leadingContent = { Icon(Icons.AutoMirrored.Filled.LibraryBooks, contentDescription = null) },
+        leadingContent = {
+            Icon(Icons.AutoMirrored.Filled.LibraryBooks, contentDescription = null)
+        },
         headlineContent = { Text(library.name) },
         supportingContent = { Text(library.license) },
         trailingContent = {
