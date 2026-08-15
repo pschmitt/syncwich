@@ -38,6 +38,10 @@ jobs:
     name: Capture ${{ matrix.device_type }} screenshots
     runs-on: ubuntu-24.04
     timeout-minutes: 90
+    env:
+      E2E_BASE_URL: http://127.0.0.1:9925
+      E2E_USERNAME: syncwich-ci@example.invalid
+      E2E_PASSWORD: syncwich-ci-password
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -57,6 +61,17 @@ jobs:
           ruby-version: '3.3'
       - name: Install fastlane
         run: gem install fastlane --no-document
+
+      - name: Start disposable Mealie fixture
+        run: docker compose -f ci/mealie/docker-compose.yml up --detach --wait --wait-timeout 600
+
+      - name: Seed deterministic screenshot recipes
+        run: |
+          python3 ci/mealie/seed_screenshots.py \
+            --base-url "$E2E_BASE_URL" \
+            --username "$E2E_USERNAME" \
+            --password "$E2E_PASSWORD" \
+            --github-env "$GITHUB_ENV"
 
       # Build before the emulator starts, not while it's running: screengrab only installs/drives
       # prebuilt APKs over adb, and compiling concurrently with a booted emulator starves it of
@@ -105,7 +120,7 @@ jobs:
           # Retries the reinstall+capture (not the whole job) up to twice - cheap versus the full
           # rebuild+reboot, and each attempt starts from a clean reinstall.
           script: |
-            attempt=0; until [ "$attempt" -ge 2 ]; do attempt=$((attempt + 1)); serial="$(adb devices | awk '$2 == "device" { print $1; exit }')"; if [ -n "$serial" ] && adb -s "$serial" install -r -g -t dist/app-debug.apk && SCREENGRAB_DEVICE_TYPE=${{ matrix.device_type }} SCREENGRAB_SPECIFIC_DEVICE="$serial" fastlane screenshots; then exit 0; fi; echo "Attempt $attempt/2 failed" >&2; sleep 5; done; exit 1
+            attempt=0; until [ "$attempt" -ge 2 ]; do attempt=$((attempt + 1)); serial="$(adb devices | awk '$2 == "device" { print $1; exit }')"; if [ -n "$serial" ] && adb -s "$serial" reverse tcp:9925 tcp:9925 && adb -s "$serial" install -r -g -t dist/app-debug.apk && SCREENGRAB_DEVICE_TYPE=${{ matrix.device_type }} SCREENGRAB_SPECIFIC_DEVICE="$serial" fastlane screenshots; then exit 0; fi; echo "Attempt $attempt/2 failed" >&2; sleep 5; done; exit 1
 
       - name: Upload screenshot artifact
         if: ${{ always() }}
@@ -116,6 +131,22 @@ jobs:
           path: |
             fastlane/metadata/android/en-US/images/${{ matrix.folder }}/
             app/build/reports/androidTests/
+
+      - name: Capture Mealie fixture diagnostics
+        if: ${{ failure() }}
+        run: docker compose -f ci/mealie/docker-compose.yml logs --no-color > screenshot-mealie.log || true
+
+      - name: Upload Mealie fixture diagnostics
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: syncwich-${{ matrix.device_type }}-screenshot-diagnostics-${{ github.run_id }}
+          if-no-files-found: ignore
+          path: screenshot-mealie.log
+
+      - name: Tear down disposable Mealie fixture
+        if: ${{ always() }}
+        run: docker compose -f ci/mealie/docker-compose.yml down --volumes --remove-orphans
 
   open-pr:
     name: Open PR with updated screenshots

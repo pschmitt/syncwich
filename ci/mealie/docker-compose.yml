@@ -1,0 +1,21 @@
+services:
+  mealie:
+    image: ghcr.io/mealie-recipes/mealie:v3.22.0
+    ports:
+      - "9925:9000"
+    environment:
+      # Registration is enabled only because the seed script creates a throwaway CI account in
+      # this disposable container before capturing screenshots.
+      ALLOW_SIGNUP: "true"
+      BASE_URL: http://127.0.0.1:9925
+      DEFAULT_EMAIL: syncwich-ci@example.invalid
+      DEFAULT_GROUP: Syncwich CI
+      DEFAULT_HOUSEHOLD: Syncwich Kitchen
+      DEFAULT_PASSWORD: syncwich-ci-password
+      TZ: UTC
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:9000/login >/dev/null"]
+      start_period: 60s
+      interval: 5s
+      timeout: 5s
+      retries: 60

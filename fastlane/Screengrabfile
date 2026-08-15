@@ -13,6 +13,13 @@ output_directory("fastlane/metadata/android")
 
 device_type(ENV.fetch("SCREENGRAB_DEVICE_TYPE", "phone"))
 
+# Points ScreenshotTest at the disposable Mealie fixture started by CI. Never point this at a
+# personal Mealie instance or commit real credentials.
+launch_arguments([
+  "e2e_base_url #{ENV.fetch('E2E_BASE_URL', 'http://127.0.0.1:9925')}",
+  "e2e_token #{ENV.fetch('E2E_TOKEN')}",
+])
+
 # Screengrab's `adb root`-dependent tricks (status bar clearing, demo mode) need a rooted
 # device/emulator, which real (non-rooted) devices don't have. Defaults to false, correct for
 # those; flip to true when capturing on a rooted emulator.

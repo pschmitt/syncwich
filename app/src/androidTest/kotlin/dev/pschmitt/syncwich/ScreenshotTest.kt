@@ -7,12 +7,9 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
-import androidx.work.WorkManager
 import dagger.hilt.android.EntryPointAccessors
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import dev.pschmitt.syncwich.di.SettingsEntryPoint
-import dev.pschmitt.syncwich.sync.SyncScheduler
-import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.ClassRule
@@ -24,12 +21,8 @@ import tools.fastlane.screengrab.locale.LocaleTestRule
 
 /**
  * Captures Play Store listing screenshots (en-US only, see fastlane/Screengrabfile) from the
- * current Home, Recipes, and Settings destinations.
- *
- * Seeds a placeholder connection and marks the cache as initialized directly via
- * [SettingsRepository] before launching the activity. This keeps the capture offline-first and
- * deterministic: no real Mealie server is needed, and a clean emulator does not stop at the first
- * sync screen.
+ * current Home, Recipes, and Settings destinations against the disposable Mealie fixture started by
+ * CI. No real Mealie server or user data is ever used.
  */
 @RunWith(AndroidJUnit4::class)
 class ScreenshotTest {
@@ -47,16 +40,10 @@ class ScreenshotTest {
 
     @Before
     fun seedConnection() {
-        settingsRepository.save("https://mealie.invalid", "screenshot-test-token")
-        runBlocking {
-            settingsRepository.recordInitialSyncSuccess()
-            settingsRepository.setSyncOnAppStart(false)
-        }
-        WorkManager.getInstance(ApplicationProvider.getApplicationContext())
-            .cancelUniqueWork(SyncScheduler.STARTUP_WORK_NAME)
-        WorkManager.getInstance(ApplicationProvider.getApplicationContext())
-            .cancelUniqueWork(SyncScheduler.PERIODIC_WORK_NAME)
-        runBlocking { settingsRepository.recordInitialSyncSuccess() }
+        val arguments = InstrumentationRegistry.getArguments()
+        val baseUrl = arguments.getString("e2e_base_url") ?: error("e2e_base_url is required")
+        val token = arguments.getString("e2e_token") ?: error("e2e_token is required")
+        settingsRepository.save(baseUrl, token)
     }
 
     @After
@@ -78,6 +65,7 @@ class ScreenshotTest {
                 device.findObject(By.text("Allow")).click()
             }
             check(device.wait(Until.hasObject(By.text("Home")), 30_000))
+            check(device.wait(Until.hasObject(By.text("Synced")), 60_000))
             Screengrab.screenshot("01_home")
 
             device.findObject(By.text("Recipes")).click()
