@@ -20,8 +20,12 @@ val configuredVersionCode =
                 ?: error("versionCode must be a positive integer")
         }
         .get()
+val gitRevision = System.getenv("GIT_REVISION") ?: "unknown"
+val inferredVersionName =
+    Regex("""^v?(\d+\.\d+\.\d+)(?:[-+].*)?$""").matchEntire(gitRevision)?.groupValues?.get(1)
 val configuredVersionName =
-    providers.gradleProperty("versionName").orElse("0.1.0").get().also { name ->
+    providers.gradleProperty("versionName").orElse(inferredVersionName ?: "0.1.0").get().also { name
+        ->
         require(name.isNotBlank()) { "versionName must not be blank" }
     }
 
@@ -37,7 +41,6 @@ android {
 
         versionCode = configuredVersionCode
         versionName = configuredVersionName
-        val gitRevision = System.getenv("GIT_REVISION") ?: "unknown"
         buildConfigField("String", "GIT_REVISION", "\"$gitRevision\"")
         val buildDate = System.getenv("BUILD_DATE") ?: "unknown"
         buildConfigField("String", "BUILD_DATE", "\"$buildDate\"")

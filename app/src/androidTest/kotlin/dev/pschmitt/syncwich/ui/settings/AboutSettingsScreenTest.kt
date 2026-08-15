@@ -32,6 +32,7 @@ class AboutSettingsScreenTest {
             .assertExists()
         composeTestRule.onNodeWithContentDescription("Syncwich app icon").assertExists()
         composeTestRule.onNodeWithText("Version").assertIsDisplayed()
+        composeTestRule.onNodeWithText("GPL-3.0", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("GitHub repository").assertIsDisplayed()
         composeTestRule.onNodeWithText("Sponsor the project").assertIsDisplayed()
         composeTestRule.onNodeWithText("Privacy policy").assertIsDisplayed()

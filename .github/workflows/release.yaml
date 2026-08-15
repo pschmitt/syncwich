@@ -79,7 +79,19 @@ jobs:
 
       - name: Compute git revision
         id: git_revision
-        run: echo "value=$(git describe --always --abbrev=12 --dirty)" >> "$GITHUB_OUTPUT"
+        run: echo "value=$(git describe --always --abbrev=12 --dirty --exclude=latest)" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve Android version name
+        id: version
+        env:
+          REVISION: ${{ steps.git_revision.outputs.value }}
+        run: |
+          if [[ "$REVISION" =~ ^v?([0-9]+\.[0-9]+\.[0-9]+)([-+].*)?$ ]]; then
+            version_name="${BASH_REMATCH[1]}"
+          else
+            version_name="0.1.0"
+          fi
+          echo "name=$version_name" >> "$GITHUB_OUTPUT"
 
       - name: Generate release summary
         if: steps.params.outputs.tag_name != 'latest'
@@ -160,6 +172,7 @@ jobs:
           ./gradlew
           ${{ steps.params.outputs.include_debug == 'true' && 'assembleDebug' || '' }}
           assembleRelease
+          -PversionName=${{ steps.version.outputs.name }}
           --stacktrace --build-cache
         env:
           CI_KEYSTORE_PATH: ${{ steps.ci_keystore.outputs.filePath }}
@@ -167,6 +180,18 @@ jobs:
           CI_KEY_ALIAS: ${{ secrets.CI_KEY_ALIAS }}
           CI_KEY_PASSWORD: ${{ secrets.CI_KEY_PASSWORD }}
           GIT_REVISION: ${{ steps.git_revision.outputs.value }}
+
+      - name: Verify embedded Android version name
+        env:
+          EXPECTED_VERSION: ${{ steps.version.outputs.name }}
+        run: |
+          aapt2_path="$(ls -1d "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -n1)"
+          apk="app/build/outputs/apk/release/app-arm64-v8a-release.apk"
+          actual_version="$($aapt2_path dump badging "$apk" | sed -n "s/^package:.*versionName='\([^']*\)'.*/\1/p")"
+          if [[ "$actual_version" != "$EXPECTED_VERSION" ]]; then
+            echo "expected Android version $EXPECTED_VERSION, got $actual_version" >&2
+            exit 1
+          fi
 
       - name: Verify embedded git revision
         run: |

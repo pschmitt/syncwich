@@ -2049,8 +2049,14 @@ testing.
 
 ## SW-134: Show the actual build version in About
 
-- [ ] Reproduce the About-page version mismatch between `0.1.0` and the installed build version
-- [ ] Make About use the same authoritative version metadata as release builds
-- [ ] Add debug/release regression coverage for the displayed version
+- [x] Reproduce the About-page version mismatch between `0.1.0` and the installed build version
+- [x] Make About use the same authoritative version metadata as release builds
+- [x] Add debug/release regression coverage for the displayed version
+- [x] Display the GPL-3.0 license in its own About row
 
-Status: not started.
+Status: **done**, 2026-08-15. About now displays the generated Android `VERSION_NAME` separately
+from a dedicated `GPL-3.0` row. Gradle infers the semantic version from the Git revision when no
+explicit version is supplied, and the debug/release workflows pass and verify that same version
+while excluding the moving `latest` tag. Remote ktfmt, unit tests, Android Lint, Android-test
+compilation, release BuildConfig generation, and debug APK metadata verification passed. The
+corrected debug APK was installed successfully on ZF10, Mi Pad 4, and PX5.

@@ -23,6 +23,7 @@ import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Public
@@ -173,7 +174,12 @@ fun AboutSettingsScreen(
                     AboutInfoRow(
                         icon = Icons.Filled.Apps,
                         title = "Version",
-                        subtitle = "${BuildConfig.VERSION_NAME} · GPL-3.0",
+                        subtitle = BuildConfig.VERSION_NAME,
+                    )
+                    AboutInfoRow(
+                        icon = Icons.Filled.Description,
+                        title = "License",
+                        subtitle = "GPL-3.0",
                     )
                     BuildInfoRow(
                         context = context,
