@@ -1,8 +1,8 @@
 package dev.pschmitt.syncwich.data.settings
 
 import android.content.SharedPreferences
-import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.MutablePreferences
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.floatPreferencesKey
@@ -34,7 +34,9 @@ fun Preferences.toBackupPreferences(): Map<String, BackupPreferenceValue> =
 
 /** Converts every currently supported SharedPreferences value without maintaining a key list. */
 fun Map<String, *>.toBackupPreferences(): Map<String, BackupPreferenceValue> =
-    mapValues { (_, rawValue) -> rawValue.toBackupPreferenceValue() }
+    mapValues { (_, rawValue) ->
+        rawValue.toBackupPreferenceValue()
+    }
 
 private fun Any?.toBackupPreferenceValue(): BackupPreferenceValue =
     when (this) {

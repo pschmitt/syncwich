@@ -24,14 +24,13 @@ object NavigationBarItemKeys {
         )
 }
 
-fun NavigationBarCacheState.defaultHiddenItems(): Set<String> =
-    buildSet {
-        add(NavigationBarItemKeys.FAVORITES)
-        add(NavigationBarItemKeys.SETTINGS)
-        if (!hasMealPlanData) add(NavigationBarItemKeys.MEAL_PLAN)
-        if (!hasShoppingLists) add(NavigationBarItemKeys.SHOPPING_LISTS)
-        if (!hasCookbooks) add(NavigationBarItemKeys.COOKBOOKS)
-    }
+fun NavigationBarCacheState.defaultHiddenItems(): Set<String> = buildSet {
+    add(NavigationBarItemKeys.FAVORITES)
+    add(NavigationBarItemKeys.SETTINGS)
+    if (!hasMealPlanData) add(NavigationBarItemKeys.MEAL_PLAN)
+    if (!hasShoppingLists) add(NavigationBarItemKeys.SHOPPING_LISTS)
+    if (!hasCookbooks) add(NavigationBarItemKeys.COOKBOOKS)
+}
 
 data class RestoredNavigationBarVisibility(
     val hiddenItems: Set<String>,

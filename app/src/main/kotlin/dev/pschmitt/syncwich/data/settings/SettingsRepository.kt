@@ -287,7 +287,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
     }
 
     suspend fun exportBackupSettings(
-        navigationBarCacheState: NavigationBarCacheState? = null,
+        navigationBarCacheState: NavigationBarCacheState? = null
     ): SettingsBackupSnapshot {
         val dataStorePreferences = context.syncwichDataStore.data.first()
         val navigationBarOrder =
@@ -346,9 +346,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         context.syncwichDataStore.edit { prefs ->
             prefs[KEY_NAV_BAR_ORDER] = navigationBarOrderToString(snapshot.navigationBarOrder)
             prefs[KEY_NAV_BAR_HIDDEN_ITEMS] =
-                navigationBarOrderToString(
-                    restoredNavigationBarVisibility.hiddenItems.toList()
-                )
+                navigationBarOrderToString(restoredNavigationBarVisibility.hiddenItems.toList())
             prefs[KEY_NAV_BAR_SHOWN_ITEMS] =
                 navigationBarOrderToString(restoredNavigationBarVisibility.shownItems.toList())
             prefs[KEY_FONT_SCALE] = sanitizeFontScale(snapshot.fontScale)

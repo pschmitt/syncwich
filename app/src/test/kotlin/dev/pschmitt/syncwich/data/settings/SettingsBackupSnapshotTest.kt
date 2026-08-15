@@ -14,8 +14,7 @@ class SettingsBackupSnapshotTest {
                 settingsVersion = SETTINGS_BACKUP_VERSION,
                 preferences =
                     mapOf(
-                        "developer_mode" to
-                            BackupPreferenceValue(type = "boolean", value = "true"),
+                        "developer_mode" to BackupPreferenceValue(type = "boolean", value = "true"),
                         "font_scale" to BackupPreferenceValue(type = "float", value = "1.15"),
                     ),
                 securePreferences =

@@ -189,7 +189,9 @@ fun BackupSettingsScreen(
                     SettingsListItem(
                         leadingContent = { Icon(Icons.Filled.Folder, contentDescription = null) },
                         headlineContent = { Text("Include offline cache and images") },
-                        supportingContent = { Text("Off by default; makes larger, self-contained backups") },
+                        supportingContent = {
+                            Text("Off by default; makes larger, self-contained backups")
+                        },
                         trailingContent = {
                             Checkbox(
                                 checked = includeCache,
@@ -240,7 +242,10 @@ fun BackupSettingsScreen(
                         leadingContent = { Icon(Icons.Filled.Folder, contentDescription = null) },
                         headlineContent = { Text("Include offline cache and images") },
                         supportingContent = {
-                            Text(if (includeCache) "Scheduled backups include cached data" else "Off by default")
+                            Text(
+                                if (includeCache) "Scheduled backups include cached data"
+                                else "Off by default"
+                            )
                         },
                         trailingContent = {
                             Checkbox(

@@ -12,8 +12,8 @@ data class SettingsBackupSnapshot(
     val preferences: Map<String, BackupPreferenceValue> = emptyMap(),
     val securePreferences: Map<String, BackupPreferenceValue> = emptyMap(),
     /**
-     * The following fields are retained for imports of pre-v2 backups. New exports use the
-     * generic maps above, so adding a preference no longer requires changing this class.
+     * The following fields are retained for imports of pre-v2 backups. New exports use the generic
+     * maps above, so adding a preference no longer requires changing this class.
      */
     val navigationBarOrder: List<String> = emptyList(),
     val navigationBarHiddenItems: Set<String> = emptySet(),
