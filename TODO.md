@@ -1937,3 +1937,39 @@ Status: **done**, 2026-08-15. Debug-only resources use a purple adaptive-icon ba
 - [x] Add focused filename-format coverage
 
 Status: **done**, 2026-08-15. Manual and scheduled backups now use `Syncwich-<device>-<yyyyMMdd-HHmmss>.syncwich` with a safe fallback for unnamed devices. Remote formatting, unit tests, and debug lint passed.
+
+## SW-124: Investigate release APK startup crash with debug installed
+
+- [x] Reproduce the release APK startup crash with `dev.pschmitt.syncwich.debug` installed alongside release
+- [x] Capture and compare release/debug package, manifest, signing, and startup logcat details
+- [x] Ensure release and debug variants can coexist without shared-resource or initialization conflicts
+- [x] Add regression coverage and verify both variants on the physical test devices
+
+Status: **done**, 2026-08-15. R8 removed `SettingsCategory`, which type-safe Navigation needs to deserialize the settings route at startup. Annotating the enum with `@Keep` preserves it in minified builds. The release APK was rebuilt, installed over the Obtainium build on PX5 with the debug package still installed, and launched successfully with no crash-log entries; the preserved class name was also verified in the APK.
+
+## SW-125: Smooth recipe-list scrolling on Pixel 5
+
+- [ ] Profile recipe-list scrolling and identify main-thread or image-loading bottlenecks
+- [ ] Keep image decoding, prefetching, and cache work off the UI thread
+- [ ] Reduce unnecessary recomposition/layout work while scrolling
+- [ ] Verify smooth scrolling on the Pixel 5 and preserve offline-first image behavior
+
+Status: not started.
+
+## SW-126: Surface startup crash logs for recovery
+
+- [ ] Capture uncaught startup crashes before the normal UI is available
+- [ ] Persist a useful, sanitized crash report for the next launch
+- [ ] Expose the report from onboarding/recovery and support copy/share
+- [ ] Optionally provide a notification or other recovery path when the app cannot start normally
+- [ ] Add focused coverage without leaking credentials or other sensitive data
+
+Status: not started.
+
+## SW-127: Use the app icon on the initial login screen
+
+- [ ] Replace the generic onboarding/login icon with Syncwich's app icon
+- [ ] Preserve the debug/release branding variants where applicable
+- [ ] Add focused UI coverage for the onboarding icon
+
+Status: not started.

@@ -1,5 +1,6 @@
 package dev.pschmitt.syncwich.ui.settings
 
+import androidx.annotation.Keep
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Dns
@@ -10,6 +11,7 @@ import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.compose.ui.graphics.vector.ImageVector
 
 /** The top-level groups shown by the Settings destination. */
+@Keep
 enum class SettingsCategory(
     val title: String,
     val subtitle: String,
