@@ -2002,3 +2002,19 @@ Status: **done**, 2026-08-15. The Syncwich app already exists in Play Console; t
 - [ ] Verify the published release artifacts
 
 Status: not started.
+
+## SW-131: Match scheduled-backup card styling
+
+- [ ] Remove the unexpected dark background from scheduled-backup card items
+- [ ] Match the card-item surface styling used by the other Settings cards
+- [ ] Add focused UI coverage or a visual verification for the corrected surface
+
+Status: not started.
+
+## SW-132: Restore navbar visibility from backup
+
+- [ ] Include navbar visibility/preferences in backup data
+- [ ] Restore the Cookbooks navbar item when it was enabled before export
+- [ ] Add cross-variant backup/restore coverage for navbar preferences
+
+Status: not started.
