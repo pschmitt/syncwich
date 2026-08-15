@@ -57,9 +57,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.pschmitt.syncwich.data.db.entity.MealPlanEntryEntity
+import dev.pschmitt.syncwich.ui.common.NavigationTitle
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
 import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
-import dev.pschmitt.syncwich.ui.common.NavigationTitle
 import dev.pschmitt.syncwich.ui.navigation.TopLevelDestination
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter

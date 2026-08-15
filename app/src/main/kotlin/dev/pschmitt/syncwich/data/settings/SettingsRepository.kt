@@ -89,7 +89,9 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
 
     /** Whether a new app process should enqueue an immediate background sync. */
     val syncOnAppStart: Flow<Boolean> =
-        context.syncwichDataStore.data.map { it[KEY_SYNC_ON_APP_START] ?: DEFAULT_SYNC_ON_APP_START }
+        context.syncwichDataStore.data.map {
+            it[KEY_SYNC_ON_APP_START] ?: DEFAULT_SYNC_ON_APP_START
+        }
 
     /** The user's preferred order, with unknown or missing keys resolved by the caller. */
     override val navigationBarOrder: Flow<List<String>> =
@@ -121,9 +123,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         context.syncwichDataStore.data.map { it[KEY_BACKUP_ENABLED] ?: false }
 
     val scheduledBackupFrequency: Flow<BackupFrequency> =
-        context.syncwichDataStore.data.map {
-            BackupFrequency.fromStorage(it[KEY_BACKUP_FREQUENCY])
-        }
+        context.syncwichDataStore.data.map { BackupFrequency.fromStorage(it[KEY_BACKUP_FREQUENCY]) }
 
     val scheduledBackupFolderUri: Flow<String?> =
         context.syncwichDataStore.data.map { it[KEY_BACKUP_FOLDER_URI] }
@@ -135,8 +135,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
 
     private val _scheduledBackupPasswordSet =
         MutableStateFlow(loadScheduledBackupPassword().isNotEmpty())
-    val scheduledBackupPasswordSet: StateFlow<Boolean> =
-        _scheduledBackupPasswordSet.asStateFlow()
+    val scheduledBackupPasswordSet: StateFlow<Boolean> = _scheduledBackupPasswordSet.asStateFlow()
 
     /** Destination keys explicitly shown by the user, even when their cache is empty. */
     override val navigationBarShownItems: Flow<Set<String>> =
@@ -245,7 +244,9 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
     }
 
     suspend fun setScheduledBackupFrequency(frequency: BackupFrequency) {
-        context.syncwichDataStore.edit { prefs -> prefs[KEY_BACKUP_FREQUENCY] = frequency.storageValue }
+        context.syncwichDataStore.edit { prefs ->
+            prefs[KEY_BACKUP_FREQUENCY] = frequency.storageValue
+        }
     }
 
     suspend fun setScheduledBackupFolderUri(uri: String?) {
@@ -255,7 +256,8 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         }
     }
 
-    fun scheduledBackupPassword(): String? = loadScheduledBackupPassword().takeIf(String::isNotEmpty)
+    fun scheduledBackupPassword(): String? =
+        loadScheduledBackupPassword().takeIf(String::isNotEmpty)
 
     fun setScheduledBackupPassword(password: String?) {
         if (password.isNullOrEmpty()) prefs.edit().remove(KEY_BACKUP_PASSWORD).apply()
@@ -314,8 +316,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
             prefs[KEY_NAV_BAR_SHOWN_ITEMS] =
                 navigationBarOrderToString(snapshot.navigationBarShownItems.toList())
             prefs[KEY_FONT_SCALE] = sanitizeFontScale(snapshot.fontScale)
-            snapshot.themeMode?.let { prefs[KEY_THEME_MODE] = it }
-                ?: prefs.remove(KEY_THEME_MODE)
+            snapshot.themeMode?.let { prefs[KEY_THEME_MODE] = it } ?: prefs.remove(KEY_THEME_MODE)
             prefs[KEY_INGREDIENT_CHECKLIST] = snapshot.ingredientChecklistEnabled
             prefs[KEY_INITIAL_SYNC_COMPLETED] = snapshot.initialSyncCompleted
             snapshot.lastSyncAt?.let { prefs[KEY_LAST_SYNC_AT] = it }

@@ -33,11 +33,11 @@ class HomeNavigationTest {
 
     @Test
     fun `nested destinations keep their parent navigation item active`() {
-        assertTrue(
-            TopLevelDestination.COOKBOOKS.routeTypes.contains(Route.CookbookDetail::class)
-        )
+        assertTrue(TopLevelDestination.COOKBOOKS.routeTypes.contains(Route.CookbookDetail::class))
         assertTrue(TopLevelDestination.RECIPES.routeTypes.contains(Route.RecipeDetail::class))
-        assertTrue(TopLevelDestination.SHOPPING_LISTS.routeTypes.contains(Route.ShoppingListDetail::class))
+        assertTrue(
+            TopLevelDestination.SHOPPING_LISTS.routeTypes.contains(Route.ShoppingListDetail::class)
+        )
         assertTrue(TopLevelDestination.SETTINGS.routeTypes.contains(Route.SettingsCategory::class))
     }
 }

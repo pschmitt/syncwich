@@ -3,7 +3,6 @@ package dev.pschmitt.syncwich.ui.navigation
 import android.content.Intent
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -60,15 +59,16 @@ internal fun shouldNavigateToTopLevel(isAlreadyOnList: Boolean): Boolean = !isAl
 internal fun shouldOpenFreshTopLevelRoot(didPopToRoot: Boolean): Boolean = !didPopToRoot
 
 /**
- * Returns to a bottom-navigation destination's root screen instead of restoring a nested child.
- * The root may already be in the active stack (in which case popping is enough) or may have been
+ * Returns to a bottom-navigation destination's root screen instead of restoring a nested child. The
+ * root may already be in the active stack (in which case popping is enough) or may have been
  * removed by another top-level navigation action (in which case a fresh root is opened).
  */
 internal fun navigateToTopLevelRoot(
     navController: NavHostController,
     destination: TopLevelDestination,
 ) {
-    if (shouldOpenFreshTopLevelRoot(
+    if (
+        shouldOpenFreshTopLevelRoot(
             navController.popBackStack(destination.route, inclusive = false)
         )
     ) {
@@ -180,7 +180,11 @@ fun SyncwichNavHost(
                             selected = selected,
                             onClick = {
                                 if (shouldResetHomeStack(item.destination)) {
-                                    if (!shouldNavigateToHome(currentDestination?.hasRoute(Route.Home::class) == true)) {
+                                    if (
+                                        !shouldNavigateToHome(
+                                            currentDestination?.hasRoute(Route.Home::class) == true
+                                        )
+                                    ) {
                                         return@NavigationBarItem
                                     }
                                     // Home is a reset point: selecting it from a recipe/detail
@@ -194,8 +198,11 @@ fun SyncwichNavHost(
                                         restoreState = false
                                     }
                                 } else {
-                                    if (!shouldNavigateToTopLevel(
-                                            currentDestination?.hasRoute(item.destination.route::class) == true
+                                    if (
+                                        !shouldNavigateToTopLevel(
+                                            currentDestination?.hasRoute(
+                                                item.destination.route::class
+                                            ) == true
                                         )
                                     ) {
                                         return@NavigationBarItem

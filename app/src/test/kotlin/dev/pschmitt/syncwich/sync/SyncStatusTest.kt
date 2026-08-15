@@ -67,11 +67,11 @@ class SyncStatusTest {
     fun `cached recipes do not present as not synced yet`() {
         val status =
             resolveSyncStatus(
-                isSyncing = false,
-                lastSyncAt = null,
-                errorMessage = null,
-                nowMillis = 10_000L,
-            )
+                    isSyncing = false,
+                    lastSyncAt = null,
+                    errorMessage = null,
+                    nowMillis = 10_000L,
+                )
                 .copy(hasCachedData = true)
 
         assertEquals("Saved recipes ready", syncStatusHeadline(status))

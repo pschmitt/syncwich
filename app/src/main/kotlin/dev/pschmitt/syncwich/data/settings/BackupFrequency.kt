@@ -4,8 +4,7 @@ package dev.pschmitt.syncwich.data.settings
 enum class BackupFrequency(val storageValue: String, val intervalDays: Long, val label: String) {
     Daily("daily", 1L, "Daily"),
     Weekly("weekly", 7L, "Weekly"),
-    Monthly("monthly", 30L, "Monthly"),
-    ;
+    Monthly("monthly", 30L, "Monthly");
 
     companion object {
         fun fromStorage(value: String?): BackupFrequency =

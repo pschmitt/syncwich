@@ -32,8 +32,7 @@ interface CookbookDao {
 
     @Upsert suspend fun upsertAll(cookbooks: List<CookbookEntity>)
 
-    @Query("DELETE FROM cookbooks WHERE id = :id")
-    suspend fun deleteById(id: String)
+    @Query("DELETE FROM cookbooks WHERE id = :id") suspend fun deleteById(id: String)
 
     @Query("DELETE FROM cookbooks") suspend fun deleteAll()
 

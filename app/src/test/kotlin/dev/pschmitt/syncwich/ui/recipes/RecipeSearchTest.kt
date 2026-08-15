@@ -2,8 +2,8 @@ package dev.pschmitt.syncwich.ui.recipes
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
-import dev.pschmitt.syncwich.ui.common.highlightedSearchText
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
+import dev.pschmitt.syncwich.ui.common.highlightedSearchText
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

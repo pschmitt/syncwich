@@ -24,11 +24,7 @@ class ConditionalGetInterceptorTest {
                     .setHeader("ETag", "\"recipe-v1\"")
                     .setBody("cached recipe")
             )
-            server.enqueue(
-                MockResponse()
-                    .setHeader("ETag", "recipe-v2")
-                    .setBody("updated recipe")
-            )
+            server.enqueue(MockResponse().setHeader("ETag", "recipe-v2").setBody("updated recipe"))
             server.start()
             val client =
                 OkHttpClient.Builder()

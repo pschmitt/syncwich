@@ -113,7 +113,10 @@ constructor(
                 }
         }
 
-    /** Parses a URL through Mealie; no local cache is changed until the returned recipe is refreshed. */
+    /**
+     * Parses a URL through Mealie; no local cache is changed until the returned recipe is
+     * refreshed.
+     */
     suspend fun parseRecipeUrl(url: String): Result<String> =
         withContext(Dispatchers.IO) {
             runCatching {

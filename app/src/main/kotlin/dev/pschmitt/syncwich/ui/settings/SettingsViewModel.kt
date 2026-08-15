@@ -4,16 +4,16 @@ import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.pschmitt.syncwich.data.api.UsersApi
+import dev.pschmitt.syncwich.data.api.dto.UserDto
 import dev.pschmitt.syncwich.data.onboarding.OnboardingError
 import dev.pschmitt.syncwich.data.onboarding.OnboardingValidationException
 import dev.pschmitt.syncwich.data.onboarding.OnboardingValidator
 import dev.pschmitt.syncwich.data.onboarding.PasswordTokenMinter
-import dev.pschmitt.syncwich.data.api.UsersApi
-import dev.pschmitt.syncwich.data.api.dto.UserDto
 import dev.pschmitt.syncwich.data.repository.AccountRepository
 import dev.pschmitt.syncwich.data.settings.DEFAULT_FONT_SCALE
-import dev.pschmitt.syncwich.data.settings.DEFAULT_SYNC_ON_APP_START
 import dev.pschmitt.syncwich.data.settings.DEFAULT_SYNC_INTERVAL_HOURS
+import dev.pschmitt.syncwich.data.settings.DEFAULT_SYNC_ON_APP_START
 import dev.pschmitt.syncwich.data.settings.MealieCredentials
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import dev.pschmitt.syncwich.data.settings.ThemeMode
@@ -66,7 +66,8 @@ constructor(
     val connectionUpdateState: StateFlow<ConnectionUpdateState> =
         _connectionUpdateState.asStateFlow()
 
-    private val _credentialsTestState = MutableStateFlow<CredentialsTestState>(CredentialsTestState.Idle)
+    private val _credentialsTestState =
+        MutableStateFlow<CredentialsTestState>(CredentialsTestState.Idle)
     val credentialsTestState: StateFlow<CredentialsTestState> = _credentialsTestState.asStateFlow()
 
     private val _isSigningOut = MutableStateFlow(false)
@@ -225,8 +226,7 @@ constructor(
         viewModelScope.launch {
             runCatching { usersApi.getSelf() }
                 .onSuccess { user ->
-                    _credentialsTestState.value =
-                        CredentialsTestState.Success(user.displayName())
+                    _credentialsTestState.value = CredentialsTestState.Success(user.displayName())
                 }
                 .onFailure { error ->
                     _credentialsTestState.value = CredentialsTestState.Error(error.toTestMessage())
@@ -298,4 +298,5 @@ constructor(
 }
 
 internal fun UserDto.displayName(): String =
-    listOf(fullName, username, email, id).firstOrNull { !it.isNullOrBlank() } ?: "authenticated user"
+    listOf(fullName, username, email, id).firstOrNull { !it.isNullOrBlank() }
+        ?: "authenticated user"

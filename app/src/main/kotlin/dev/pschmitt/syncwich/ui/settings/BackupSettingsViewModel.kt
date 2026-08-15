@@ -19,9 +19,13 @@ import kotlinx.coroutines.launch
 
 sealed interface BackupOperationState {
     data object Idle : BackupOperationState
+
     data object Working : BackupOperationState
+
     data class PasswordRequired(val uri: Uri) : BackupOperationState
+
     data class Success(val message: String) : BackupOperationState
+
     data class Error(val message: String) : BackupOperationState
 }
 
@@ -87,9 +91,7 @@ constructor(
     fun setFolderUri(uri: Uri?) {
         viewModelScope.launch {
             uri?.let {
-                runCatching {
-                    settingsRepository.setScheduledBackupFolderUri(it.toString())
-                }
+                runCatching { settingsRepository.setScheduledBackupFolderUri(it.toString()) }
             } ?: settingsRepository.setScheduledBackupFolderUri(null)
             backupScheduler.schedule()
         }

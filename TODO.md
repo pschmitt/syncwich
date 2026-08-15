@@ -1786,3 +1786,21 @@ backup, sync, offline-cache, and device-deployment behavior; tracked local link/
 
 Status: **done**, 2026-08-15. AGENTS.md now requires README review and same-change updates whenever
 user-facing behavior, setup, commands, links, assets, or release instructions change.
+
+## SW-109: Fix CI
+
+- [ ] Inspect the currently failing CI workflow and identify the root cause
+- [ ] Implement the CI fix without weakening required checks
+- [ ] Verify the affected workflow(s) pass
+- [ ] Document any relevant CI maintenance detail in the repository instructions
+
+Status: in progress.
+
+## SW-110: Compact recipe-search filter control
+
+- [ ] Move the recipe filter control beside the search field
+- [ ] Replace the labeled Filters button with an icon-only button
+- [ ] Preserve filter-sheet behavior, selected-state indication, and accessibility semantics
+- [ ] Add focused UI coverage for the compact search/filter layout
+
+Status: in progress.

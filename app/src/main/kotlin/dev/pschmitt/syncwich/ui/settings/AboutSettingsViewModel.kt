@@ -6,8 +6,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import javax.inject.Inject
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -15,8 +15,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 @HiltViewModel
-class AboutSettingsViewModel @Inject constructor(private val settingsRepository: SettingsRepository) :
-    ViewModel() {
+class AboutSettingsViewModel
+@Inject
+constructor(private val settingsRepository: SettingsRepository) : ViewModel() {
 
     private val developerMode: StateFlow<Boolean> =
         settingsRepository.developerMode.stateIn(

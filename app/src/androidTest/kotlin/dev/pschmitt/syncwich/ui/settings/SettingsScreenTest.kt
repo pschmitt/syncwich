@@ -17,9 +17,7 @@ class SettingsScreenTest {
     @Test
     fun aboutIsShownAsOneHeaderlessSettingsItem() {
         composeTestRule.setContent {
-            SyncwichTheme {
-                SettingsScreen(onBack = {}, onCategoryClick = {})
-            }
+            SyncwichTheme { SettingsScreen(onBack = {}, onCategoryClick = {}) }
         }
 
         composeTestRule.onAllNodesWithText("About").assertCountEquals(1)

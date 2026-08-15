@@ -71,7 +71,8 @@ class BackupWrongPasswordException : Exception("Incorrect backup password")
 
 /** Password protection for the complete archive, using authenticated AES-GCM. */
 object BackupCrypto {
-    private val magic = byteArrayOf('S'.code.toByte(), 'W'.code.toByte(), 'B'.code.toByte(), '1'.code.toByte())
+    private val magic =
+        byteArrayOf('S'.code.toByte(), 'W'.code.toByte(), 'B'.code.toByte(), '1'.code.toByte())
     private const val plainFlag: Byte = 0
     private const val encryptedFlag: Byte = 1
     private const val saltSize = 16
@@ -145,7 +146,10 @@ constructor(
     private val database: AppDatabase,
     @ApplicationContext private val context: Context,
 ) {
-    private val json = Json { ignoreUnknownKeys = true; prettyPrint = false }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        prettyPrint = false
+    }
 
     suspend fun write(uri: Uri, password: String?) {
         withContext(Dispatchers.IO) {
@@ -199,7 +203,13 @@ constructor(
         val output = ByteArrayOutputStream()
         ZipOutputStream(output).use { zip ->
             writeEntry(zip, MANIFEST_ENTRY, json.encodeToString(manifest).toByteArray())
-            writeEntry(zip, CREDENTIALS_ENTRY, json.encodeToString(BackupCredentials(credentials.serverUrl, credentials.apiToken)).toByteArray())
+            writeEntry(
+                zip,
+                CREDENTIALS_ENTRY,
+                json
+                    .encodeToString(BackupCredentials(credentials.serverUrl, credentials.apiToken))
+                    .toByteArray(),
+            )
             writeEntry(zip, SETTINGS_ENTRY, json.encodeToString(settings).toByteArray())
             dbFile?.let { writeFileEntry(zip, DATABASE_ENTRY, it) }
             imageFiles.forEach { file ->
@@ -232,16 +242,30 @@ constructor(
                     }
                     val entryBytes = zip.readEntryBytes()
                     when (entryName) {
-                        MANIFEST_ENTRY -> manifest = json.decodeFromString<BackupManifest>(entryBytes.decodeToString())
-                        CREDENTIALS_ENTRY -> credentials = json.decodeFromString<BackupCredentials>(entryBytes.decodeToString())
-                        SETTINGS_ENTRY -> settings = json.decodeFromString<SettingsBackupSnapshot>(entryBytes.decodeToString())
+                        MANIFEST_ENTRY ->
+                            manifest =
+                                json.decodeFromString<BackupManifest>(entryBytes.decodeToString())
+                        CREDENTIALS_ENTRY ->
+                            credentials =
+                                json.decodeFromString<BackupCredentials>(
+                                    entryBytes.decodeToString()
+                                )
+                        SETTINGS_ENTRY ->
+                            settings =
+                                json.decodeFromString<SettingsBackupSnapshot>(
+                                    entryBytes.decodeToString()
+                                )
                         DATABASE_ENTRY -> {
                             databaseFile = temporaryDirectory.resolve(DATABASE_NAME)
                             databaseFile!!.writeBytes(entryBytes)
                         }
                         else ->
                             if (entryName.startsWith("$IMAGES_PREFIX/")) {
-                                imageDirectory = imageDirectory ?: temporaryDirectory.resolve(IMAGES_PREFIX).also(File::mkdirs)
+                                imageDirectory =
+                                    imageDirectory
+                                        ?: temporaryDirectory
+                                            .resolve(IMAGES_PREFIX)
+                                            .also(File::mkdirs)
                                 val relative = entryName.removePrefix("$IMAGES_PREFIX/")
                                 val output = imageDirectory!!.resolve(relative)
                                 output.parentFile?.mkdirs()
@@ -296,7 +320,8 @@ constructor(
     }
 
     private fun restoreDatabase(sourceFile: File) {
-        val source = SQLiteDatabase.openDatabase(sourceFile.path, null, SQLiteDatabase.OPEN_READONLY)
+        val source =
+            SQLiteDatabase.openDatabase(sourceFile.path, null, SQLiteDatabase.OPEN_READONLY)
         try {
             if (source.version != AppDatabase.SCHEMA_VERSION) {
                 throw BackupFormatException("This backup uses an incompatible cache schema")
@@ -320,7 +345,8 @@ constructor(
 
     private fun applicationTables(source: SQLiteDatabase): List<String> {
         val available = mutableSetOf<String>()
-        source.rawQuery(
+        source
+            .rawQuery(
                 "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
                 null,
             )
@@ -375,7 +401,8 @@ constructor(
         val output = ByteArrayOutputStream()
         copyTo(output, MAX_ENTRY_BYTES + 1)
         val bytes = output.toByteArray()
-        if (bytes.size > MAX_ENTRY_BYTES) throw BackupFormatException("The backup contains an oversized file")
+        if (bytes.size > MAX_ENTRY_BYTES)
+            throw BackupFormatException("The backup contains an oversized file")
         return bytes
     }
 

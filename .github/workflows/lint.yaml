@@ -4,11 +4,8 @@ name: Lint
 # its normal push/PR gating. The ktfmt and Android Lint checks run as independent parallel jobs
 # so a failure in one doesn't hide or block the other. When ktfmtCheck fails - on any trigger -
 # the `ktfmt` job uploads a `ktfmt-diff-patch` artifact containing exactly what
-# `./gradlew ktfmtFormat` would change, and additionally tries to land that same fix
-# automatically: pushed straight onto a same-repo PR's branch (pre-merge, safe to amend in
-# place), or opened as a new PR when the failure came from a direct push to main with no PR to
-# push into. A fork PR can't be pushed to by GITHUB_TOKEN at all, so that case only gets the
-# patch artifact. See AGENTS.md.
+# `./gradlew ktfmtFormat` would change. The formatting fix is applied by a maintainer or coding
+# agent on the intended branch; this workflow does not create pull requests automatically.
 on:
   push:
     branches:
@@ -29,8 +26,7 @@ jobs:
     name: ktfmt
     runs-on: ubuntu-24.04
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -58,33 +54,6 @@ jobs:
           name: ktfmt-diff-patch
           path: /tmp/ktfmt.patch
           if-no-files-found: error
-      - name: Commit formatting fix onto this PR's branch
-        if: >-
-          ${{ failure() && steps.ktfmt_check.outcome == 'failure' &&
-              github.event_name == 'pull_request' &&
-              github.event.pull_request.head.repo.full_name == github.repository }}
-        env:
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- '*.kt' '*.kts'
-          git commit -m "style: apply ktfmt formatting"
-          git push origin "HEAD:$HEAD_REF"
-      - name: Open a PR with the formatting fix
-        if: ${{ failure() && steps.ktfmt_check.outcome == 'failure' && github.event_name != 'pull_request' }}
-        uses: peter-evans/create-pull-request@v8
-        with:
-          commit-message: "style: apply ktfmt formatting"
-          title: "style: apply ktfmt formatting"
-          body: >-
-            Automated ktfmt formatting fix - `ktfmtCheck` failed on
-            ${{ github.sha }} (`${{ github.ref_name }}`).
-          branch: ci/ktfmt-format-fix
-          add-paths: |
-            **.kt
-            **.kts
-
   android-lint:
     name: Android Lint
     runs-on: ubuntu-24.04

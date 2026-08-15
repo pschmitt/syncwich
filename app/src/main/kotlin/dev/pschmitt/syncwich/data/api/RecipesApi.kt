@@ -45,8 +45,7 @@ interface RecipesApi {
     ): ResponseBody
 
     /** Confirmed by the live Mealie OpenAPI schema: deletes one recipe by slug. */
-    @DELETE("api/recipes/{slug}")
-    suspend fun deleteRecipe(@Path("slug") slug: String): ResponseBody
+    @DELETE("api/recipes/{slug}") suspend fun deleteRecipe(@Path("slug") slug: String): ResponseBody
 
     /** Confirmed by the live Mealie OpenAPI schema: multipart cover-image replacement. */
     @Multipart

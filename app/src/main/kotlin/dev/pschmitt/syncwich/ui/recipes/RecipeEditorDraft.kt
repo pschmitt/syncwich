@@ -6,14 +6,14 @@ import dev.pschmitt.syncwich.data.api.dto.RecipeIngredientInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeStepInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeTagInputDto
+import java.util.Locale
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.put
 import kotlinx.serialization.json.jsonPrimitive
-import java.util.Locale
+import kotlinx.serialization.json.put
 
 /**
  * In-memory editor state kept intact when a save fails, including while the device is offline -
@@ -142,17 +142,12 @@ internal fun appendMarkdownImage(content: String, uri: String): String =
     listOf(content.trimEnd(), "![Image]($uri)").filter(String::isNotBlank).joinToString("\n\n")
 
 internal fun parseEditorNames(value: String): List<String> =
-    value
-        .split(',', '\n')
-        .map(String::trim)
-        .filter(String::isNotBlank)
-        .distinctBy { it.lowercase(Locale.ROOT) }
+    value.split(',', '\n').map(String::trim).filter(String::isNotBlank).distinctBy {
+        it.lowercase(Locale.ROOT)
+    }
 
 private fun organizerSlug(name: String): String =
-    name
-        .lowercase(Locale.ROOT)
-        .replace(Regex("[^a-z0-9]+"), "-")
-        .trim('-')
+    name.lowercase(Locale.ROOT).replace(Regex("[^a-z0-9]+"), "-").trim('-')
 
 internal fun editableCategories(
     value: String,

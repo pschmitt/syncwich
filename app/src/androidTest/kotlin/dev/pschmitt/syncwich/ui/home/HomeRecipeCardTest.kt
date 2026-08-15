@@ -2,9 +2,9 @@ package dev.pschmitt.syncwich.ui.home
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import org.junit.Assert.assertEquals

@@ -116,7 +116,10 @@ class CookbookRepositoryTest {
 
         assertTrue(result.isFailure)
         assertEquals(listOf(cached), cookbookDao.observeAll().first())
-        assertEquals(listOf("recipe-1"), recipeDao.observeByCookbook("keep-1").first().map { it.id })
+        assertEquals(
+            listOf("recipe-1"),
+            recipeDao.observeByCookbook("keep-1").first().map { it.id },
+        )
     }
 
     @Test
@@ -138,7 +141,10 @@ class CookbookRepositoryTest {
 
         assertTrue(repository.deleteCookbook("remove-1").isSuccess)
         assertEquals(emptyList<CookbookEntity>(), cookbookDao.observeAll().first())
-        assertEquals(emptyList<RecipeSummaryEntity>(), recipeDao.observeByCookbook("remove-1").first())
+        assertEquals(
+            emptyList<RecipeSummaryEntity>(),
+            recipeDao.observeByCookbook("remove-1").first(),
+        )
     }
 
     @Test
@@ -289,7 +295,8 @@ class CookbookRepositoryTest {
             list.find { it.slug == slug }
         }
 
-        override fun observeByRecipe(recipeId: String): Flow<List<CookbookEntity>> = flowOf(emptyList())
+        override fun observeByRecipe(recipeId: String): Flow<List<CookbookEntity>> =
+            flowOf(emptyList())
 
         override suspend fun upsertAll(cookbooks: List<CookbookEntity>) {
             val byId = state.value.associateBy { it.id }.toMutableMap()

@@ -5,8 +5,8 @@ import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -23,9 +23,7 @@ class AboutSettingsScreenTest {
 
     @Test
     fun aboutScreenShowsBuildAndProjectInformationOffline() {
-        composeTestRule.setContent {
-            SyncwichTheme { AboutSettingsScreen(onBack = {}) }
-        }
+        composeTestRule.setContent { SyncwichTheme { AboutSettingsScreen(onBack = {}) } }
 
         composeTestRule.onNodeWithText("Syncwich").assertIsDisplayed()
         composeTestRule.onNodeWithText("Version").assertIsDisplayed()
@@ -37,9 +35,7 @@ class AboutSettingsScreenTest {
 
     @Test
     fun aboutScreenShowsLibrariesAndLicensesOffline() {
-        composeTestRule.setContent {
-            SyncwichTheme { AboutSettingsScreen(onBack = {}) }
-        }
+        composeTestRule.setContent { SyncwichTheme { AboutSettingsScreen(onBack = {}) } }
 
         composeTestRule.onNodeWithTag("about-settings-list").performScrollToIndex(2)
         composeTestRule.onNodeWithText("Libraries").assertIsDisplayed()
@@ -57,9 +53,7 @@ class AboutSettingsScreenTest {
             SyncwichTheme {
                 AboutSettingsScreen(
                     onBack = {},
-                    onBuildTap = {
-                        taps++
-                    },
+                    onBuildTap = { taps++ },
                 )
             }
         }
@@ -67,7 +61,8 @@ class AboutSettingsScreenTest {
         repeat(7) { composeTestRule.onNodeWithText("Build").performClick() }
 
         assertEquals(7, taps)
-        composeTestRule.onAllNodesWithText("Developer mode enabled", substring = true)
+        composeTestRule
+            .onAllNodesWithText("Developer mode enabled", substring = true)
             .assertCountEquals(0)
     }
 }

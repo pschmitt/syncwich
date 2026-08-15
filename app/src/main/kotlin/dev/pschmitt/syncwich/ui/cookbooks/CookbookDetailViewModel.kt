@@ -85,15 +85,17 @@ constructor(
         viewModelScope.launch {
             _deleteState.value = CookbookDeleteUiState.Deleting
             _deleteState.value =
-                cookbookRepository.deleteCookbook(cookbookId).fold(
-                    onSuccess = { CookbookDeleteUiState.Deleted },
-                    onFailure = {
-                        CookbookDeleteUiState.Failed(
-                            "Couldn't delete the cookbook. Your saved copy is still available; " +
-                                "check your connection and try again."
-                        )
-                    },
-                )
+                cookbookRepository
+                    .deleteCookbook(cookbookId)
+                    .fold(
+                        onSuccess = { CookbookDeleteUiState.Deleted },
+                        onFailure = {
+                            CookbookDeleteUiState.Failed(
+                                "Couldn't delete the cookbook. Your saved copy is still available; " +
+                                    "check your connection and try again."
+                            )
+                        },
+                    )
         }
     }
 

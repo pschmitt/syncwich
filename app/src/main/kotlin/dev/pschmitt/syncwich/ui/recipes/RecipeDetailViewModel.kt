@@ -161,17 +161,15 @@ constructor(
     private val ingredientChecklistEnabled =
         settingsRepository.ingredientChecklistEnabled.distinctUntilChanged()
 
-    private val completedStepIndexes: Flow<Set<Int>> =
-        effectiveRecipeId.flatMapLatest { recipeId ->
-            if (recipeId.isBlank()) flowOf(emptySet())
-            else stepProgressRepository.observeCompleted(recipeId)
-        }
+    private val completedStepIndexes: Flow<Set<Int>> = effectiveRecipeId.flatMapLatest { recipeId ->
+        if (recipeId.isBlank()) flowOf(emptySet())
+        else stepProgressRepository.observeCompleted(recipeId)
+    }
 
-    private val cookbooks =
-        effectiveRecipeId.flatMapLatest { recipeId ->
-            if (recipeId.isBlank()) flowOf(emptyList())
-            else cookbookRepository.observeCookbooksForRecipe(recipeId)
-        }
+    private val cookbooks = effectiveRecipeId.flatMapLatest { recipeId ->
+        if (recipeId.isBlank()) flowOf(emptyList())
+        else cookbookRepository.observeCookbooksForRecipe(recipeId)
+    }
 
     private val actions: Flow<RecipeActionUiState> =
         effectiveRecipeId
@@ -265,15 +263,17 @@ constructor(
         viewModelScope.launch {
             _deleteState.value = RecipeDeleteUiState.Deleting
             _deleteState.value =
-                recipeRepository.deleteRecipe(recipeId, slug).fold(
-                    onSuccess = { RecipeDeleteUiState.Deleted },
-                    onFailure = {
-                        RecipeDeleteUiState.Failed(
-                            "Couldn't delete the recipe. Your saved copy is still available; " +
-                                "check your connection and try again."
-                        )
-                    },
-                )
+                recipeRepository
+                    .deleteRecipe(recipeId, slug)
+                    .fold(
+                        onSuccess = { RecipeDeleteUiState.Deleted },
+                        onFailure = {
+                            RecipeDeleteUiState.Failed(
+                                "Couldn't delete the recipe. Your saved copy is still available; " +
+                                    "check your connection and try again."
+                            )
+                        },
+                    )
         }
     }
 
@@ -325,7 +325,8 @@ internal fun recipeDetailUiState(
 
 internal fun decodeRecipeDetail(json: Json, rawJson: String): RecipeDetailDto? = runCatching {
     json.decodeFromString<RecipeDetailDto>(rawJson)
-}.getOrNull()
+}
+    .getOrNull()
 
 internal fun recipeImageIndex(serverUrl: String, recipe: RecipeDetailDto): RecipeImageIndex {
     val coverUrl = recipeImageUrl(serverUrl, recipe.id, recipe.image)

@@ -62,7 +62,9 @@ Single `:app` Gradle module - this app doesn't need a multi-module split.
   `Lint` job fails, `.github/workflows/lint.yaml`'s `ktfmt` job auto-uploads a `ktfmt-diff-patch`
   artifact whenever `ktfmtCheck` fails, containing exactly what `./gradlew ktfmtFormat` would
   change. Grab it with `gh run download <run-id> -n ktfmt-diff-patch` and apply it (`git apply`)
-  rather than guessing or reformatting by hand. Fix every lint/format violation CI reports before
+  rather than guessing or reformatting by hand. The workflow deliberately does not create
+  formatting PRs or push an agent-generated branch automatically; apply the patch on the
+  intended branch and commit it directly. Fix every lint/format violation CI reports before
   calling a change done, even in files the current change didn't touch or author.
 - Never tag a release from a commit whose CI hasn't gone green.
 

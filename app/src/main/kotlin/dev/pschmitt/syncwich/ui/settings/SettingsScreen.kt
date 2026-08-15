@@ -18,7 +18,6 @@ import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.FormatSize
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.ViewCarousel
@@ -54,9 +53,9 @@ import dev.pschmitt.syncwich.data.settings.MIN_FONT_SCALE
 import dev.pschmitt.syncwich.data.settings.NavigationBarItemKeys
 import dev.pschmitt.syncwich.data.settings.ThemeMode
 import dev.pschmitt.syncwich.data.settings.resolveNavBarOrder
+import dev.pschmitt.syncwich.ui.common.NavigationTitle
 import dev.pschmitt.syncwich.ui.navigation.NavigationBarViewModel
 import dev.pschmitt.syncwich.ui.navigation.TopLevelDestination
-import dev.pschmitt.syncwich.ui.common.NavigationTitle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

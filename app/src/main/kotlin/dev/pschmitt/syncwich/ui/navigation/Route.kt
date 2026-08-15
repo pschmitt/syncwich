@@ -10,8 +10,8 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.ui.graphics.vector.ImageVector
 import dev.pschmitt.syncwich.data.settings.NavigationBarItemKeys
-import kotlinx.serialization.Serializable
 import kotlin.reflect.KClass
+import kotlinx.serialization.Serializable
 
 /** Type-safe Navigation Compose destinations (see MainActivity/SyncwichNavHost). */
 sealed interface Route {

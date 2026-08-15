@@ -12,8 +12,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.isActive
 
 /** The user-facing state of a cache refresh. */
 enum class SyncStatusState {

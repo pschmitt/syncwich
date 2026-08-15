@@ -74,7 +74,8 @@ constructor(
     private val _saveState = MutableStateFlow<RecipeEditorSaveState>(RecipeEditorSaveState.Idle)
     val saveState: StateFlow<RecipeEditorSaveState> = _saveState.asStateFlow()
 
-    private val _importState = MutableStateFlow<RecipeEditorImportState>(RecipeEditorImportState.Idle)
+    private val _importState =
+        MutableStateFlow<RecipeEditorImportState>(RecipeEditorImportState.Idle)
     val importState: StateFlow<RecipeEditorImportState> = _importState.asStateFlow()
 
     private var draftTouched = false
@@ -174,19 +175,19 @@ constructor(
         _importState.value = RecipeEditorImportState.Importing
         viewModelScope.launch {
             runCatching {
-                val reference = recipeRepository.parseRecipeUrl(url).getOrThrow()
-                val slug =
-                    reference.trim().trim('"').takeIf(String::isNotBlank)
-                        ?: error("Mealie did not return the imported recipe slug")
-                recipeRepository.refreshRecipeDetail("", slug, forceRefresh = true).getOrThrow()
-                val cached =
-                    recipeRepository.observeRecipeDetailBySlug(slug).first()
-                        ?: error("The imported recipe was not returned by Mealie")
-                val input =
-                    decodeRecipeInput(json, cached.detailJson)
-                        ?: error("The imported recipe could not be decoded")
-                slug to input
-            }
+                    val reference = recipeRepository.parseRecipeUrl(url).getOrThrow()
+                    val slug =
+                        reference.trim().trim('"').takeIf(String::isNotBlank)
+                            ?: error("Mealie did not return the imported recipe slug")
+                    recipeRepository.refreshRecipeDetail("", slug, forceRefresh = true).getOrThrow()
+                    val cached =
+                        recipeRepository.observeRecipeDetailBySlug(slug).first()
+                            ?: error("The imported recipe was not returned by Mealie")
+                    val input =
+                        decodeRecipeInput(json, cached.detailJson)
+                            ?: error("The imported recipe could not be decoded")
+                    slug to input
+                }
                 .fold(
                     onSuccess = { (slug, input) ->
                         importedSlug = slug
@@ -364,4 +365,5 @@ constructor(
  */
 internal fun decodeRecipeInput(json: Json, rawJson: String): RecipeInputDto? = runCatching {
     json.decodeFromString<RecipeInputDto>(rawJson)
-}.getOrNull()
+}
+    .getOrNull()

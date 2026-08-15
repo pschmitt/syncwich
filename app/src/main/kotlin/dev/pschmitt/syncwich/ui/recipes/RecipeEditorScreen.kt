@@ -76,8 +76,9 @@ fun RecipeEditorScreen(
     val errorMessage = (saveState as? RecipeEditorSaveState.Error)?.message
     val importErrorMessage = (importState as? RecipeEditorImportState.Failed)?.message
     val context = LocalContext.current
-    val cameraAvailable =
-        remember { context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) }
+    val cameraAvailable = remember {
+        context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
+    }
     var imageTarget by remember { mutableStateOf<RecipeEditorImageTarget?>(null) }
     var cameraOutputUri by remember { mutableStateOf<Uri?>(null) }
     val applyImageUri: (Uri) -> Unit = { uri ->

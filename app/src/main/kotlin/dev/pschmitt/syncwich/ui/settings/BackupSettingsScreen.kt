@@ -23,6 +23,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -34,7 +35,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -60,12 +60,19 @@ fun BackupSettingsScreen(
     modifier: Modifier = Modifier,
     viewModel: BackupSettingsViewModel = hiltViewModel(),
 ) {
-    val enabled by viewModel.settingsRepository.scheduledBackupEnabled.collectAsStateWithLifecycle(false)
-    val frequency by viewModel.settingsRepository.scheduledBackupFrequency.collectAsStateWithLifecycle(BackupFrequency.Weekly)
-    val folderUri by viewModel.settingsRepository.scheduledBackupFolderUri.collectAsStateWithLifecycle(null)
-    val passwordSet by viewModel.settingsRepository.scheduledBackupPasswordSet.collectAsStateWithLifecycle()
+    val enabled by
+        viewModel.settingsRepository.scheduledBackupEnabled.collectAsStateWithLifecycle(false)
+    val frequency by
+        viewModel.settingsRepository.scheduledBackupFrequency.collectAsStateWithLifecycle(
+            BackupFrequency.Weekly
+        )
+    val folderUri by
+        viewModel.settingsRepository.scheduledBackupFolderUri.collectAsStateWithLifecycle(null)
+    val passwordSet by
+        viewModel.settingsRepository.scheduledBackupPasswordSet.collectAsStateWithLifecycle()
     val lastBackupAt by viewModel.settingsRepository.lastBackupAt.collectAsStateWithLifecycle(null)
-    val lastBackupError by viewModel.settingsRepository.lastBackupError.collectAsStateWithLifecycle(null)
+    val lastBackupError by
+        viewModel.settingsRepository.lastBackupError.collectAsStateWithLifecycle(null)
     val operation by viewModel.operation.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var exportPassword by rememberSaveable { mutableStateOf("") }
@@ -74,7 +81,9 @@ fun BackupSettingsScreen(
     var frequencyExpanded by remember { mutableStateOf(false) }
 
     val exportLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.CreateDocument("application/octet-stream")
+        ) { uri ->
             uri?.let { viewModel.export(it, exportPassword.takeIf(String::isNotEmpty)) }
         }
     val restoreLauncher =
@@ -87,7 +96,8 @@ fun BackupSettingsScreen(
                 runCatching {
                     context.contentResolver.takePersistableUriPermission(
                         it,
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
                     )
                 }
                 viewModel.setFolderUri(it)
@@ -203,9 +213,10 @@ fun BackupSettingsScreen(
                             Switch(
                                 checked = enabled,
                                 onCheckedChange = viewModel::setEnabled,
-                                modifier = Modifier.semantics {
-                                    contentDescription = "Enable scheduled backups"
-                                },
+                                modifier =
+                                    Modifier.semantics {
+                                        contentDescription = "Enable scheduled backups"
+                                    },
                             )
                         },
                     )
@@ -284,7 +295,9 @@ fun BackupSettingsScreen(
             if (operation is BackupOperationState.Working) {
                 item { Text("Working…", color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
-            if (operation is BackupOperationState.Success || operation is BackupOperationState.Error) {
+            if (
+                operation is BackupOperationState.Success || operation is BackupOperationState.Error
+            ) {
                 item {
                     val message =
                         when (val state = operation) {
@@ -310,5 +323,4 @@ fun BackupSettingsScreen(
             }
         }
     }
-
 }

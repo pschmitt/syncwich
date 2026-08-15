@@ -90,4 +90,5 @@ private fun parseLongFormLink(segments: List<String>): MealieLinkTarget? {
 
 private fun decodeSegment(segment: String): String = runCatching {
     URLDecoder.decode(segment, StandardCharsets.UTF_8.name())
-}.getOrDefault(segment)
+}
+    .getOrDefault(segment)

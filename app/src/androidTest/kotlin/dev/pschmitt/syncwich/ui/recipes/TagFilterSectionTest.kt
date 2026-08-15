@@ -5,6 +5,8 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -31,8 +33,29 @@ class TagFilterSectionTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Filters").performClick()
+        composeTestRule.onNodeWithContentDescription("Filters").performClick()
         assertTrue(clicked)
+    }
+
+    @Test
+    fun filterButtonSitsBesideTheSearchFieldWithoutAVisibleLabel() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                RecipeSearchControls(
+                    searchQuery = "",
+                    onSearchQueryChange = {},
+                    filtersAvailable = true,
+                    selectedFilterCount = 1,
+                    onFilterClick = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithContentDescription("Search recipes").assertIsDisplayed()
+        composeTestRule
+            .onNodeWithContentDescription("Filters, 1 active")
+            .assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("Filters").assertCountEquals(0)
     }
 
     @Test

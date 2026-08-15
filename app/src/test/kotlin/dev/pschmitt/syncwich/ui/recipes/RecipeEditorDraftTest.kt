@@ -1,9 +1,9 @@
 package dev.pschmitt.syncwich.ui.recipes
 
 import dev.pschmitt.syncwich.data.api.dto.CreateRecipeDto
+import dev.pschmitt.syncwich.data.api.dto.RecipeCategoryInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeIngredientInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeInputDto
-import dev.pschmitt.syncwich.data.api.dto.RecipeCategoryInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeStepInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeTagInputDto
 import kotlinx.serialization.json.JsonPrimitive
@@ -113,8 +113,7 @@ class RecipeEditorDraftTest {
             RecipeInputDto(
                 name = "Saved Soup",
                 description = "Keep warm",
-                recipeCategory =
-                    listOf(RecipeCategoryInputDto(name = "Dinner", slug = "dinner")),
+                recipeCategory = listOf(RecipeCategoryInputDto(name = "Dinner", slug = "dinner")),
                 tags = listOf(RecipeTagInputDto(name = "Quick", slug = "quick")),
                 tools = listOf(JsonPrimitive("Pot")),
                 recipeIngredient =

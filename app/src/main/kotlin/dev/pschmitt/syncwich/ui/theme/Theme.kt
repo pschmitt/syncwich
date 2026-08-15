@@ -54,14 +54,15 @@ internal val ExpressiveShapes =
     )
 
 internal val ExpressiveTypography =
-    Typography().copy(
-        displayLarge = Typography().displayLarge.copy(fontWeight = FontWeight.Bold),
-        headlineLarge = Typography().headlineLarge.copy(fontWeight = FontWeight.Bold),
-        headlineMedium = Typography().headlineMedium.copy(fontWeight = FontWeight.SemiBold),
-        titleLarge = Typography().titleLarge.copy(fontWeight = FontWeight.SemiBold),
-        titleMedium = Typography().titleMedium.copy(fontWeight = FontWeight.SemiBold),
-        labelLarge = Typography().labelLarge.copy(letterSpacing = 0.1.sp),
-    )
+    Typography()
+        .copy(
+            displayLarge = Typography().displayLarge.copy(fontWeight = FontWeight.Bold),
+            headlineLarge = Typography().headlineLarge.copy(fontWeight = FontWeight.Bold),
+            headlineMedium = Typography().headlineMedium.copy(fontWeight = FontWeight.SemiBold),
+            titleLarge = Typography().titleLarge.copy(fontWeight = FontWeight.SemiBold),
+            titleMedium = Typography().titleMedium.copy(fontWeight = FontWeight.SemiBold),
+            labelLarge = Typography().labelLarge.copy(letterSpacing = 0.1.sp),
+        )
 
 /**
  * Full Material You theming: dynamic, wallpaper-derived color on Android 12+, falling back to a

@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
@@ -35,12 +34,12 @@ import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.StickyNote2
-import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -55,21 +54,21 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
-import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material.icons.filled.TextDecrease
 import androidx.compose.material.icons.filled.TextIncrease
-import androidx.compose.material3.Checkbox
+import androidx.compose.material.icons.filled.Timeline
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -87,17 +86,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -107,11 +103,14 @@ import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -151,16 +150,14 @@ fun RecipeDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val refreshState by viewModel.refreshState.collectAsStateWithLifecycle()
-            val deleteState by viewModel.deleteState.collectAsStateWithLifecycle()
+    val deleteState by viewModel.deleteState.collectAsStateWithLifecycle()
     val loadedState = uiState as? RecipeDetailUiState.Loaded
     val title = loadedState?.recipe?.name ?: "Recipe"
     var overflowExpanded by remember { mutableStateOf(false) }
     var deleteDialogVisible by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
 
-    LaunchedEffect(deleteState) {
-        if (deleteState is RecipeDeleteUiState.Deleted) onDeleted()
-    }
+    LaunchedEffect(deleteState) { if (deleteState is RecipeDeleteUiState.Deleted) onDeleted() }
 
     Scaffold(
         modifier = modifier,
@@ -178,7 +175,7 @@ fun RecipeDetailScreen(
                             enabled = deleteState !is RecipeDeleteUiState.Deleting,
                             onClick = {
                                 onEditClick(loadedState.recipe.id, loadedState.recipe.slug)
-                            }
+                            },
                         ) {
                             Icon(Icons.Filled.Edit, contentDescription = "Edit recipe")
                         }
@@ -283,9 +280,7 @@ fun RecipeDetailScreen(
             recipeName = loadedState.recipe.name,
             isDeleting = deleteState is RecipeDeleteUiState.Deleting,
             errorMessage = (deleteState as? RecipeDeleteUiState.Failed)?.message,
-            onConfirm = {
-                viewModel.deleteRecipe(loadedState.recipe.id, loadedState.recipe.slug)
-            },
+            onConfirm = { viewModel.deleteRecipe(loadedState.recipe.id, loadedState.recipe.slug) },
             onDismiss = { deleteDialogVisible = false },
         )
     }
@@ -382,7 +377,8 @@ internal fun RecipeDetailContent(
     modifier: Modifier = Modifier,
 ) {
     val imageUrl = imageIndex.coverUrl
-    val viewerImages = remember(recipe.name, imageIndex) { recipeViewerImages(recipe.name, imageIndex) }
+    val viewerImages =
+        remember(recipe.name, imageIndex) { recipeViewerImages(recipe.name, imageIndex) }
     var viewerPage by rememberSaveable { mutableStateOf<Int?>(null) }
     var stepsFullScreen by rememberSaveable { mutableStateOf(false) }
 
@@ -432,7 +428,9 @@ internal fun RecipeDetailContent(
                             Text(
                                 text = tool,
                                 style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                                modifier =
+                                    Modifier.fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 4.dp),
                             )
                         }
                     }
@@ -455,8 +453,7 @@ internal fun RecipeDetailContent(
                         )
                     if (times.isNotEmpty()) {
                         Box(
-                            modifier =
-                                Modifier.fillMaxWidth().testTag("recipe-timing-rating-row")
+                            modifier = Modifier.fillMaxWidth().testTag("recipe-timing-rating-row")
                         ) {
                             Column(modifier = Modifier.padding(end = 52.dp)) {
                                 times.forEach { (label, value) ->
@@ -588,13 +585,20 @@ internal fun RecipeDetailContent(
                         recipe.notes.forEach { note ->
                             Column(
                                 modifier =
-                                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)
+                                    Modifier.fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 4.dp)
                             ) {
                                 if (!note.title.isNullOrBlank()) {
-                                    Text(text = note.title, style = MaterialTheme.typography.titleSmall)
+                                    Text(
+                                        text = note.title,
+                                        style = MaterialTheme.typography.titleSmall,
+                                    )
                                 }
                                 if (!note.text.isNullOrBlank()) {
-                                    Text(text = note.text, style = MaterialTheme.typography.bodyMedium)
+                                    Text(
+                                        text = note.text,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
                                 }
                             }
                         }
@@ -641,10 +645,9 @@ internal fun RecipeTitleImage(
             contentDescription = recipeName,
             contentScale = ContentScale.Crop,
             modifier =
-                Modifier.fillMaxWidth()
-                    .height(220.dp)
-                    .clickable(onClick = onClick)
-                    .semantics { contentDescription = "Open recipe images" },
+                Modifier.fillMaxWidth().height(220.dp).clickable(onClick = onClick).semantics {
+                    contentDescription = "Open recipe images"
+                },
         )
     }
 }
@@ -659,7 +662,10 @@ internal fun RecipeMetadataCard(
     onOpenCookbook: (String) -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             if (categories.isNotEmpty()) {
                 Row(
                     modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
@@ -965,12 +971,11 @@ internal fun stepViewerImages(
 internal fun imageMetadataRows(
     image: RecipeViewerImage,
     dimensions: ImageDimensions?,
-): List<Pair<String, String>> =
-    buildList {
-        add("Source" to image.sourceLabel)
-        image.altText?.takeIf(String::isNotBlank)?.let { add("Description" to it) }
-        dimensions?.let { add("Dimensions" to "${it.width} × ${it.height} px") }
-    }
+): List<Pair<String, String>> = buildList {
+    add("Source" to image.sourceLabel)
+    image.altText?.takeIf(String::isNotBlank)?.let { add("Description" to it) }
+    dimensions?.let { add("Dimensions" to "${it.width} × ${it.height} px") }
+}
 
 @Composable
 internal fun SectionHeader(
@@ -1053,10 +1058,12 @@ internal fun InstructionRow(
         Checkbox(
             checked = completed,
             onCheckedChange = onCompletedChange,
-            modifier = Modifier.semantics {
-                contentDescription =
-                    if (completed) "Mark step $number incomplete" else "Mark step $number complete"
-            },
+            modifier =
+                Modifier.semantics {
+                    contentDescription =
+                        if (completed) "Mark step $number incomplete"
+                        else "Mark step $number complete"
+                },
         )
         Text(
             text = "$number.",
@@ -1129,7 +1136,8 @@ private fun FullScreenStepsDialog(
     onStepCompleted: (Int, Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val images = remember(recipeName, imageReferences) { stepViewerImages(recipeName, imageReferences) }
+    val images =
+        remember(recipeName, imageReferences) { stepViewerImages(recipeName, imageReferences) }
     var viewerPage by rememberSaveable { mutableStateOf<Int?>(null) }
     var fontScale by rememberSaveable { mutableFloatStateOf(1f) }
     var firstVisibleItemIndex by rememberSaveable { mutableStateOf(0) }
@@ -1137,8 +1145,7 @@ private fun FullScreenStepsDialog(
     val baseDensity = LocalDensity.current
 
     LaunchedEffect(listState) {
-        snapshotFlow { listState.firstVisibleItemIndex }
-            .collect { firstVisibleItemIndex = it }
+        snapshotFlow { listState.firstVisibleItemIndex }.collect { firstVisibleItemIndex = it }
     }
 
     Dialog(
@@ -1182,12 +1189,13 @@ private fun FullScreenStepsDialog(
                     LazyColumn(
                         state = listState,
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(
-                            start = 16.dp,
-                            top = 12.dp,
-                            end = 16.dp,
-                            bottom = FULL_SCREEN_STEPS_BOTTOM_PADDING_DP.dp,
-                        ),
+                        contentPadding =
+                            PaddingValues(
+                                start = 16.dp,
+                                top = 12.dp,
+                                end = 16.dp,
+                                bottom = FULL_SCREEN_STEPS_BOTTOM_PADDING_DP.dp,
+                            ),
                     ) {
                         itemsIndexed(instructions) { index, instruction ->
                             InstructionRow(
@@ -1246,10 +1254,13 @@ internal fun StepFontSizeControls(
         SmallFloatingActionButton(
             onClick = { if (fontScale > 0.8f) onDecrease() },
             modifier =
-                Modifier.size(36.dp)
-                    .semantics { contentDescription = "Decrease step text size" },
+                Modifier.size(36.dp).semantics { contentDescription = "Decrease step text size" },
         ) {
-            Icon(Icons.Filled.TextDecrease, contentDescription = null, modifier = Modifier.size(18.dp))
+            Icon(
+                Icons.Filled.TextDecrease,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
         }
         Text(
             text = "${(fontScale * 100).toInt()}%",
@@ -1259,10 +1270,13 @@ internal fun StepFontSizeControls(
         SmallFloatingActionButton(
             onClick = { if (fontScale < 1.6f) onIncrease() },
             modifier =
-                Modifier.size(36.dp)
-                    .semantics { contentDescription = "Increase step text size" },
+                Modifier.size(36.dp).semantics { contentDescription = "Increase step text size" },
         ) {
-            Icon(Icons.Filled.TextIncrease, contentDescription = null, modifier = Modifier.size(18.dp))
+            Icon(
+                Icons.Filled.TextIncrease,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
         }
     }
 }
@@ -1273,7 +1287,7 @@ internal fun adjustStepFontScale(current: Float, delta: Float): Float =
     (current + delta).coerceIn(0.8f, 1.6f)
 
 internal fun fullScreenStepImageUrls(
-    imageReferences: List<List<RecipeImageReference>>,
+    imageReferences: List<List<RecipeImageReference>>
 ): List<String> = imageReferences.flatten().map(RecipeImageReference::url).distinct()
 
 @Composable
@@ -1350,7 +1364,9 @@ internal fun RecipeImageViewer(
                         val nextPage = (currentPage + 1).takeIf { it < images.size }
                         IconButton(
                             onClick = {
-                                previousPage?.let { scope.launch { pagerState.animateScrollToPage(it) } }
+                                previousPage?.let {
+                                    scope.launch { pagerState.animateScrollToPage(it) }
+                                }
                             },
                             enabled = previousPage != null,
                             modifier =
@@ -1361,12 +1377,17 @@ internal fun RecipeImageViewer(
                             Icon(
                                 Icons.Filled.ChevronLeft,
                                 contentDescription = "Previous image",
-                                tint = Color.White.copy(alpha = if (previousPage == null) 0.35f else 1f),
+                                tint =
+                                    Color.White.copy(
+                                        alpha = if (previousPage == null) 0.35f else 1f
+                                    ),
                             )
                         }
                         IconButton(
                             onClick = {
-                                nextPage?.let { scope.launch { pagerState.animateScrollToPage(it) } }
+                                nextPage?.let {
+                                    scope.launch { pagerState.animateScrollToPage(it) }
+                                }
                             },
                             enabled = nextPage != null,
                             modifier =
@@ -1377,7 +1398,8 @@ internal fun RecipeImageViewer(
                             Icon(
                                 Icons.Filled.ChevronRight,
                                 contentDescription = "Next image",
-                                tint = Color.White.copy(alpha = if (nextPage == null) 0.35f else 1f),
+                                tint =
+                                    Color.White.copy(alpha = if (nextPage == null) 0.35f else 1f),
                             )
                         }
                     }
@@ -1434,8 +1456,7 @@ private fun ZoomableRecipeImagePage(
                     detectRecipeImageZoomPan(
                         isZoomed = { scale > MIN_IMAGE_SCALE },
                         onGesture = { pan, zoom ->
-                            val newScale =
-                                (scale * zoom).coerceIn(MIN_IMAGE_SCALE, MAX_IMAGE_SCALE)
+                            val newScale = (scale * zoom).coerceIn(MIN_IMAGE_SCALE, MAX_IMAGE_SCALE)
                             val maxOffsetX = (size.width * (newScale - 1f)) / 2f
                             val maxOffsetY = (size.height * (newScale - 1f)) / 2f
                             offset =
@@ -1469,14 +1490,12 @@ private fun ZoomableRecipeImagePage(
             contentDescription = null,
             contentScale = ContentScale.Fit,
             modifier =
-                Modifier.fillMaxSize()
-                    .padding(16.dp)
-                    .graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
-                        translationX = offset.x
-                        translationY = offset.y
-                    },
+                Modifier.fillMaxSize().padding(16.dp).graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    translationX = offset.x
+                    translationY = offset.y
+                },
         )
     }
 }

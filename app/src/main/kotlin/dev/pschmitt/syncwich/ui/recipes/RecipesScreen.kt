@@ -9,17 +9,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.FilterList
@@ -28,18 +28,19 @@ import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.Card
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -56,8 +57,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -66,11 +67,11 @@ import dev.pschmitt.syncwich.data.api.recipeImageUrl
 import dev.pschmitt.syncwich.data.db.entity.CategoryEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.data.db.entity.TagEntity
+import dev.pschmitt.syncwich.ui.common.NavigationTitle
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
 import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
 import dev.pschmitt.syncwich.ui.common.SearchField
 import dev.pschmitt.syncwich.ui.common.highlightedSearchText
-import dev.pschmitt.syncwich.ui.common.NavigationTitle
 import dev.pschmitt.syncwich.ui.navigation.TopLevelDestination
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -145,24 +146,19 @@ fun RecipesScreen(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                SearchField(
-                    value = uiState.searchQuery,
-                    onValueChange = viewModel::onSearchQueryChange,
-                    placeholder = "Search recipes",
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                RecipeSearchControls(
+                    searchQuery = uiState.searchQuery,
+                    onSearchQueryChange = viewModel::onSearchQueryChange,
+                    filtersAvailable =
+                        uiState.categories.isNotEmpty() || uiState.tags.isNotEmpty(),
+                    selectedFilterCount =
+                        listOfNotNull(
+                                uiState.selectedCategoryId,
+                                uiState.selectedTagId,
+                            )
+                            .size,
+                    onFilterClick = { filterSheetVisible = true },
                 )
-
-                if (uiState.categories.isNotEmpty() || uiState.tags.isNotEmpty()) {
-                    RecipeFilterButton(
-                        selectedFilterCount =
-                            listOfNotNull(
-                                    uiState.selectedCategoryId,
-                                    uiState.selectedTagId,
-                                )
-                                .size,
-                        onClick = { filterSheetVisible = true },
-                    )
-                }
 
                 RefreshErrorBanner(
                     errorMessage = uiState.refreshState.errorMessage,
@@ -241,15 +237,18 @@ fun RecipesScreen(
             },
             confirmButton = {
                 TextButton(
-                    enabled = importUrl.trim().startsWith("http://") ||
-                        importUrl.trim().startsWith("https://"),
+                    enabled =
+                        importUrl.trim().startsWith("http://") ||
+                            importUrl.trim().startsWith("https://"),
                     onClick = {
                         val url = importUrl.trim()
                         importDialogVisible = false
                         importUrl = ""
                         onImportUrlClick(url)
                     },
-                ) { Text("Import") }
+                ) {
+                    Text("Import")
+                }
             },
             dismissButton = {
                 TextButton(onClick = { importDialogVisible = false }) { Text("Cancel") }
@@ -259,27 +258,62 @@ fun RecipesScreen(
 }
 
 @Composable
+internal fun RecipeSearchControls(
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    filtersAvailable: Boolean,
+    selectedFilterCount: Int,
+    onFilterClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SearchField(
+            value = searchQuery,
+            onValueChange = onSearchQueryChange,
+            placeholder = "Search recipes",
+            modifier = Modifier.weight(1f),
+        )
+        if (filtersAvailable) {
+            RecipeFilterButton(
+                selectedFilterCount = selectedFilterCount,
+                onClick = onFilterClick,
+            )
+        }
+    }
+}
+
+@Composable
 internal fun RecipeFilterButton(
     selectedFilterCount: Int,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    OutlinedButton(
+    val hasActiveFilter = selectedFilterCount > 0
+    FilledTonalIconButton(
         onClick = onClick,
-        modifier =
-            Modifier.fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 4.dp)
-                .testTag("recipe-search-filter-button"),
+        modifier = modifier.testTag("recipe-search-filter-button"),
+        colors =
+            IconButtonDefaults.filledTonalIconButtonColors(
+                containerColor =
+                    if (hasActiveFilter) MaterialTheme.colorScheme.primaryContainer
+                    else MaterialTheme.colorScheme.surfaceContainerHighest,
+                contentColor =
+                    if (hasActiveFilter) MaterialTheme.colorScheme.onPrimaryContainer
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
     ) {
-        Icon(Icons.Filled.FilterList, contentDescription = null)
-        Text(
-            text = recipeFilterButtonLabel(selectedFilterCount),
-            modifier = Modifier.padding(start = 8.dp),
+        Icon(
+            Icons.Filled.FilterList,
+            contentDescription = recipeFilterButtonContentDescription(selectedFilterCount),
         )
     }
 }
 
-internal fun recipeFilterButtonLabel(selectedFilterCount: Int): String =
-    if (selectedFilterCount == 0) "Filters" else "Filters ($selectedFilterCount)"
+internal fun recipeFilterButtonContentDescription(selectedFilterCount: Int): String =
+    if (selectedFilterCount == 0) "Filters" else "Filters, $selectedFilterCount active"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -299,7 +333,7 @@ internal fun RecipeFilterSheet(
                 Modifier.fillMaxWidth()
                     .navigationBarsPadding()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
             Text(
                 text = "Filter recipes",

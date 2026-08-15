@@ -67,11 +67,7 @@ constructor(
                 favoriteRecipes,
                 settingsRepository.credentials,
                 syncPresentation,
-            ) {
-                (recipes, recentlyViewed),
-                favorites,
-                credentials,
-                (syncStatus, userRefresh) ->
+            ) { (recipes, recentlyViewed), favorites, credentials, (syncStatus, userRefresh) ->
                 HomeUiState(
                     recentlyViewedRecipes = recentlyViewed,
                     recentlyAddedRecipes =
@@ -127,8 +123,7 @@ fun sortRecipesByDate(
 fun sortFavoriteRecipes(
     recipes: List<RecipeSummaryEntity>,
     limit: Int = HOME_RECIPE_PREVIEW_LIMIT,
-): List<RecipeSummaryEntity> =
-    recipes.sortedBy { it.name.lowercase() }.take(limit.coerceAtLeast(0))
+): List<RecipeSummaryEntity> = recipes.sortedBy { it.name.lowercase() }.take(limit.coerceAtLeast(0))
 
 /** Resolves the ordered local history against cached summaries, omitting missing cache entries. */
 fun recipesForHistory(
