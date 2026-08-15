@@ -1847,13 +1847,13 @@ successfully.
 
 - [x] Document the Syncwich deep-link and `assetlinks.json` requirements for associating the custom Mealie instance with the app
 - [x] Add the required asset-links hosting/configuration to `/home/pschmitt/devel/private/pschmitt/nixos-config.git`
-- [ ] Verify the Android package, signing certificate, URL paths, and hosted asset-links response
+- [x] Verify the Android package, signing certificate, URL paths, and hosted asset-links response
 - [x] Record deployment and verification instructions for future signing-key changes
 
-Status: mostly done, 2026-08-15. The manifest now enables verified links for `nom.brkn.lol`,
-documents the recipe/cookbook paths and release fingerprint, and the Nix Mealie vhost generates
-the matching JSON. Android Lint, Nix formatting, and statix pass; the live endpoint still returns
-404 because the Nix change has not been deployed.
+Status: **done**, 2026-08-15. The manifest enables verified links for `nom.brkn.lol`, documents
+the recipe/cookbook paths and release fingerprint, and the Nix Mealie vhost generates the matching
+JSON. The isolated `rofl-10` deployment now serves the expected asset-links document with HTTP
+200; Android Lint, Nix formatting, and statix pass.
 
 ## SW-115: Shorten the home sync-card status label
 
