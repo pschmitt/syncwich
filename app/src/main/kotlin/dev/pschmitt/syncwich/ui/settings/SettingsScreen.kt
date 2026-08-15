@@ -16,7 +16,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Checklist
-import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Sync
@@ -91,12 +90,8 @@ fun SettingsScreen(
                 )
             }
             item {
-                SettingsGroupCard(title = "Account", icon = Icons.Filled.Dns) {
+                SettingsGroupCard(title = "Account & Sync", icon = Icons.Filled.Sync) {
                     SettingsCategoryRow(SettingsCategory.Server, onCategoryClick)
-                }
-            }
-            item {
-                SettingsGroupCard(title = "Data & sync", icon = Icons.Filled.Sync) {
                     SettingsCategoryRow(SettingsCategory.Sync, onCategoryClick)
                     SettingsCategoryRow(SettingsCategory.Backup, onCategoryClick)
                 }

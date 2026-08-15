@@ -1889,11 +1889,14 @@ and PX5. Mi Pad 4's SSH endpoint was unavailable during deployment.
 
 ## SW-118: Merge account and data-sync settings
 
-- [ ] Merge the Account and Data & Sync settings sections
-- [ ] Rename the merged section to the concise “Account & Sync”
-- [ ] Preserve all existing settings, navigation, and focused coverage
+- [x] Merge the Account and Data & Sync settings sections
+- [x] Rename the merged section to the concise “Account & Sync”
+- [x] Preserve all existing settings, navigation, and focused coverage
 
-Status: not started.
+Status: **done**, 2026-08-15. Server, Sync, and Backup now share one concise “Account & Sync”
+settings card, while Personalization remains separate. Remote checks, Android-test compilation,
+and the focused ZF10 settings suite pass; the updated debug APK is installed on ZF10 and PX5.
+Mi Pad 4's SSH endpoint remains unavailable.
 
 ## SW-119: Remove duplicate recipe-step numbering
 

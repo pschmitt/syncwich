@@ -27,6 +27,20 @@ class SettingsScreenTest {
     }
 
     @Test
+    fun accountAndSyncArePresentedAsOneSettingsSection() {
+        composeTestRule.setContent {
+            SyncwichTheme { SettingsScreen(onBack = {}, onCategoryClick = {}) }
+        }
+
+        composeTestRule.onAllNodesWithText("Account & Sync").assertCountEquals(1)
+        composeTestRule.onAllNodesWithText("Account").assertCountEquals(0)
+        composeTestRule.onAllNodesWithText("Data & sync").assertCountEquals(0)
+        composeTestRule.onAllNodesWithText("Server").assertCountEquals(1)
+        composeTestRule.onAllNodesWithText("Sync").assertCountEquals(1)
+        composeTestRule.onAllNodesWithText("Backup").assertCountEquals(1)
+    }
+
+    @Test
     fun personalizationExposesNavigationBarAsItsOwnSettingsEntry() {
         composeTestRule.setContent {
             SyncwichTheme { SettingsScreen(onBack = {}, onCategoryClick = {}) }
