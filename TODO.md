@@ -1789,18 +1789,23 @@ user-facing behavior, setup, commands, links, assets, or release instructions ch
 
 ## SW-109: Fix CI
 
-- [ ] Inspect the currently failing CI workflow and identify the root cause
-- [ ] Implement the CI fix without weakening required checks
-- [ ] Verify the affected workflow(s) pass
-- [ ] Document any relevant CI maintenance detail in the repository instructions
+- [x] Inspect the currently failing CI workflow and identify the root cause
+- [x] Implement the CI fix without weakening required checks
+- [x] Verify the affected workflow(s) pass
+- [x] Document any relevant CI maintenance detail in the repository instructions
 
-Status: in progress.
+Status: **done**, 2026-08-15. Applied the exact CI-generated ktfmt patch, retained ktfmt as a
+required check with its diagnostic artifact, and removed the forbidden automatic PR-creation path.
+The GitHub Lint, Build, and Release workflows for `26557d8` all pass.
 
 ## SW-110: Compact recipe-search filter control
 
-- [ ] Move the recipe filter control beside the search field
-- [ ] Replace the labeled Filters button with an icon-only button
-- [ ] Preserve filter-sheet behavior, selected-state indication, and accessibility semantics
-- [ ] Add focused UI coverage for the compact search/filter layout
+- [x] Move the recipe filter control beside the search field
+- [x] Replace the labeled Filters button with an icon-only button
+- [x] Preserve filter-sheet behavior, selected-state indication, and accessibility semantics
+- [x] Add focused UI coverage for the compact search/filter layout
 
-Status: in progress.
+Status: **done**, 2026-08-15. Recipe search now places an icon-only filter control beside the
+search field, indicates active filters through its content description and colors, and retains the
+bottom-sheet flow. Remote checks, Android-test compilation, and three focused tests on the wired
+Zenfone 10 pass; the verified debug build was deployed to all attached devices.
