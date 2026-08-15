@@ -1900,11 +1900,11 @@ Mi Pad 4's SSH endpoint remains unavailable.
 
 ## SW-119: Remove duplicate recipe-step numbering
 
-- [ ] Ensure each recipe step displays its index only once
-- [ ] Preserve step ordering, completion controls, and full-screen step numbering
-- [ ] Add focused coverage for normal and full-screen recipe steps
+- [x] Ensure each recipe step displays its index only once
+- [x] Preserve step ordering, completion controls, and full-screen step numbering
+- [x] Add focused coverage for normal and full-screen recipe steps
 
-Status: not started.
+Status: **done**, 2026-08-15. Leading Markdown/HTML ordered-list markers are stripped before the shared instruction row renders its single step number. Remote checks, Android-test compilation, and the focused ZF10 test passed.
 
 ## SW-120: Restore the developer-mode status toast
 

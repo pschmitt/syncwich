@@ -1,8 +1,10 @@
 package dev.pschmitt.syncwich.ui.recipes
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -41,6 +43,22 @@ class RecipeStepControlsTest {
             .performClick()
 
         assertEquals(true, completed)
+    }
+
+    @Test
+    fun leadingNumberInStepContentIsNotRenderedTwice() {
+        composeTestRule.setContent {
+            SyncwichTheme {
+                InstructionRow(
+                    number = 1,
+                    instruction = RecipeInstructionDto(text = "1. Stir the sauce."),
+                    imageReferences = emptyList(),
+                    onImageClick = {},
+                )
+            }
+        }
+
+        composeTestRule.onAllNodesWithText("1.").assertCountEquals(1)
     }
 
     @Test

@@ -22,4 +22,15 @@ class RecipeFormattingTest {
         assertEquals("4", formatServings(4.0))
         assertEquals("2.5", formatServings(2.5))
     }
+
+    @Test
+    fun `step content does not repeat its leading ordered-list number`() {
+        assertEquals("Preheat the oven.", stripLeadingStepNumber("1. Preheat the oven."))
+        assertEquals("Mix the sauce.", stripLeadingStepNumber("2) Mix the sauce."))
+        assertEquals(
+            "Fold the dough.",
+            stripLeadingStepNumber("<ol><li>Fold the dough.</li></ol>"),
+        )
+        assertEquals("1.5 kg of flour.", stripLeadingStepNumber("1.5 kg of flour."))
+    }
 }

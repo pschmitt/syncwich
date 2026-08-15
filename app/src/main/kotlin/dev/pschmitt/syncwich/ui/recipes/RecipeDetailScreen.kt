@@ -1071,7 +1071,7 @@ internal fun InstructionRow(
                     textDecoration = if (completed) TextDecoration.LineThrough else null,
                 )
             }
-            val stepContent = stripRecipeImageSyntax(instruction.text)
+            val stepContent = stripLeadingStepNumber(stripRecipeImageSyntax(instruction.text))
             Markdown(
                 content = if (completed) "<del>$stepContent</del>" else stepContent,
                 imageTransformer = SafeRecipeImageTransformer,
@@ -1115,6 +1115,15 @@ private fun stripMarkdownImageSyntax(markdown: String): String =
 
 private fun stripRecipeImageSyntax(content: String): String =
     HTML_IMAGE_SYNTAX.replace(stripMarkdownImageSyntax(content), "")
+
+private val SINGLE_ORDERED_LIST_ITEM_HTML =
+    Regex("""(?is)^\s*<ol(?:\s[^>]*)?>\s*<li(?:\s[^>]*)?>(.*?)</li>\s*</ol>\s*$""")
+private val LEADING_ORDERED_LIST_MARKER = Regex("""^\s*\d+[.)]\s+""")
+
+internal fun stripLeadingStepNumber(content: String): String {
+    val unwrappedHtml = SINGLE_ORDERED_LIST_ITEM_HTML.matchEntire(content)?.groupValues?.get(1)
+    return LEADING_ORDERED_LIST_MARKER.replace(unwrappedHtml ?: content, "")
+}
 
 private val HTML_IMAGE_SYNTAX = Regex("""<img\b[^>]*>""", RegexOption.IGNORE_CASE)
 
