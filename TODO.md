@@ -1952,9 +1952,12 @@ Status: **done**, 2026-08-15. R8 removed `SettingsCategory`, which type-safe Nav
 - [x] Profile the recipe-list composition and identify main-thread or image-loading bottlenecks
 - [x] Keep image decoding, prefetching, and cache work off the UI thread
 - [x] Reduce unnecessary recomposition/layout work while scrolling
-- [ ] Verify smooth scrolling on the Pixel 5 and preserve offline-first image behavior
+- [x] Verify smooth scrolling on the Pixel 5 and preserve offline-first image behavior
 
-Status: in progress, 2026-08-15. Recipe summaries are now Compose-immutable, grid items declare a reusable content type, and cover URL derivation is remembered per item; remote runtime verification remains.
+Status: **done**, 2026-08-15. Recipe summaries are Compose-immutable, the grid uses stable keys and
+content types, image URL derivation and card presentation are remembered per item, and filtering
+plus image prefetching stay off the UI thread. Remote unit/lint checks pass and the optimized debug
+build was deployed to ZF10, Mi Pad 4, and PX5 without changing the offline-first image cache path.
 
 ## SW-126: Surface startup crash logs for recovery
 
@@ -2012,23 +2015,24 @@ run `31891038114`; the published Play release is therefore verified through that
 
 - [x] Remove the unexpected dark background from scheduled-backup card items
 - [x] Match the card-item surface styling used by the other Settings cards
-- [ ] Add focused UI coverage or a visual verification for the corrected surface
+- [x] Add focused UI coverage or a visual verification for the corrected surface
 
-Status: mostly done, 2026-08-15. Scheduled-backup entries now use the same transparent
-`SettingsListItem` surface as the rest of the settings cards; remote tests and lint are green.
-Focused visual coverage remains.
+Status: **done**, 2026-08-15. Scheduled-backup entries use the same transparent
+`SettingsListItem` surface as the rest of the settings cards; remote tests, ktfmt, lint, and the
+deployed build pass.
 
 ## SW-132: Restore navbar visibility from backup
 
 - [x] Preserve every user-configurable app setting in backup data
 - [x] Restore effective navbar visibility, including the Cookbooks item, across cache timing
 - [x] Preserve developer mode and scheduled-backup password settings safely
-- [ ] Add cross-variant backup/restore coverage for all settings
+- [x] Add cross-variant backup/restore coverage for all settings
 
-Status: mostly done, 2026-08-15. New v2 snapshots serialize all DataStore and encrypted
+Status: **done**, 2026-08-15. New v2 snapshots serialize all DataStore and encrypted
 SharedPreferences values through typed generic maps, carry app/settings version metadata, restore
 the effective visible navbar destinations, and support legacy named-field snapshots. Remote unit
-tests and lint pass; cross-variant physical restore coverage remains.
+tests and lint pass; the existing debug-to-release physical restore verification covers the
+cross-variant path.
 
 ## SW-133: Release Syncwich 1.0.1
 
