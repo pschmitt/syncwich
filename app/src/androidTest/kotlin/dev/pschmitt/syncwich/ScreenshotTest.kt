@@ -38,12 +38,21 @@ class ScreenshotTest {
             .settingsRepository()
     }
 
+    private val syncScheduler by lazy {
+        EntryPointAccessors.fromApplication(
+                ApplicationProvider.getApplicationContext(),
+                SettingsEntryPoint::class.java,
+            )
+            .syncScheduler()
+    }
+
     @Before
     fun seedConnection() {
         val arguments = InstrumentationRegistry.getArguments()
         val baseUrl = arguments.getString("e2e_base_url") ?: error("e2e_base_url is required")
         val token = arguments.getString("e2e_token") ?: error("e2e_token is required")
         settingsRepository.save(baseUrl, token)
+        syncScheduler.syncAll()
     }
 
     @After

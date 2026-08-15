@@ -4,6 +4,7 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
+import dev.pschmitt.syncwich.sync.SyncScheduler
 
 /**
  * Lets test code (e.g. `ScreenshotTest`) reach the app's real Hilt-singleton [SettingsRepository]
@@ -16,4 +17,6 @@ import dev.pschmitt.syncwich.data.settings.SettingsRepository
 @InstallIn(SingletonComponent::class)
 interface SettingsEntryPoint {
     fun settingsRepository(): SettingsRepository
+
+    fun syncScheduler(): SyncScheduler
 }
