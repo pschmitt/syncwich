@@ -52,9 +52,7 @@ class TagFilterSectionTest {
         }
 
         composeTestRule.onNodeWithContentDescription("Search recipes").assertIsDisplayed()
-        composeTestRule
-            .onNodeWithContentDescription("Filters, 1 active")
-            .assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Filters, 1 active").assertIsDisplayed()
         composeTestRule.onAllNodesWithText("Filters").assertCountEquals(0)
     }
 
