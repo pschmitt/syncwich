@@ -1,9 +1,19 @@
 package dev.pschmitt.syncwich.ui.recipes
 
 import dev.pschmitt.syncwich.data.api.dto.CreateRecipeDto
+import dev.pschmitt.syncwich.data.api.dto.RecipeCategoryInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeIngredientInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeStepInputDto
+import dev.pschmitt.syncwich.data.api.dto.RecipeTagInputDto
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.jsonPrimitive
+import java.util.Locale
 
 /**
  * In-memory editor state kept intact when a save fails, including while the device is offline -
@@ -18,6 +28,9 @@ data class RecipeEditorDraft(
     val prepTime: String = "",
     val cookTime: String = "",
     val totalTime: String = "",
+    val categories: String = "",
+    val tags: String = "",
+    val tools: String = "",
     val ingredients: List<String> = listOf(""),
     val instructions: List<String> = listOf(""),
     val coverImageUri: String? = null,
@@ -50,6 +63,9 @@ data class RecipeEditorDraft(
             prepTime = prepTime.trim().ifBlank { null },
             cookTime = cookTime.trim().ifBlank { null },
             totalTime = totalTime.trim().ifBlank { null },
+            recipeCategory = editableCategories(categories, base.recipeCategory),
+            tags = editableTags(tags, base.tags),
+            tools = editableTools(tools, base.tools),
             recipeIngredient =
                 trimmedIngredients.map { text ->
                     RecipeIngredientInputDto(display = text, note = text, originalText = text)
@@ -108,6 +124,9 @@ data class RecipeEditorDraft(
                 prepTime = input.prepTime.orEmpty(),
                 cookTime = input.cookTime.orEmpty(),
                 totalTime = input.totalTime.orEmpty(),
+                categories = input.recipeCategory.joinToString(", ") { it.name },
+                tags = input.tags.joinToString(", ") { it.name },
+                tools = input.tools.mapNotNull(::toolDisplayName).joinToString(", "),
                 ingredients =
                     input.recipeIngredient
                         .map { it.display.takeIf(String::isNotBlank) ?: it.note.orEmpty() }
@@ -121,3 +140,52 @@ data class RecipeEditorDraft(
 
 internal fun appendMarkdownImage(content: String, uri: String): String =
     listOf(content.trimEnd(), "![Image]($uri)").filter(String::isNotBlank).joinToString("\n\n")
+
+internal fun parseEditorNames(value: String): List<String> =
+    value
+        .split(',', '\n')
+        .map(String::trim)
+        .filter(String::isNotBlank)
+        .distinctBy { it.lowercase(Locale.ROOT) }
+
+private fun organizerSlug(name: String): String =
+    name
+        .lowercase(Locale.ROOT)
+        .replace(Regex("[^a-z0-9]+"), "-")
+        .trim('-')
+
+internal fun editableCategories(
+    value: String,
+    previous: List<RecipeCategoryInputDto>,
+): List<RecipeCategoryInputDto> =
+    parseEditorNames(value).map { name ->
+        val slug = organizerSlug(name)
+        val old = previous.firstOrNull { it.name.equals(name, true) || it.slug == slug }
+        RecipeCategoryInputDto(id = old?.id, groupId = old?.groupId, name = name, slug = slug)
+    }
+
+internal fun editableTags(
+    value: String,
+    previous: List<RecipeTagInputDto>,
+): List<RecipeTagInputDto> =
+    parseEditorNames(value).map { name ->
+        val slug = organizerSlug(name)
+        val old = previous.firstOrNull { it.name.equals(name, true) || it.slug == slug }
+        RecipeTagInputDto(id = old?.id, groupId = old?.groupId, name = name, slug = slug)
+    }
+
+internal fun toolDisplayName(element: JsonElement): String? =
+    when (element) {
+        is JsonPrimitive -> element.contentOrNull?.takeIf(String::isNotBlank)
+        is JsonObject ->
+            listOf("name", "display", "title")
+                .firstNotNullOfOrNull { key -> element[key]?.jsonPrimitive?.contentOrNull }
+                ?.takeIf(String::isNotBlank)
+        else -> null
+    }
+
+internal fun editableTools(value: String, previous: List<JsonElement>): List<JsonElement> =
+    parseEditorNames(value).map { name ->
+        previous.firstOrNull { toolDisplayName(it).equals(name, true) }
+            ?: buildJsonObject { put("name", name) }
+    }

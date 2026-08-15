@@ -27,9 +27,12 @@ class RecipeMetadataTest {
     fun tagsAndCookbooksAreDisplayedAndClickable() {
         var openedTag: String? = null
         var openedCookbook: String? = null
+        var openedCategory: String? = null
         composeTestRule.setContent {
             MaterialTheme {
                 RecipeMetadataCard(
+                    categories =
+                        listOf(OrganizerDto(id = "category-1", name = "Dinner", slug = "dinner")),
                     tags = listOf(OrganizerDto(id = "tag-1", name = "Quick", slug = "quick")),
                     cookbooks =
                         listOf(
@@ -41,6 +44,7 @@ class RecipeMetadataTest {
                                 position = 0,
                             )
                         ),
+                    onOpenCategory = { openedCategory = it },
                     onOpenTag = { openedTag = it },
                     onOpenCookbook = { openedCookbook = it },
                 )
@@ -50,11 +54,13 @@ class RecipeMetadataTest {
         composeTestRule.onAllNodesWithText("Recipe details").assertCountEquals(0)
         composeTestRule.onAllNodesWithText("Tags").assertCountEquals(0)
         composeTestRule.onAllNodesWithText("Cookbooks").assertCountEquals(0)
+        composeTestRule.onNodeWithText("Dinner").performClick()
         composeTestRule.onNodeWithText("Quick").performClick()
         composeTestRule.onNodeWithText("Weeknights").performClick()
 
         assertEquals("tag-1", openedTag)
         assertEquals("book-1", openedCookbook)
+        assertEquals("category-1", openedCategory)
     }
 
     @Test

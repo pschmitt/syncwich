@@ -1708,33 +1708,39 @@ test compilation pass.
 
 ## SW-102: Display recipe serving information
 
-- [ ] Show the recipe’s “Serves x” value in the recipe metadata/details area
-- [ ] Format whole and fractional serving counts naturally
-- [ ] Hide the row when serving information is unavailable
-- [ ] Add focused layout and formatting coverage
+- [x] Show the recipe’s “Serves x” value in the recipe metadata/details area
+- [x] Format whole and fractional serving counts naturally
+- [x] Hide the row when serving information is unavailable
+- [x] Add focused layout and formatting coverage
 
-Status: in progress.
+Status: **done**, 2026-08-15. Recipe details now include a compact “Serves” metadata row for
+positive serving counts, using natural whole/fractional formatting and omitting unavailable data;
+formatting and detail-layout coverage pass.
 
 ## SW-103: Add category metadata and editing support
 
-- [ ] Give recipe categories their own icon in the recipe-search filters
-- [ ] Display recipe categories in the recipe metadata card
-- [ ] Make recipe tags editable from the recipe editor/metadata flow
-- [ ] Make recipe categories editable from the recipe editor/metadata flow
-- [ ] Preserve navigation from category and tag metadata buttons
-- [ ] Add focused UI and editor coverage
+- [x] Give recipe categories their own icon in the recipe-search filters
+- [x] Display recipe categories in the recipe metadata card
+- [x] Make recipe tags editable from the recipe editor/metadata flow
+- [x] Make recipe categories editable from the recipe editor/metadata flow
+- [x] Preserve navigation from category and tag metadata buttons
+- [x] Add focused UI and editor coverage
 
-Status: in progress.
+Status: **done**, 2026-08-15. Categories now use a distinct search/filter icon, appear as clickable
+metadata chips, and navigate to a category-filtered recipes list. The editor exposes comma-separated
+category/tag fields while retaining matching Mealie IDs; focused metadata and draft tests pass.
 
 ## SW-104: Add required tools to recipes
 
-- [ ] Display a recipe’s required tools in the recipe view
-- [ ] Allow creating tools from the recipe editor
-- [ ] Allow editing and deleting existing tools
-- [ ] Preserve tool data through recipe updates and offline cache refreshes
-- [ ] Add focused display and editor coverage
+- [x] Display a recipe’s required tools in the recipe view
+- [x] Allow creating tools from the recipe editor
+- [x] Allow editing and deleting existing tools
+- [x] Preserve tool data through recipe updates and offline cache refreshes
+- [x] Add focused display and editor coverage
 
-Status: in progress.
+Status: **done**, 2026-08-15. Recipes display named tool entries in a required-tools card, and the
+editor supports comma-separated add/edit/delete operations while preserving matching structured
+tool JSON from Mealie; draft and Android compilation coverage pass.
 
 ## SW-105: Make navbar buttons return to destination home pages
 

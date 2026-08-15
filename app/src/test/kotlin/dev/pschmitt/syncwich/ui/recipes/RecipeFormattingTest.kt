@@ -16,4 +16,10 @@ class RecipeFormattingTest {
         assertEquals("5", formatRating(5.0))
         assertEquals("0", formatRating(0.0))
     }
+
+    @Test
+    fun `serving counts omit trailing zeroes`() {
+        assertEquals("4", formatServings(4.0))
+        assertEquals("2.5", formatServings(2.5))
+    }
 }

@@ -196,6 +196,30 @@ fun RecipeEditorScreen(
                             { requestCameraCapture(RecipeEditorImageTarget.Description) }
                         } else null,
                 )
+                OutlinedTextField(
+                    value = draft.categories,
+                    onValueChange = viewModel::onCategoriesChange,
+                    label = { Text("Categories") },
+                    supportingText = { Text("Separate categories with commas") },
+                    enabled = !isBusy,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = draft.tags,
+                    onValueChange = viewModel::onTagsChange,
+                    label = { Text("Tags") },
+                    supportingText = { Text("Separate tags with commas") },
+                    enabled = !isBusy,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = draft.tools,
+                    onValueChange = viewModel::onToolsChange,
+                    label = { Text("Required tools") },
+                    supportingText = { Text("Separate tools with commas") },
+                    enabled = !isBusy,
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth(),

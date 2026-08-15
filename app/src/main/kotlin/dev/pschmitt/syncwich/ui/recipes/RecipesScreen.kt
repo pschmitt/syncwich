@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
@@ -75,6 +76,7 @@ fun RecipesScreen(
     onImportUrlClick: (String) -> Unit = {},
     onSettingsClick: () -> Unit = {},
     initialTagId: String? = null,
+    initialCategoryId: String? = null,
     viewModel: RecipesViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -83,8 +85,9 @@ fun RecipesScreen(
     var importDialogVisible by rememberSaveable { mutableStateOf(false) }
     var importUrl by rememberSaveable { mutableStateOf("") }
 
-    LaunchedEffect(initialTagId) {
+    LaunchedEffect(initialTagId, initialCategoryId) {
         initialTagId?.let(viewModel::selectTag)
+        initialCategoryId?.let(viewModel::selectCategory)
     }
 
     Scaffold(
@@ -150,6 +153,7 @@ fun RecipesScreen(
                         label = { it.name },
                         selectedId = uiState.selectedCategoryId,
                         onSelected = viewModel::onCategorySelected,
+                        leadingIcon = { CategoryFilterIcon() },
                     )
                 }
                 if (uiState.tags.isNotEmpty()) {
@@ -330,6 +334,15 @@ private fun <T> FilterChipRow(
             )
         }
     }
+}
+
+@Composable
+private fun CategoryFilterIcon() {
+    Icon(
+        imageVector = Icons.Filled.Category,
+        contentDescription = null,
+        modifier = Modifier.size(18.dp).testTag("recipe-search-category-icon"),
+    )
 }
 
 @Composable

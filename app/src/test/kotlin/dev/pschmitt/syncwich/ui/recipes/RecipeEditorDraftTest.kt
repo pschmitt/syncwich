@@ -3,7 +3,10 @@ package dev.pschmitt.syncwich.ui.recipes
 import dev.pschmitt.syncwich.data.api.dto.CreateRecipeDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeIngredientInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeInputDto
+import dev.pschmitt.syncwich.data.api.dto.RecipeCategoryInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeStepInputDto
+import dev.pschmitt.syncwich.data.api.dto.RecipeTagInputDto
+import kotlinx.serialization.json.JsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -79,11 +82,41 @@ class RecipeEditorDraftTest {
     }
 
     @Test
+    fun `categories tags and tools are editable while matching server metadata is preserved`() {
+        val base =
+            RecipeInputDto(
+                recipeCategory =
+                    listOf(RecipeCategoryInputDto(id = "cat-1", name = "Dinner", slug = "dinner")),
+                tags = listOf(RecipeTagInputDto(id = "tag-1", name = "Quick", slug = "quick")),
+                tools = listOf(JsonPrimitive("Pan")),
+            )
+        val request =
+            RecipeEditorDraft(
+                    name = "Soup",
+                    categories = "Dinner, Vegetarian",
+                    tags = "Quick, Weeknight",
+                    tools = "Pan, Blender",
+                    baseInput = base,
+                )
+                .toUpdateRequest()
+
+        assertEquals(listOf("Dinner", "Vegetarian"), request.recipeCategory.map { it.name })
+        assertEquals("cat-1", request.recipeCategory.first().id)
+        assertEquals(listOf("Quick", "Weeknight"), request.tags.map { it.name })
+        assertEquals("tag-1", request.tags.first().id)
+        assertEquals(listOf("Pan", "Blender"), request.tools.mapNotNull(::toolDisplayName))
+    }
+
+    @Test
     fun `an edit draft loads cached ingredients and steps as plain text rows`() {
         val input =
             RecipeInputDto(
                 name = "Saved Soup",
                 description = "Keep warm",
+                recipeCategory =
+                    listOf(RecipeCategoryInputDto(name = "Dinner", slug = "dinner")),
+                tags = listOf(RecipeTagInputDto(name = "Quick", slug = "quick")),
+                tools = listOf(JsonPrimitive("Pot")),
                 recipeIngredient =
                     listOf(
                         RecipeIngredientInputDto(display = "2 cups broth", note = "2 cups broth")
@@ -95,6 +128,9 @@ class RecipeEditorDraftTest {
 
         assertEquals("Saved Soup", draft.name)
         assertEquals("Keep warm", draft.description)
+        assertEquals("Dinner", draft.categories)
+        assertEquals("Quick", draft.tags)
+        assertEquals("Pot", draft.tools)
         assertEquals(listOf("2 cups broth"), draft.ingredients)
         assertEquals(listOf("Simmer for 20 minutes"), draft.instructions)
         assertEquals("saved-soup", draft.existingSlug)

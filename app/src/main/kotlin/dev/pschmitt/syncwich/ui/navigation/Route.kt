@@ -25,6 +25,8 @@ sealed interface Route {
 
     @Serializable data class TagRecipes(val tagId: String) : Route
 
+    @Serializable data class CategoryRecipes(val categoryId: String) : Route
+
     @Serializable data object Favorites : Route
 
     // slug is carried alongside recipeId because Mealie's full-detail endpoint is keyed by slug,
@@ -89,6 +91,7 @@ enum class TopLevelDestination(
         setOf(
             Route.Recipes::class,
             Route.TagRecipes::class,
+            Route.CategoryRecipes::class,
             Route.RecipeDetail::class,
             Route.RecipeEditor::class,
             Route.RecipeTimeline::class,

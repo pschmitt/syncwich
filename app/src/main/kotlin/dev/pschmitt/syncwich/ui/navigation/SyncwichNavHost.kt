@@ -258,6 +258,18 @@ fun SyncwichNavHost(
                     onSettingsClick = { navController.navigate(Route.Settings) },
                 )
             }
+            composable<Route.CategoryRecipes> { backStackEntry ->
+                val route = backStackEntry.toRoute<Route.CategoryRecipes>()
+                RecipesScreen(
+                    initialCategoryId = route.categoryId,
+                    onRecipeClick = { recipe -> openRecipe(recipe.id, recipe.slug) },
+                    onCreateClick = { navController.navigate(Route.RecipeEditor()) },
+                    onImportUrlClick = { url ->
+                        navController.navigate(Route.RecipeEditor(importUrl = url))
+                    },
+                    onSettingsClick = { navController.navigate(Route.Settings) },
+                )
+            }
             composable<Route.Favorites> {
                 FavoritesScreen(
                     onRecipeClick = { recipe -> openRecipe(recipe.id, recipe.slug) },
@@ -343,6 +355,9 @@ fun SyncwichNavHost(
                         navController.navigate(Route.CookbookDetail(cookbookId))
                     },
                     onOpenTag = { tagId -> navController.navigate(Route.TagRecipes(tagId)) },
+                    onOpenCategory = { categoryId ->
+                        navController.navigate(Route.CategoryRecipes(categoryId))
+                    },
                 )
             }
             composable<Route.RecipeEditor> {

@@ -36,9 +36,11 @@ import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.StickyNote2
 import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -141,6 +143,7 @@ fun RecipeDetailScreen(
     onOpenTimeline: (String) -> Unit,
     onOpenCookbook: (String) -> Unit = {},
     onOpenTag: (String) -> Unit = {},
+    onOpenCategory: (String) -> Unit = {},
     modifier: Modifier = Modifier,
     onEditClick: (recipeId: String, slug: String) -> Unit = { _, _ -> },
     onDeleted: () -> Unit = {},
@@ -266,6 +269,7 @@ fun RecipeDetailScreen(
                             onStepCompleted = viewModel::setStepCompleted,
                             onOpenCookbook = onOpenCookbook,
                             onOpenTag = onOpenTag,
+                            onOpenCategory = onOpenCategory,
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
@@ -374,6 +378,7 @@ internal fun RecipeDetailContent(
     onStepCompleted: (Int, Boolean) -> Unit,
     onOpenCookbook: (String) -> Unit,
     onOpenTag: (String) -> Unit,
+    onOpenCategory: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val imageUrl = imageIndex.coverUrl
@@ -400,14 +405,38 @@ internal fun RecipeDetailContent(
             }
         }
 
-        if (recipe.tags.isNotEmpty() || cookbooks.isNotEmpty()) {
+        if (
+            recipe.recipeCategory.isNotEmpty() || recipe.tags.isNotEmpty() || cookbooks.isNotEmpty()
+        ) {
             item {
                 RecipeMetadataCard(
+                    categories = recipe.recipeCategory,
                     tags = recipe.tags,
                     cookbooks = cookbooks,
+                    onOpenCategory = onOpenCategory,
                     onOpenTag = onOpenTag,
                     onOpenCookbook = onOpenCookbook,
                 )
+            }
+        }
+
+        val toolNames = recipe.tools.mapNotNull(::toolDisplayName).distinct()
+        if (toolNames.isNotEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Column {
+                        SectionHeader(icon = Icons.Filled.Build, title = "Required tools")
+                        toolNames.forEach { tool ->
+                            Text(
+                                text = tool,
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                            )
+                        }
+                    }
+                }
             }
         }
 
@@ -416,6 +445,9 @@ internal fun RecipeDetailContent(
                 Column(modifier = Modifier.padding(16.dp)) {
                     val times =
                         listOfNotNull(
+                            recipe.recipeServings
+                                ?.takeIf { it > 0 }
+                                ?.let { "Serves" to formatServings(it) },
                             recipe.prepTime?.let { "Prep" to it },
                             recipe.cookTime?.let { "Cook" to it },
                             recipe.performTime?.let { "Active" to it },
@@ -619,13 +651,35 @@ internal fun RecipeTitleImage(
 
 @Composable
 internal fun RecipeMetadataCard(
+    categories: List<dev.pschmitt.syncwich.data.api.dto.OrganizerDto> = emptyList(),
     tags: List<dev.pschmitt.syncwich.data.api.dto.OrganizerDto>,
     cookbooks: List<CookbookEntity>,
+    onOpenCategory: (String) -> Unit = {},
     onOpenTag: (String) -> Unit,
     onOpenCookbook: (String) -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (categories.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    categories.forEach { category ->
+                        AssistChip(
+                            onClick = { onOpenCategory(category.id) },
+                            label = { Text(category.name) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Filled.Category,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            },
+                        )
+                    }
+                }
+            }
             if (tags.isNotEmpty()) {
                 Row(
                     modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),

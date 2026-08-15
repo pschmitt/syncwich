@@ -167,4 +167,8 @@ constructor(
     fun selectTag(tagId: String) {
         selection.value = selection.value.copy(categoryId = null, tagId = tagId)
     }
+
+    fun selectCategory(categoryId: String) {
+        selection.value = selection.value.copy(categoryId = categoryId, tagId = null)
+    }
 }

@@ -98,6 +98,12 @@ constructor(
 
     fun onTotalTimeChange(value: String) = updateDraft { copy(totalTime = value) }
 
+    fun onCategoriesChange(value: String) = updateDraft { copy(categories = value) }
+
+    fun onTagsChange(value: String) = updateDraft { copy(tags = value) }
+
+    fun onToolsChange(value: String) = updateDraft { copy(tools = value) }
+
     fun onIngredientChange(index: Int, value: String) = updateDraft {
         withIngredientChanged(index, value)
     }

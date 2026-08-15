@@ -1,6 +1,7 @@
 package dev.pschmitt.syncwich.ui.recipes
 
 import kotlin.math.roundToInt
+import java.math.BigDecimal
 
 /** Mealie ratings are 0-5 in whole or half-star steps; drops a trailing ".0" for whole ratings. */
 fun formatRating(rating: Double): String {
@@ -11,3 +12,7 @@ fun formatRating(rating: Double): String {
         roundedToOneDecimal.toString()
     }
 }
+
+/** Displays Mealie's serving count without noisy trailing zeroes. */
+fun formatServings(servings: Double): String =
+    BigDecimal.valueOf(servings).stripTrailingZeros().toPlainString()
