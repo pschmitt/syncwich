@@ -26,8 +26,9 @@ and let the lettuce/cheese/tomato bulge past the crust instead of sitting flush.
   it back to level and drops the individual lettuce/cheese/tomato shapes down to abstract bumps.
 - **Preview** (`syncwich-icon-preview.png`, 1024×1024): the foreground composited over the
   terracotta background, for at-a-glance review — not used by the app itself.
-- **README icon** (`syncwich-icon-round.png`, 1024×1024 RGBA): the same preview with a circular
-  alpha mask, since GitHub strips CSS border-radius styling from README images.
+- **README icon** (`syncwich-icon-round.svg`, 1024×1024 viewBox): a self-contained circular SVG
+  for GitHub, since GitHub strips CSS border-radius styling from README images. The PNG mask is
+  retained as `syncwich-icon-round.png` for raster consumers.
 - **Feature graphic** (`syncwich-feature-graphic.svg` →
   `fastlane/metadata/android/en-US/images/featureGraphic.png`, 1024×500, 24-bit/no alpha per Play
   Store's spec): the same glyph at a smaller scale alongside a "Syncwich" wordmark and a one-line

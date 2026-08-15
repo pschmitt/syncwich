@@ -1973,3 +1973,12 @@ Status: not started.
 - [ ] Add focused UI coverage for the onboarding icon
 
 Status: not started.
+
+## SW-128: Restore debug backups in release builds
+
+- [ ] Reproduce restoring a backup exported by the debug app in the release app
+- [ ] Compare backup file format, encryption, signing, and validation behavior across variants
+- [ ] Make compatible backups restore reliably without weakening password protection
+- [ ] Add cross-variant backup round-trip coverage and verify on a physical device
+
+Status: not started.
