@@ -88,9 +88,7 @@ class RecipeMetadataTest {
             }
         }
 
-        composeTestRule
-            .onAllNodesWithContentDescription("Open rating dialog")
-            .assertCountEquals(0)
+        composeTestRule.onAllNodesWithContentDescription("Open rating dialog").assertCountEquals(0)
         composeTestRule.onAllNodesWithTag("recipe-timing-row").assertCountEquals(0)
     }
 
@@ -120,8 +118,6 @@ class RecipeMetadataTest {
         }
 
         composeTestRule.onNodeWithTag("recipe-timing-row").assertIsDisplayed()
-        composeTestRule
-            .onAllNodesWithContentDescription("Open rating dialog")
-            .assertCountEquals(0)
+        composeTestRule.onAllNodesWithContentDescription("Open rating dialog").assertCountEquals(0)
     }
 }

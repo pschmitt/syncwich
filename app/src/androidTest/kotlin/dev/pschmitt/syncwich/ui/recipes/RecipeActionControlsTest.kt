@@ -127,9 +127,7 @@ class RecipeActionControlsTest {
     fun madeThisPendingStateShowsTheOfflineSyncBanner() {
         composeTestRule.setContent {
             MaterialTheme {
-                RecipePendingSyncBanner(
-                    actions = RecipeActionUiState(madeThisPending = true),
-                )
+                RecipePendingSyncBanner(actions = RecipeActionUiState(madeThisPending = true))
             }
         }
 

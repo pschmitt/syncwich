@@ -471,15 +471,15 @@ internal fun RecipeDetailContent(
 
         val times =
             listOfNotNull(
-                recipe.recipeServings
-                    ?.takeIf { it > 0 }
-                    ?.let { "Serves" to formatServings(it) },
+                recipe.recipeServings?.takeIf { it > 0 }?.let { "Serves" to formatServings(it) },
                 recipe.prepTime?.let { "Prep" to it },
                 recipe.cookTime?.let { "Cook" to it },
                 recipe.performTime?.let { "Active" to it },
                 recipe.totalTime?.let { "Total" to it },
             )
-        if (times.isNotEmpty() || !recipe.description.isNullOrBlank() || actions.hasPendingChanges) {
+        if (
+            times.isNotEmpty() || !recipe.description.isNullOrBlank() || actions.hasPendingChanges
+        ) {
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
