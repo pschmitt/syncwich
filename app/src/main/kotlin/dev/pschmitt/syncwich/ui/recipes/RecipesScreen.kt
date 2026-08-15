@@ -451,9 +451,10 @@ internal fun RecipeCard(
     isFavorite: Boolean = false,
     onClick: () -> Unit,
 ) {
-    val imageUrl = remember(serverUrl, recipe.id, recipe.image) {
-        recipeImageUrl(serverUrl, recipe.id, recipe.image)
-    }
+    val imageUrl =
+        remember(serverUrl, recipe.id, recipe.image) {
+            recipeImageUrl(serverUrl, recipe.id, recipe.image)
+        }
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth().height(RECIPE_CARD_HEIGHT).testTag("recipe-card"),

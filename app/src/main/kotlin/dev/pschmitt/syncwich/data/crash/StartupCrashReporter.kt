@@ -13,8 +13,7 @@ import kotlin.system.exitProcess
 private const val MAX_REPORT_LENGTH = 16_384
 
 /** A sanitized crash captured before the normal Compose UI became available. */
-@Immutable
-data class StartupCrashReport(val capturedAt: Long, val details: String)
+@Immutable data class StartupCrashReport(val capturedAt: Long, val details: String)
 
 /**
  * Persists the last uncaught startup exception synchronously so it survives process death. The
@@ -22,9 +21,7 @@ data class StartupCrashReport(val capturedAt: Long, val details: String)
  * throwable text is redacted before it is written to disk.
  */
 @Singleton
-class StartupCrashReporter
-@Inject
-constructor(@ApplicationContext private val context: Context) {
+class StartupCrashReporter @Inject constructor(@ApplicationContext private val context: Context) {
 
     fun pending(): StartupCrashReport? {
         val preferences = preferences()
@@ -41,8 +38,7 @@ constructor(@ApplicationContext private val context: Context) {
         preferences().edit().clear().apply()
     }
 
-    private fun preferences() =
-        context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+    private fun preferences() = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
 
     companion object {
         private const val PREFERENCES_NAME = "startup_crash_report"
@@ -85,7 +81,9 @@ internal fun formatStartupCrash(throwable: Throwable): String {
 internal fun sanitizeCrashText(text: String): String =
     text
         .replace(URL_PATTERN) { "<redacted-url>" }
-        .replace(SECRET_PATTERN) { match -> "${match.groupValues[1]}${match.groupValues[2]}<redacted>" }
+        .replace(SECRET_PATTERN) { match ->
+            "${match.groupValues[1]}${match.groupValues[2]}<redacted>"
+        }
 
 private val URL_PATTERN = Regex("""https?://[^\s"'<>)]*""")
 private val SECRET_PATTERN =

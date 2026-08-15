@@ -8,9 +8,9 @@ import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.disk.DiskCache
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
-import dev.pschmitt.syncwich.data.crash.StartupCrashReporter
 import dagger.hilt.android.HiltAndroidApp
 import dev.pschmitt.syncwich.data.backup.BackupScheduler
+import dev.pschmitt.syncwich.data.crash.StartupCrashReporter
 import dev.pschmitt.syncwich.sync.SyncNotifier
 import dev.pschmitt.syncwich.sync.SyncScheduler
 import javax.inject.Inject

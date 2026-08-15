@@ -1,8 +1,8 @@
 package dev.pschmitt.syncwich.data.db.entity
 
+import androidx.compose.runtime.Immutable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import androidx.compose.runtime.Immutable
 
 /**
  * One `/api/recipes` list item. Real columns for everything the recipe list/search/sort/filter UI

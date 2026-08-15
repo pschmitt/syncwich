@@ -25,10 +25,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
+import dev.pschmitt.syncwich.data.crash.StartupCrashReporter
 import dev.pschmitt.syncwich.data.settings.DEFAULT_FONT_SCALE
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import dev.pschmitt.syncwich.data.settings.ThemeMode
-import dev.pschmitt.syncwich.data.crash.StartupCrashReporter
 import dev.pschmitt.syncwich.sync.SyncNotifier
 import dev.pschmitt.syncwich.ui.navigation.Route
 import dev.pschmitt.syncwich.ui.navigation.SyncwichNavHost

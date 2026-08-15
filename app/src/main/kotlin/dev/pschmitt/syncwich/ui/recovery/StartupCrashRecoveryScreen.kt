@@ -78,9 +78,9 @@ fun StartupCrashRecoveryScreen(
                         text = report.details,
                         style = MaterialTheme.typography.bodySmall,
                         modifier =
-                            Modifier.fillMaxWidth()
-                                .padding(16.dp)
-                                .semantics { contentDescription = "Crash report" },
+                            Modifier.fillMaxWidth().padding(16.dp).semantics {
+                                contentDescription = "Crash report"
+                            },
                     )
                 }
             }
@@ -107,7 +107,8 @@ fun StartupCrashRecoveryScreen(
 }
 
 private fun copyCrashReport(context: Context, details: String) {
-    context.getSystemService<ClipboardManager>()
+    context
+        .getSystemService<ClipboardManager>()
         ?.setPrimaryClip(ClipData.newPlainText("Syncwich crash report", details))
 }
 
