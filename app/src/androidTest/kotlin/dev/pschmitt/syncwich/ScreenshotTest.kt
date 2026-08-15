@@ -74,7 +74,7 @@ class ScreenshotTest {
                 device.findObject(By.text("Allow")).click()
             }
             check(device.wait(Until.hasObject(By.text("Home")), 30_000))
-            check(device.wait(Until.hasObject(By.text("Synced")), 60_000))
+            check(device.wait(Until.hasObject(By.text("Gochujang Tofu Bowls")), 60_000))
             Screengrab.screenshot("01_home")
 
             device.findObject(By.text("Recipes")).click()
