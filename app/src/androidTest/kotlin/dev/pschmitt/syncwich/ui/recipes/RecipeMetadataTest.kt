@@ -4,6 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
@@ -64,7 +65,7 @@ class RecipeMetadataTest {
     }
 
     @Test
-    fun ratingSharesDescriptionRowWhenRecipeHasNoTimingMetadata() {
+    fun recipeDetailsNoLongerRenderTheRatingWidget() {
         composeTestRule.setContent {
             MaterialTheme {
                 RecipeDetailContent(
@@ -80,7 +81,6 @@ class RecipeMetadataTest {
                     cookbooks = emptyList(),
                     completedStepIndexes = emptySet(),
                     ingredientChecklistEnabled = false,
-                    onRatingSelected = {},
                     onStepCompleted = { _, _ -> },
                     onOpenCookbook = {},
                     onOpenTag = {},
@@ -88,12 +88,14 @@ class RecipeMetadataTest {
             }
         }
 
-        composeTestRule.onNodeWithTag("recipe-description-rating-row").assertIsDisplayed()
-        composeTestRule.onAllNodesWithTag("recipe-timing-rating-row").assertCountEquals(0)
+        composeTestRule
+            .onAllNodesWithContentDescription("Open rating dialog")
+            .assertCountEquals(0)
+        composeTestRule.onAllNodesWithTag("recipe-timing-row").assertCountEquals(0)
     }
 
     @Test
-    fun ratingStaysInTimingRowWhenTimingMetadataExists() {
+    fun recipeTimingMetadataRemainsVisibleWithoutTheRatingWidget() {
         composeTestRule.setContent {
             MaterialTheme {
                 RecipeDetailContent(
@@ -110,7 +112,6 @@ class RecipeMetadataTest {
                     cookbooks = emptyList(),
                     completedStepIndexes = emptySet(),
                     ingredientChecklistEnabled = false,
-                    onRatingSelected = {},
                     onStepCompleted = { _, _ -> },
                     onOpenCookbook = {},
                     onOpenTag = {},
@@ -118,7 +119,9 @@ class RecipeMetadataTest {
             }
         }
 
-        composeTestRule.onNodeWithTag("recipe-timing-rating-row").assertIsDisplayed()
-        composeTestRule.onAllNodesWithTag("recipe-description-rating-row").assertCountEquals(0)
+        composeTestRule.onNodeWithTag("recipe-timing-row").assertIsDisplayed()
+        composeTestRule
+            .onAllNodesWithContentDescription("Open rating dialog")
+            .assertCountEquals(0)
     }
 }

@@ -69,6 +69,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -186,6 +187,8 @@ fun RecipeDetailScreen(
                             RecipeOverflowMenu(
                                 expanded = overflowExpanded,
                                 actions = loadedState.actions,
+                                globalRating = loadedState.recipe.rating,
+                                onRatingSelected = viewModel::setRating,
                                 onDismiss = { overflowExpanded = false },
                                 onFavoriteClick = { viewModel.setFavorite(it) },
                                 onMadeThisClick = viewModel::recordMadeThis,
@@ -262,7 +265,6 @@ fun RecipeDetailScreen(
                             completedStepIndexes = state.completedStepIndexes,
                             cookbooks = state.cookbooks,
                             ingredientChecklistEnabled = state.ingredientChecklistEnabled,
-                            onRatingSelected = viewModel::setRating,
                             onStepCompleted = viewModel::setStepCompleted,
                             onOpenCookbook = onOpenCookbook,
                             onOpenTag = onOpenTag,
@@ -290,6 +292,8 @@ fun RecipeDetailScreen(
 internal fun RecipeOverflowMenu(
     expanded: Boolean,
     actions: RecipeActionUiState,
+    globalRating: Double? = null,
+    onRatingSelected: (Int) -> Unit = {},
     onDismiss: () -> Unit,
     onFavoriteClick: (Boolean) -> Unit,
     onMadeThisClick: () -> Unit,
@@ -298,6 +302,8 @@ internal fun RecipeOverflowMenu(
     onOpenBrowserClick: () -> Unit,
     onDeleteClick: () -> Unit,
 ) {
+    var ratingDialogVisible by rememberSaveable { mutableStateOf(false) }
+
     DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
         DropdownMenuItem(
             text = { Text(if (actions.isFavorite) "Remove favorite" else "Favorite") },
@@ -310,6 +316,19 @@ internal fun RecipeOverflowMenu(
             onClick = {
                 onDismiss()
                 onFavoriteClick(!actions.isFavorite)
+            },
+        )
+        DropdownMenuItem(
+            text = { Text("Rate recipe") },
+            leadingIcon = {
+                Icon(
+                    if (actions.rating != null) Icons.Filled.Star else Icons.Filled.StarBorder,
+                    contentDescription = null,
+                )
+            },
+            onClick = {
+                onDismiss()
+                ratingDialogVisible = true
             },
         )
         DropdownMenuItem(
@@ -359,6 +378,18 @@ internal fun RecipeOverflowMenu(
             },
         )
     }
+
+    if (ratingDialogVisible) {
+        RecipeRatingDialog(
+            globalRating = globalRating,
+            selectedRating = actions.rating,
+            onRatingSelected = {
+                onRatingSelected(it)
+                ratingDialogVisible = false
+            },
+            onDismiss = { ratingDialogVisible = false },
+        )
+    }
 }
 
 @Composable
@@ -369,7 +400,6 @@ internal fun RecipeDetailContent(
     cookbooks: List<CookbookEntity>,
     completedStepIndexes: Set<Int>,
     ingredientChecklistEnabled: Boolean,
-    onRatingSelected: (Int) -> Unit,
     onStepCompleted: (Int, Boolean) -> Unit,
     onOpenCookbook: (String) -> Unit,
     onOpenTag: (String) -> Unit,
@@ -393,6 +423,7 @@ internal fun RecipeDetailContent(
                 RecipeTitleImage(
                     imageUrl = imageUrl,
                     recipeName = recipe.name,
+                    globalRating = recipe.rating,
                     onClick = {
                         viewerPage =
                             viewerImages.indexOfFirst { it.url == imageUrl }.coerceAtLeast(0)
@@ -438,24 +469,24 @@ internal fun RecipeDetailContent(
             }
         }
 
-        item {
-            Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    val times =
-                        listOfNotNull(
-                            recipe.recipeServings
-                                ?.takeIf { it > 0 }
-                                ?.let { "Serves" to formatServings(it) },
-                            recipe.prepTime?.let { "Prep" to it },
-                            recipe.cookTime?.let { "Cook" to it },
-                            recipe.performTime?.let { "Active" to it },
-                            recipe.totalTime?.let { "Total" to it },
-                        )
-                    if (times.isNotEmpty()) {
-                        Box(
-                            modifier = Modifier.fillMaxWidth().testTag("recipe-timing-rating-row")
-                        ) {
-                            Column(modifier = Modifier.padding(end = 52.dp)) {
+        val times =
+            listOfNotNull(
+                recipe.recipeServings
+                    ?.takeIf { it > 0 }
+                    ?.let { "Serves" to formatServings(it) },
+                recipe.prepTime?.let { "Prep" to it },
+                recipe.cookTime?.let { "Cook" to it },
+                recipe.performTime?.let { "Active" to it },
+                recipe.totalTime?.let { "Total" to it },
+            )
+        if (times.isNotEmpty() || !recipe.description.isNullOrBlank() || actions.hasPendingChanges) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        if (times.isNotEmpty()) {
+                            Column(modifier = Modifier.testTag("recipe-timing-row")) {
                                 times.forEach { (label, value) ->
                                     LabeledRow(
                                         icon = Icons.Filled.Schedule,
@@ -464,13 +495,6 @@ internal fun RecipeDetailContent(
                                     )
                                 }
                             }
-                            RecipeActionControls(
-                                actions = actions,
-                                globalRating = recipe.rating,
-                                onRatingSelected = onRatingSelected,
-                                compact = true,
-                                modifier = Modifier.align(Alignment.TopEnd),
-                            )
                         }
                         if (!recipe.description.isNullOrBlank()) {
                             Markdown(
@@ -478,31 +502,7 @@ internal fun RecipeDetailContent(
                                 modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
                             )
                         }
-                    } else if (!recipe.description.isNullOrBlank()) {
-                        Row(
-                            modifier =
-                                Modifier.fillMaxWidth().testTag("recipe-description-rating-row"),
-                            verticalAlignment = Alignment.Top,
-                        ) {
-                            Markdown(
-                                content = recipe.description,
-                                modifier = Modifier.weight(1f).padding(top = 12.dp),
-                            )
-                            RecipeActionControls(
-                                actions = actions,
-                                globalRating = recipe.rating,
-                                onRatingSelected = onRatingSelected,
-                                compact = true,
-                                modifier = Modifier.padding(start = 8.dp),
-                            )
-                        }
-                    } else {
-                        RecipeActionControls(
-                            actions = actions,
-                            globalRating = recipe.rating,
-                            onRatingSelected = onRatingSelected,
-                            compact = true,
-                        )
+                        RecipePendingSyncBanner(actions = actions)
                     }
                 }
             }
@@ -632,6 +632,7 @@ internal fun RecipeDetailContent(
 internal fun RecipeTitleImage(
     imageUrl: String,
     recipeName: String,
+    globalRating: Double? = null,
     onClick: () -> Unit,
 ) {
     Card(
@@ -640,15 +641,50 @@ internal fun RecipeTitleImage(
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .testTag("recipe-title-image-card")
     ) {
-        AsyncImage(
-            model = imageUrl,
-            contentDescription = recipeName,
-            contentScale = ContentScale.Crop,
-            modifier =
-                Modifier.fillMaxWidth().height(220.dp).clickable(onClick = onClick).semantics {
-                    contentDescription = "Open recipe images"
-                },
-        )
+        Box {
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = recipeName,
+                contentScale = ContentScale.Crop,
+                modifier =
+                    Modifier.fillMaxWidth().height(220.dp).clickable(onClick = onClick).semantics {
+                        contentDescription = "Open recipe images"
+                    },
+            )
+            globalRating?.let { rating ->
+                Surface(
+                    modifier =
+                        Modifier.align(Alignment.BottomEnd)
+                            .padding(12.dp)
+                            .testTag("recipe-average-rating-badge")
+                            .semantics {
+                                contentDescription =
+                                    "Average rating ${formatRating(rating)} out of 5"
+                            },
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    tonalElevation = 2.dp,
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Star,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                        Text(
+                            text = formatRating(rating),
+                            style = MaterialTheme.typography.labelLarge,
+                            modifier = Modifier.padding(start = 4.dp),
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -730,75 +766,31 @@ internal fun RecipeMetadataCard(
     }
 }
 
+internal val RecipeActionUiState.hasPendingChanges: Boolean
+    get() = favoritePending || ratingPending || madeThisPending
+
 @Composable
-internal fun RecipeActionControls(
+internal fun RecipePendingSyncBanner(
     actions: RecipeActionUiState,
-    globalRating: Double? = null,
-    onRatingSelected: (Int) -> Unit,
-    compact: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
-    var ratingDialogVisible by rememberSaveable { mutableStateOf(false) }
-
-    Column(
-        modifier =
-            modifier
-                .then(if (compact) Modifier else Modifier.fillMaxWidth())
-                .padding(horizontal = if (compact) 4.dp else 16.dp, vertical = 8.dp)
-    ) {
+    if (actions.hasPendingChanges) {
         Row(
-            modifier =
-                (if (compact) Modifier else Modifier.fillMaxWidth())
-                    .clickable { ratingDialogVisible = true }
-                    .semantics { contentDescription = "Open rating dialog" }
-                    .padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
+            modifier = modifier.fillMaxWidth().padding(top = 12.dp),
         ) {
             Icon(
-                imageVector =
-                    if (globalRating == null) Icons.Filled.StarBorder else Icons.Filled.Star,
-                contentDescription = if (globalRating == null) "No ratings yet" else null,
-                tint = MaterialTheme.colorScheme.primary,
+                imageVector = Icons.Filled.CloudOff,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(16.dp),
             )
-            globalRating?.let {
-                Text(
-                    text = "${formatRating(it)} / 5",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(start = 8.dp),
-                )
-            }
-        }
-
-        if (ratingDialogVisible) {
-            RecipeRatingDialog(
-                globalRating = globalRating,
-                selectedRating = actions.rating,
-                onRatingSelected = {
-                    onRatingSelected(it)
-                    ratingDialogVisible = false
-                },
-                onDismiss = { ratingDialogVisible = false },
+            Text(
+                text = "Saved offline; sync pending",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 6.dp),
             )
-        }
-
-        if (actions.favoritePending || actions.ratingPending || actions.madeThisPending) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.CloudOff,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(16.dp),
-                )
-                Text(
-                    text = "Saved offline; sync pending",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 6.dp),
-                )
-            }
         }
     }
 }

@@ -35,4 +35,23 @@ class RecipeTitleImageTest {
 
         assertEquals(1, clicked)
     }
+
+    @Test
+    fun titleImageShowsTheRoundedAverageRatingBadge() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                RecipeTitleImage(
+                    imageUrl = "https://example.invalid/recipe.jpg",
+                    recipeName = "Example recipe",
+                    globalRating = 4.6666667,
+                    onClick = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithTag("recipe-average-rating-badge").assertIsDisplayed()
+        composeTestRule
+            .onNodeWithContentDescription("Average rating 4.7 out of 5")
+            .assertIsDisplayed()
+    }
 }

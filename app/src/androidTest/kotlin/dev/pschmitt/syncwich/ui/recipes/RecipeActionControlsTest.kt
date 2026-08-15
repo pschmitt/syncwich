@@ -29,6 +29,8 @@ class RecipeActionControlsTest {
                 RecipeOverflowMenu(
                     expanded = true,
                     actions = RecipeActionUiState(),
+                    globalRating = 4.6666667,
+                    onRatingSelected = { rating = it },
                     onDismiss = {},
                     onFavoriteClick = { favorite = it },
                     onMadeThisClick = {},
@@ -37,21 +39,16 @@ class RecipeActionControlsTest {
                     onOpenBrowserClick = {},
                     onDeleteClick = {},
                 )
-                RecipeActionControls(
-                    actions = RecipeActionUiState(),
-                    globalRating = 4.6666667,
-                    onRatingSelected = { rating = it },
-                )
             }
         }
 
         composeTestRule.onNodeWithText("Favorite").performClick()
-        composeTestRule.onNodeWithContentDescription("Open rating dialog").performClick()
+        composeTestRule.onNodeWithText("Rate recipe").performClick()
+        composeTestRule.onNodeWithText("Overall rating: 4.7 / 5").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Rate 4 out of 5 stars").performClick()
 
         assertEquals(true, favorite)
         assertEquals(4, rating)
-        composeTestRule.onNodeWithText("4.7 / 5").assertIsDisplayed()
     }
 
     @Test
@@ -130,9 +127,8 @@ class RecipeActionControlsTest {
     fun madeThisPendingStateShowsTheOfflineSyncBanner() {
         composeTestRule.setContent {
             MaterialTheme {
-                RecipeActionControls(
+                RecipePendingSyncBanner(
                     actions = RecipeActionUiState(madeThisPending = true),
-                    onRatingSelected = {},
                 )
             }
         }
@@ -141,38 +137,52 @@ class RecipeActionControlsTest {
     }
 
     @Test
-    fun ratingControlUsesTheGlobalDisplayAndOpensOneRatingDialog() {
+    fun ratingMenuItemUsesTheGlobalDisplayAndOpensOneRatingDialog() {
         composeTestRule.setContent {
             MaterialTheme {
-                RecipeActionControls(
+                RecipeOverflowMenu(
+                    expanded = true,
                     actions = RecipeActionUiState(),
                     globalRating = 4.6666667,
                     onRatingSelected = {},
+                    onDismiss = {},
+                    onFavoriteClick = {},
+                    onMadeThisClick = {},
+                    onOpenTimelineClick = {},
+                    onShareClick = {},
+                    onOpenBrowserClick = {},
+                    onDeleteClick = {},
                 )
             }
         }
 
         composeTestRule.onAllNodesWithText("Your rating").assertCountEquals(0)
-        composeTestRule.onNodeWithText("4.7 / 5").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Open rating dialog").performClick()
+        composeTestRule.onNodeWithText("Rate recipe").performClick()
+        composeTestRule.onNodeWithText("Overall rating: 4.7 / 5").assertIsDisplayed()
         composeTestRule.onNodeWithText("Your rating").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Rate 1 out of 5 stars").assertIsDisplayed()
     }
 
     @Test
-    fun unratedRecipeUsesAnEmptyStarWithoutTheRateLabel() {
+    fun unratedRecipeKeepsRatingInTheOverflowMenuWithoutAnAverageBadge() {
         composeTestRule.setContent {
             MaterialTheme {
-                RecipeActionControls(
+                RecipeOverflowMenu(
+                    expanded = true,
                     actions = RecipeActionUiState(),
-                    onRatingSelected = {},
+                    onDismiss = {},
+                    onFavoriteClick = {},
+                    onMadeThisClick = {},
+                    onOpenTimelineClick = {},
+                    onShareClick = {},
+                    onOpenBrowserClick = {},
+                    onDeleteClick = {},
                 )
             }
         }
 
-        composeTestRule.onNodeWithContentDescription("No ratings yet").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Rate recipe").assertIsDisplayed()
         composeTestRule.onAllNodesWithText("No ratings yet").assertCountEquals(0)
-        composeTestRule.onAllNodesWithText("Rate").assertCountEquals(0)
     }
 
     @Test

@@ -1862,3 +1862,56 @@ the matching JSON. Android Lint, Nix formatting, and statix pass; the live endpo
 
 Status: **done**, 2026-08-15. The successful-sync headline is now the compact “Synced” label;
 sync-state details and focused unit coverage remain unchanged.
+
+## SW-116: Move recipe rating into the overflow menu
+
+- [x] Remove the rating widget from its current location in the recipe view
+- [x] Add recipe rating access to the recipe overflow menu
+- [x] Show the current average rating as a badge at the bottom-right of the title image
+- [x] Preserve rating display, editing, accessibility, and focused coverage
+
+Status: **done**, 2026-08-15. Recipe rating is now opened from the overflow menu, the inline
+rating widget is removed from the details card, and rounded average ratings appear as a badge on
+the title image. Remote checks, Android-test compilation, and 13 focused ZF10 tests pass. The
+debug APK installed successfully on ZF10; the all-device deployment stopped when Mi Pad 4's SSH
+endpoint was unavailable.
+
+## SW-117: Move navbar settings into Personalization
+
+- [ ] Add a dedicated navbar settings view
+- [ ] Place the navbar settings entry under the Personalization section
+- [ ] Preserve existing navbar customization behavior and focused coverage
+
+Status: not started.
+
+## SW-118: Merge account and data-sync settings
+
+- [ ] Merge the Account and Data & Sync settings sections
+- [ ] Rename the merged section to the concise “Account & Sync”
+- [ ] Preserve all existing settings, navigation, and focused coverage
+
+Status: not started.
+
+## SW-119: Remove duplicate recipe-step numbering
+
+- [ ] Ensure each recipe step displays its index only once
+- [ ] Preserve step ordering, completion controls, and full-screen step numbering
+- [ ] Add focused coverage for normal and full-screen recipe steps
+
+Status: not started.
+
+## SW-120: Restore the developer-mode status toast
+
+- [ ] Show a “You are already a developer” toast when the easter egg is triggered after activation
+- [ ] Preserve the internally persisted developer-mode state without displaying it elsewhere
+- [ ] Add focused coverage for first activation and repeated activation
+
+Status: not started.
+
+## SW-121: Match the About icon to the app icon
+
+- [ ] Add an orange circular background around the About-page app icon
+- [ ] Match the splash/app-icon background color and visual treatment
+- [ ] Add focused UI coverage for the updated icon presentation
+
+Status: not started.
