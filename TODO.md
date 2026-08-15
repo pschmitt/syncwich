@@ -1809,3 +1809,15 @@ Status: **done**, 2026-08-15. Recipe search now places an icon-only filter contr
 search field, indicates active filters through its content description and colors, and retains the
 bottom-sheet flow. Remote checks, Android-test compilation, and three focused tests on the wired
 Zenfone 10 pass; the verified debug build was deployed to all attached devices.
+
+## SW-111: Standardize recipe cards and show favorite badges
+
+- [x] Make recipe cards on the recipes list use a consistent height
+- [x] Add a heart badge in the image’s top-right corner for favorited recipes
+- [x] Preserve accessible favorite state and correct behavior for cards with or without images
+- [x] Add focused UI coverage for card sizing and favorite badges
+
+Status: **done**, 2026-08-15. Recipe-list cards now use a consistent media/content height, and
+cached favorite state drives an accessible heart badge in the media corner, including placeholder
+media. Remote checks, Android-test compilation, and the focused card test on the wired Zenfone 10
+pass; the verified debug build was deployed to all attached devices.

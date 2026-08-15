@@ -6,9 +6,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -17,12 +17,14 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
@@ -43,6 +45,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -199,6 +202,7 @@ fun RecipesScreen(
                                 recipe = recipe,
                                 serverUrl = uiState.serverUrl,
                                 searchQuery = uiState.searchQuery,
+                                isFavorite = recipe.id in uiState.favoriteRecipeIds,
                                 onClick = { onRecipeClick(recipe) },
                             )
                         }
@@ -439,19 +443,20 @@ internal fun RecipeCard(
     recipe: RecipeSummaryEntity,
     serverUrl: String,
     searchQuery: String = "",
+    isFavorite: Boolean = false,
     onClick: () -> Unit,
 ) {
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().height(RECIPE_CARD_HEIGHT).testTag("recipe-card"),
         shape = MaterialTheme.shapes.large,
     ) {
-        Column {
+        Column(modifier = Modifier.fillMaxSize()) {
             val imageUrl = recipeImageUrl(serverUrl, recipe.id, recipe.image)
             Box(
                 modifier =
                     Modifier.fillMaxWidth()
-                        .aspectRatio(4f / 3f)
+                        .height(RECIPE_CARD_IMAGE_HEIGHT)
                         .background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 if (imageUrl != null) {
@@ -468,6 +473,27 @@ internal fun RecipeCard(
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.align(Alignment.Center).size(40.dp),
                     )
+                }
+                if (isFavorite) {
+                    Surface(
+                        modifier =
+                            Modifier.align(Alignment.TopEnd)
+                                .padding(8.dp)
+                                .size(32.dp)
+                                .testTag("recipe-card-favorite-badge"),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                        tonalElevation = 3.dp,
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Filled.Favorite,
+                                contentDescription = "Favorite recipe",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                    }
                 }
             }
             Column(modifier = Modifier.padding(12.dp)) {
@@ -525,3 +551,6 @@ internal fun RecipeCard(
         }
     }
 }
+
+internal val RECIPE_CARD_HEIGHT = 244.dp
+internal val RECIPE_CARD_IMAGE_HEIGHT = 132.dp

@@ -78,6 +78,9 @@ constructor(
             }
         }
 
+    /** Returns cached favorite ids so list screens can decorate any matching recipe summary. */
+    fun observeFavoriteRecipeIds(): Flow<List<String>> = recipeActionDao.observeFavoriteIds()
+
     /**
      * Sends the minimal `CreateRecipe` body. No cache is cleared on failure; a later refresh can
      * discover a successful server-side create without making an offline read unavailable.

@@ -85,6 +85,10 @@ class RecipeActionRepositoryTest {
             it[recipeId]
         }
 
+        override fun observeFavoriteIds(): Flow<List<String>> = state.map { actions ->
+            actions.values.filter { it.isFavorite }.map { it.recipeId }.sorted()
+        }
+
         override suspend fun get(recipeId: String): RecipeActionEntity? = state.value[recipeId]
 
         override suspend fun getAll(): List<RecipeActionEntity> = state.value.values.toList()

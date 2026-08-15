@@ -11,6 +11,9 @@ interface RecipeActionDao {
     @Query("SELECT * FROM recipe_actions WHERE recipeId = :recipeId")
     fun observe(recipeId: String): Flow<RecipeActionEntity?>
 
+    @Query("SELECT recipeId FROM recipe_actions WHERE isFavorite = 1 ORDER BY recipeId ASC")
+    fun observeFavoriteIds(): Flow<List<String>>
+
     @Query("SELECT * FROM recipe_actions WHERE recipeId = :recipeId")
     suspend fun get(recipeId: String): RecipeActionEntity?
 

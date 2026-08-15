@@ -32,6 +32,7 @@ import kotlinx.coroutines.launch
 
 data class RecipesUiState(
     val recipes: List<RecipeSummaryEntity> = emptyList(),
+    val favoriteRecipeIds: Set<String> = emptySet(),
     val categories: List<CategoryEntity> = emptyList(),
     val tags: List<TagEntity> = emptyList(),
     val searchQuery: String = "",
@@ -91,6 +92,13 @@ constructor(
             .distinctUntilChanged()
             .flowOn(Dispatchers.Default)
 
+    private val favoriteRecipeIds =
+        recipeRepository.observeFavoriteRecipeIds().map { it.toSet() }.distinctUntilChanged()
+
+    private val recipesAndFavorites =
+        combine(filteredRecipes, favoriteRecipeIds) { recipes, favorites -> recipes to favorites }
+            .distinctUntilChanged()
+
     private val categoriesAndTags =
         combine(
                 categoryRepository.observeCategories(),
@@ -101,15 +109,22 @@ constructor(
 
     val uiState: StateFlow<RecipesUiState> =
         combine(
-                filteredRecipes,
+                recipesAndFavorites,
                 categoriesAndTags,
                 selection,
                 settingsRepository.credentials,
                 refreshState,
-            ) { recipes, categoriesAndTags, (query, categoryId, tagId), credentials, refresh ->
+            ) {
+                (recipes, favoriteIds),
+                categoriesAndTags,
+                (query, categoryId, tagId),
+                credentials,
+                refresh,
+                ->
                 val (categories, tags) = categoriesAndTags
                 RecipesUiState(
                     recipes = recipes,
+                    favoriteRecipeIds = favoriteIds,
                     categories = categories,
                     tags = tags,
                     searchQuery = query,
