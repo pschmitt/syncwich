@@ -1,7 +1,6 @@
 package dev.pschmitt.syncwich.ui.recipes
 
 import androidx.compose.foundation.background
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,15 +11,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
@@ -28,6 +30,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,6 +39,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -59,7 +63,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import dev.pschmitt.syncwich.data.api.recipeImageUrl
+import dev.pschmitt.syncwich.data.db.entity.CategoryEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
+import dev.pschmitt.syncwich.data.db.entity.TagEntity
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
 import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
 import dev.pschmitt.syncwich.ui.common.SearchField
@@ -80,7 +86,7 @@ fun RecipesScreen(
     viewModel: RecipesViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var tagsExpanded by rememberSaveable { mutableStateOf(false) }
+    var filterSheetVisible by rememberSaveable { mutableStateOf(false) }
     var addMenuExpanded by rememberSaveable { mutableStateOf(false) }
     var importDialogVisible by rememberSaveable { mutableStateOf(false) }
     var importUrl by rememberSaveable { mutableStateOf("") }
@@ -146,23 +152,15 @@ fun RecipesScreen(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                 )
 
-                if (uiState.categories.isNotEmpty()) {
-                    FilterChipRow(
-                        entries = uiState.categories,
-                        key = { it.id },
-                        label = { it.name },
-                        selectedId = uiState.selectedCategoryId,
-                        onSelected = viewModel::onCategorySelected,
-                        leadingIcon = { CategoryFilterIcon() },
-                    )
-                }
-                if (uiState.tags.isNotEmpty()) {
-                    TagFilterSection(
-                        tags = uiState.tags,
-                        selectedTagId = uiState.selectedTagId,
-                        expanded = tagsExpanded,
-                        onExpandedChange = { tagsExpanded = it },
-                        onSelected = viewModel::onTagSelected,
+                if (uiState.categories.isNotEmpty() || uiState.tags.isNotEmpty()) {
+                    RecipeFilterButton(
+                        selectedFilterCount =
+                            listOfNotNull(
+                                    uiState.selectedCategoryId,
+                                    uiState.selectedTagId,
+                                )
+                                .size,
+                        onClick = { filterSheetVisible = true },
                     )
                 }
 
@@ -215,6 +213,19 @@ fun RecipesScreen(
         }
     }
 
+    if (filterSheetVisible) {
+        RecipeFilterSheet(
+            categories = uiState.categories,
+            tags = uiState.tags,
+            selectedCategoryId = uiState.selectedCategoryId,
+            selectedTagId = uiState.selectedTagId,
+            onCategorySelected = viewModel::onCategorySelected,
+            onTagSelected = viewModel::onTagSelected,
+            onClearFilters = viewModel::clearFilters,
+            onDismiss = { filterSheetVisible = false },
+        )
+    }
+
     if (importDialogVisible) {
         AlertDialog(
             onDismissRequest = { importDialogVisible = false },
@@ -248,51 +259,98 @@ fun RecipesScreen(
 }
 
 @Composable
-internal fun TagFilterSection(
-    tags: List<dev.pschmitt.syncwich.data.db.entity.TagEntity>,
-    selectedTagId: String?,
-    expanded: Boolean,
-    onExpandedChange: (Boolean) -> Unit,
-    onSelected: (String) -> Unit,
+internal fun RecipeFilterButton(
+    selectedFilterCount: Int,
+    onClick: () -> Unit,
 ) {
-    val selectedTag = tags.firstOrNull { it.id == selectedTagId }
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    OutlinedButton(
+        onClick = onClick,
+        modifier =
+            Modifier.fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 4.dp)
+                .testTag("recipe-search-filter-button"),
     ) {
+        Icon(Icons.Filled.FilterList, contentDescription = null)
         Text(
-            text = if (selectedTag == null) "Tags" else "Tag: ${selectedTag.name}",
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.weight(1f),
-        )
-        TextButton(onClick = { onExpandedChange(!expanded) }) {
-            Text(tagFilterToggleLabel(expanded, tags.size))
-        }
-    }
-    AnimatedVisibility(visible = expanded) {
-        FilterChipRow(
-            entries = tags,
-            key = { it.id },
-            label = { it.name },
-            selectedId = selectedTagId,
-            onSelected = onSelected,
-            leadingIcon = { TagFilterIcon() },
+            text = recipeFilterButtonLabel(selectedFilterCount),
+            modifier = Modifier.padding(start = 8.dp),
         )
     }
-    AnimatedVisibility(visible = !expanded && selectedTag != null) {
-        selectedTag?.let { tag ->
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 2.dp),
-                modifier = Modifier.fillMaxWidth(),
+}
+
+internal fun recipeFilterButtonLabel(selectedFilterCount: Int): String =
+    if (selectedFilterCount == 0) "Filters" else "Filters ($selectedFilterCount)"
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun RecipeFilterSheet(
+    categories: List<CategoryEntity>,
+    tags: List<TagEntity>,
+    selectedCategoryId: String?,
+    selectedTagId: String?,
+    onCategorySelected: (String) -> Unit,
+    onTagSelected: (String) -> Unit,
+    onClearFilters: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier =
+                Modifier.fillMaxWidth()
+                    .navigationBarsPadding()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+        ) {
+            Text(
+                text = "Filter recipes",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.testTag("recipe-filter-sheet-title"),
+            )
+            if (categories.isNotEmpty()) {
+                Text(
+                    text = "Categories",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(top = 24.dp),
+                )
+                FilterChipRow(
+                    entries = categories,
+                    key = { it.id },
+                    label = { it.name },
+                    selectedId = selectedCategoryId,
+                    onSelected = onCategorySelected,
+                    leadingIcon = { CategoryFilterIcon() },
+                    contentPadding = PaddingValues(vertical = 4.dp),
+                )
+            }
+            if (tags.isNotEmpty()) {
+                Text(
+                    text = "Tags",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(top = 16.dp),
+                )
+                FilterChipRow(
+                    entries = tags,
+                    key = { it.id },
+                    label = { it.name },
+                    selectedId = selectedTagId,
+                    onSelected = onTagSelected,
+                    leadingIcon = { TagFilterIcon() },
+                    contentPadding = PaddingValues(vertical = 4.dp),
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                horizontalArrangement = Arrangement.End,
             ) {
-                item {
-                    FilterChip(
-                        selected = true,
-                        onClick = { onSelected(tag.id) },
-                        label = { Text(tag.name) },
-                        leadingIcon = { TagFilterIcon() },
-                    )
+                if (selectedCategoryId != null || selectedTagId != null) {
+                    TextButton(
+                        onClick = onClearFilters,
+                        modifier = Modifier.testTag("recipe-filter-clear-button"),
+                    ) {
+                        Text("Clear filters")
+                    }
                 }
+                TextButton(onClick = onDismiss) { Text("Done") }
             }
         }
     }
@@ -307,8 +365,14 @@ private fun TagFilterIcon() {
     )
 }
 
-internal fun tagFilterToggleLabel(expanded: Boolean, count: Int): String =
-    if (expanded) "Hide tags" else "Show tags ($count)"
+@Composable
+private fun CategoryFilterIcon() {
+    Icon(
+        imageVector = Icons.Filled.Category,
+        contentDescription = null,
+        modifier = Modifier.size(18.dp).testTag("recipe-search-category-icon"),
+    )
+}
 
 @Composable
 private fun <T> FilterChipRow(
@@ -318,10 +382,11 @@ private fun <T> FilterChipRow(
     selectedId: String?,
     onSelected: (String) -> Unit,
     leadingIcon: (@Composable () -> Unit)? = null,
+    contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
 ) {
-    LazyRow(
+    androidx.compose.foundation.lazy.LazyRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+        contentPadding = contentPadding,
         modifier = Modifier.fillMaxWidth(),
     ) {
         items(entries, key = key) { entry ->
@@ -334,15 +399,6 @@ private fun <T> FilterChipRow(
             )
         }
     }
-}
-
-@Composable
-private fun CategoryFilterIcon() {
-    Icon(
-        imageVector = Icons.Filled.Category,
-        contentDescription = null,
-        modifier = Modifier.size(18.dp).testTag("recipe-search-category-icon"),
-    )
 }
 
 @Composable

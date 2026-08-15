@@ -21,6 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -55,6 +56,25 @@ internal fun shouldResetHomeStack(destination: TopLevelDestination): Boolean =
 internal fun shouldNavigateToHome(isAlreadyOnHome: Boolean): Boolean = !isAlreadyOnHome
 
 internal fun shouldNavigateToTopLevel(isAlreadyOnList: Boolean): Boolean = !isAlreadyOnList
+
+internal fun shouldOpenFreshTopLevelRoot(didPopToRoot: Boolean): Boolean = !didPopToRoot
+
+/**
+ * Returns to a bottom-navigation destination's root screen instead of restoring a nested child.
+ * The root may already be in the active stack (in which case popping is enough) or may have been
+ * removed by another top-level navigation action (in which case a fresh root is opened).
+ */
+internal fun navigateToTopLevelRoot(
+    navController: NavHostController,
+    destination: TopLevelDestination,
+) {
+    if (shouldOpenFreshTopLevelRoot(
+            navController.popBackStack(destination.route, inclusive = false)
+        )
+    ) {
+        navController.navigate(destination.route) { launchSingleTop = true }
+    }
+}
 
 private val topLevelNavItems =
     listOf(
@@ -180,13 +200,7 @@ fun SyncwichNavHost(
                                     ) {
                                         return@NavigationBarItem
                                     }
-                                    navController.navigate(item.destination.route) {
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
-                                        }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
+                                    navigateToTopLevelRoot(navController, item.destination)
                                 }
                             },
                             icon = { Icon(item.destination.icon, contentDescription = item.label) },

@@ -6,8 +6,9 @@ import org.junit.Test
 class TagFilterTest {
 
     @Test
-    fun `tag filter toggle explains collapsed and expanded states`() {
-        assertEquals("Show tags (12)", tagFilterToggleLabel(expanded = false, count = 12))
-        assertEquals("Hide tags", tagFilterToggleLabel(expanded = true, count = 12))
+    fun `filter button reports whether a filter is active`() {
+        assertEquals("Filters", recipeFilterButtonLabel(selectedFilterCount = 0))
+        assertEquals("Filters (1)", recipeFilterButtonLabel(selectedFilterCount = 1))
+        assertEquals("Filters (2)", recipeFilterButtonLabel(selectedFilterCount = 2))
     }
 }

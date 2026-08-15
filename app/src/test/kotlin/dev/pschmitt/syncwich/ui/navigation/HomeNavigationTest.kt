@@ -26,6 +26,12 @@ class HomeNavigationTest {
     }
 
     @Test
+    fun `top-level navigation only opens a fresh root when no root was popped`() {
+        assertTrue(shouldOpenFreshTopLevelRoot(didPopToRoot = false))
+        assertFalse(shouldOpenFreshTopLevelRoot(didPopToRoot = true))
+    }
+
+    @Test
     fun `nested destinations keep their parent navigation item active`() {
         assertTrue(
             TopLevelDestination.COOKBOOKS.routeTypes.contains(Route.CookbookDetail::class)

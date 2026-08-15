@@ -1,10 +1,6 @@
 package dev.pschmitt.syncwich.ui.recipes
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -12,7 +8,10 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import dev.pschmitt.syncwich.data.db.entity.CategoryEntity
 import dev.pschmitt.syncwich.data.db.entity.TagEntity
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -23,30 +22,59 @@ class TagFilterSectionTest {
     @get:Rule val composeTestRule = createComposeRule()
 
     @Test
-    fun collapsedTagFilterCanBeExpandedWithoutLosingAllTags() {
+    fun filterButtonInvokesTheBottomSheetAction() {
+        var clicked = false
+
         composeTestRule.setContent {
-            var expanded by remember { mutableStateOf(false) }
             MaterialTheme {
-                TagFilterSection(
+                RecipeFilterButton(selectedFilterCount = 0, onClick = { clicked = true })
+            }
+        }
+
+        composeTestRule.onNodeWithText("Filters").performClick()
+        assertTrue(clicked)
+    }
+
+    @Test
+    fun filterSheetShowsCategoriesAndTagsAndSupportsClearing() {
+        var selectedTagId: String? = null
+        var cleared = false
+        var dismissed = false
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                RecipeFilterSheet(
+                    categories = listOf(CategoryEntity("category-1", "Dinner", "dinner")),
                     tags =
                         listOf(
                             TagEntity("tag-1", "Quick", "quick"),
                             TagEntity("tag-2", "Vegetarian", "vegetarian"),
                         ),
+                    selectedCategoryId = "category-1",
                     selectedTagId = null,
-                    expanded = expanded,
-                    onExpandedChange = { expanded = it },
-                    onSelected = {},
+                    onCategorySelected = {},
+                    onTagSelected = { selectedTagId = it },
+                    onClearFilters = { cleared = true },
+                    onDismiss = { dismissed = true },
                 )
             }
         }
 
-        composeTestRule.onNodeWithText("Show tags (2)").performClick()
-        composeTestRule.onNodeWithText("Quick").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Vegetarian").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Hide tags").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Filter recipes").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Categories").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Tags").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Quick").performClick()
+        composeTestRule.onNodeWithText("Clear filters").performClick()
+        composeTestRule.onNodeWithText("Done").performClick()
+
+        assertEquals("tag-1", selectedTagId)
+        assertTrue(cleared)
+        assertTrue(dismissed)
         composeTestRule
             .onAllNodesWithTag("recipe-search-tag-icon", useUnmergedTree = true)
             .assertCountEquals(2)
+        composeTestRule
+            .onAllNodesWithTag("recipe-search-category-icon", useUnmergedTree = true)
+            .assertCountEquals(1)
     }
 }

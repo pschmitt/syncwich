@@ -164,6 +164,10 @@ constructor(
             )
     }
 
+    fun clearFilters() {
+        selection.value = selection.value.copy(categoryId = null, tagId = null)
+    }
+
     fun selectTag(tagId: String) {
         selection.value = selection.value.copy(categoryId = null, tagId = tagId)
     }

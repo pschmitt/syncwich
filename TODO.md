@@ -1744,10 +1744,42 @@ tool JSON from Mealie; draft and Android compilation coverage pass.
 
 ## SW-105: Make navbar buttons return to destination home pages
 
-- [ ] Make Recipes always navigate to the recipes list
-- [ ] Make Cookbooks always navigate to the cookbook list
-- [ ] Make Shopping, Meal Plan, Favorites, and Settings return to their root pages
-- [ ] Avoid no-op taps when currently inside a nested destination
-- [ ] Add focused navigation coverage for nested routes
+- [x] Make Recipes always navigate to the recipes list
+- [x] Make Cookbooks always navigate to the cookbook list
+- [x] Make Shopping, Meal Plan, Favorites, and Settings return to their root pages
+- [x] Avoid no-op taps when currently inside a nested destination
+- [x] Add focused navigation coverage for nested routes
+
+Status: **done**, 2026-08-15. Bottom-navigation taps now pop to the selected destination's root
+route when it is present, or open a fresh root route when it is not, while preserving Home's
+intentional no-op behavior when already on Home. Navigation unit coverage passes; remote
+`just check` and Android-test APK compilation are green.
+
+## SW-107: Update the README
+
+- [ ] Review the README against the current app behavior and project structure
+- [ ] Update stale setup, feature, and usage information
+- [ ] Verify links, commands, and screenshots/assets referenced by the README
 
 Status: not started.
+
+## SW-108: Keep the README current by repository policy
+
+- [ ] Update AGENTS.md to require keeping the README aligned with implemented behavior
+- [ ] Define when README updates should be made alongside code changes
+- [ ] Preserve the existing documentation verification expectations
+
+Status: not started.
+
+## SW-106: Move recipe group and tag filters into a bottom sheet
+
+- [x] Remove the always-visible group-selection and tag-selection rows from the recipe list/search view
+- [x] Add a clearly labeled filter button for opening the filter controls
+- [x] Present group and tag selection in a Material bottom sheet dialog
+- [x] Preserve current filter selection, clearing, and search behavior
+- [x] Add focused UI coverage for opening, applying, and dismissing the filter sheet
+
+Status: **done**, 2026-08-15. Recipe search now keeps category and tag controls behind a single
+Material bottom-sheet Filters button, with immediate selection, clear, and done actions. Remote
+`just check` plus Android-test compilation passed, and both focused filter tests passed on the
+wired Zenfone 10. The verified debug build was deployed to the Zenfone 10, Mi Pad 4, and Pixel 5.
