@@ -1714,3 +1714,14 @@ test compilation pass.
 - [ ] Add focused layout and formatting coverage
 
 Status: not started.
+
+## SW-103: Add category metadata and editing support
+
+- [ ] Give recipe categories their own icon in the recipe-search filters
+- [ ] Display recipe categories in the recipe metadata card
+- [ ] Make recipe tags editable from the recipe editor/metadata flow
+- [ ] Make recipe categories editable from the recipe editor/metadata flow
+- [ ] Preserve navigation from category and tag metadata buttons
+- [ ] Add focused UI and editor coverage
+
+Status: not started.
