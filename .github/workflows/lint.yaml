@@ -1,11 +1,11 @@
 name: Lint
 
 # Dispatchable on demand (e.g. to preemptively check formatting before pushing) in addition to
-# its normal push/PR gating. The ktfmt and Android Lint checks run as independent parallel jobs
-# so a failure in one doesn't hide or block the other. When ktfmtCheck fails - on any trigger -
-# the `ktfmt` job uploads a `ktfmt-diff-patch` artifact containing exactly what
-# `./gradlew ktfmtFormat` would change. The formatting fix is applied by a maintainer or coding
-# agent on the intended branch; this workflow does not create pull requests automatically.
+# its normal push/PR gating. Delegates to pschmitt/android-app-ci's reusable lint workflow (ktfmt
+# + Android Lint) - see that repo's README for what it does. enable-auto-fix is off: a formatting
+# fix here is applied by a maintainer or coding agent on the intended branch, this workflow does
+# not create pull requests automatically. Syncwich has no app/lint-baseline.xml, so that check is
+# skipped too.
 on:
   push:
     branches:
@@ -22,57 +22,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  ktfmt:
-    name: ktfmt
-    runs-on: ubuntu-24.04
+  lint:
+    uses: pschmitt/android-app-ci/.github/workflows/lint.yaml@main
+    with:
+      lint-baseline-path: ''
+      enable-auto-fix: false
+    secrets: inherit
     permissions:
       contents: read
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref }}
-      - name: Set up JDK 21
-        uses: actions/setup-java@v5
-        with:
-          java-version: '21.0.11'
-          distribution: temurin
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
-      - name: Check with ktfmt
-        id: ktfmt_check
-        run: ./gradlew ktfmtCheck
-      - name: Produce ktfmt diff patch
-        if: ${{ failure() && steps.ktfmt_check.outcome == 'failure' }}
-        run: |
-          ./gradlew ktfmtFormat
-          git diff > /tmp/ktfmt.patch
-      - name: Upload ktfmt diff patch
-        if: ${{ failure() && steps.ktfmt_check.outcome == 'failure' }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: ktfmt-diff-patch
-          path: /tmp/ktfmt.patch
-          if-no-files-found: error
-  android-lint:
-    name: Android Lint
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-      - name: Set up JDK 21
-        uses: actions/setup-java@v5
-        with:
-          java-version: '21.0.11'
-          distribution: temurin
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
-      - name: Run Android Lint
-        run: ./gradlew lintDebug
-      - name: Upload Android Lint report
-        if: ${{ failure() }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: android-lint-report
-          path: app/build/reports/lint-results-debug.html
-          if-no-files-found: warn
