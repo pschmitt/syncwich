@@ -27,9 +27,17 @@ mipad_adb_port := env_var_or_default("MIPAD_ADB_PORT", "5555")
 
 px5_host := env_var_or_default("PX5_HOST", "px5.lan")
 
-# List all available recipes
+# List all available recipes. Must stay the first recipe in this file (not just the first line
+# overall) - `just` only considers recipes written directly here, not ones pulled in via the
+# import below, when deciding what a bare `just` invocation runs.
 default:
     @just --list
+
+# Recipes shared across the app fleet (format, nix-fmt, nix-lint, screenshots-upload) - see
+# pschmitt/android-app-ci's just/common.just for the source of truth. Vendored (not a submodule -
+# see that repo's README) as .just/common.just; `just update-common` (defined at the bottom of
+# this file) refreshes it.
+import '.just/common.just'
 
 # --- Remote build (rofl-13 / rofl-14) -------------------------------------
 
@@ -273,54 +281,8 @@ deploy-all variant="debug":
 
 play_package := "dev.pschmitt.syncwich"
 
-# Upload the generated screenshots to the Play Console listing. Deliberately separate from
-# capturing them: review the images (build artifact, or the PR screenshots.yaml opens with
-# open_pr) before this ever runs. Replaces each bucket's existing images with the local set rather
-# than appending to it - the locally generated set is always the authoritative "current" one.
-screenshots-upload:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    image_dir="fastlane/metadata/android"
-    shopt -s nullglob
-    image_types=(phoneScreenshots sevenInchScreenshots tenInchScreenshots)
-    found_images=0
-    for image_type in "${image_types[@]}"
-    do
-      image_glob=("$image_dir"/en-US/images/"$image_type"/*)
-      if [[ ${#image_glob[@]} -gt 0 ]]
-      then
-        found_images=1
-      fi
-    done
-    if [[ "$found_images" -eq 0 ]]
-    then
-      printf 'No generated screenshots found under %s\n' "$image_dir" >&2
-      exit 1
-    fi
-    if ! command -v gpc >/dev/null
-    then
-      printf 'gpc (playconsole-cli) is required for Play Console uploads\n' >&2
-      exit 1
-    fi
-    if ! gpc apps list --output json | rg -q '"package_name":"{{play_package}}"'
-    then
-      printf 'Play Console package %s was not found via `gpc apps list`\n' "{{play_package}}" >&2
-      exit 1
-    fi
-    for image_type in "${image_types[@]}"
-    do
-      image_glob=("$image_dir"/en-US/images/"$image_type"/*)
-      [[ ${#image_glob[@]} -gt 0 ]] || continue
-      gpc --package {{play_package}} images delete-all --locale en-US --type "$image_type" --confirm
-      for image in "${image_glob[@]}"
-      do
-        printf 'Uploading %s\n' "$image"
-        gpc --package {{play_package}} images upload \
-          --locale en-US \
-          --type "$image_type" \
-          --file "$image"
-      done
-    done
+# screenshots-upload is now provided by the shared import above (was byte-for-byte identical to
+# nyetbox's, minus the >8-screenshots-per-language cap - now gets that fix here too).
 
 # Flatten and upload the app icon used by the launcher and README (not locale-scoped, so kept
 # separate from the screenshot upload above).
@@ -383,17 +345,11 @@ play-feature-graphic-upload:
       --type featureGraphic \
       --file "$graphic"
 
-# --- Local formatting -------------------------------------------------------
+# --- Shared recipes (pschmitt/android-app-ci) -------------------------------
 
-# Standalone ktfmt CLI over all tracked .kt/.kts files - fast, but advisory only (see flake.nix's
-# comment on why there's no ktfmt pre-commit hook). Confirm with `just lint` before relying on it.
-format:
-    ktfmt --kotlinlang-style $(git ls-files '*.kt' '*.kts')
-
-nix-fmt:
-    nix develop --command nixfmt flake.nix
-
-nix-lint:
-    nix develop --command statix check
+# Refresh the vendored copy of pschmitt/android-app-ci's shared recipes (format, nix-fmt,
+# nix-lint, screenshots-upload - see the `import` near the top of this file).
+update-common:
+    curl -fsSL https://raw.githubusercontent.com/pschmitt/android-app-ci/main/just/common.just -o .just/common.just
 
 # vim: set ft=sh et ts=2 sw=2 :
