@@ -1,10 +1,16 @@
 name: Play Store Release
 
-# Stable semantic-version tags publish a signed bundle to internal testing. The first run requires
-# one-time Play Console setup (app created, service account granted access) and the
-# CI_KEYSTORE_BASE64/CI_KEYSTORE_PASSWORD/CI_KEY_ALIAS/CI_KEY_PASSWORD/PLAY_SERVICE_ACCOUNT_JSON
-# repo secrets - none of that exists yet for this app, so this workflow stays dormant (fails the
-# credential check below) until it's configured.
+# Stable semantic-version tags publish a signed bundle to internal testing. Delegates the actual
+# build/publish to pschmitt/android-app-ci's reusable play-store.yaml, which additionally requires
+# the repository variable PLAY_PUBLISH_ENABLED=true (set that only after Play Console and
+# service-account setup) - a tag push safely fails loudly instead of silently publishing on a
+# fresh checkout, unlike this workflow's previous unconditional-on-any-tag design.
+#
+# Version resolution stays local: Syncwich's build.gradle.kts has no baked-in incrementing default
+# (versionCode/versionName fall back to fixed values unless overridden), so a real value has to be
+# computed and passed on every run rather than leaving it to the shared workflow's own "use the
+# app's default" behavior.
+
 on:
   push:
     tags:
@@ -13,50 +19,44 @@ on:
   workflow_dispatch:
     inputs:
       version_code:
-        description: "Positive, monotonically increasing Google Play version code"
-        required: true
-        default: "1000000"
+        description: "Override versionCode (leave blank on a tag build to derive it from the tag)"
+        required: false
         type: string
       version_name:
-        description: "User-visible release version"
-        required: true
-        default: "1.0.0"
+        description: "Override versionName (leave blank on a tag build to derive it from the tag)"
+        required: false
         type: string
-
-concurrency:
-  group: play-store-${{ github.ref }}
-  cancel-in-progress: true
-
-permissions:
-  contents: read
+      publish:
+        description: "Upload the bundle to the Play internal-testing track"
+        required: true
+        default: false
+        type: boolean
 
 jobs:
-  publish:
-    name: Publish internal-testing bundle
+  version:
+    name: Resolve release version
     runs-on: ubuntu-24.04
+    outputs:
+      code: ${{ steps.resolve.outputs.code }}
+      name: ${{ steps.resolve.outputs.name }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
       - name: Resolve release version
-        id: version
+        id: resolve
         env:
-          EVENT_NAME: ${{ github.event_name }}
           REF_NAME: ${{ github.ref_name }}
           INPUT_VERSION_CODE: ${{ inputs.version_code }}
           INPUT_VERSION_NAME: ${{ inputs.version_name }}
         shell: bash
         run: |
-          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+          if [[ -n "$INPUT_VERSION_CODE" || -n "$INPUT_VERSION_NAME" ]]; then
             version_code="$INPUT_VERSION_CODE"
             version_name="$INPUT_VERSION_NAME"
           elif [[ "$REF_NAME" =~ ^v?([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
             version_name="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}"
+            # Keep version codes deterministic and monotonic for semantic-version tags.
             version_code=$((10#${BASH_REMATCH[1]} * 1000000 + 10#${BASH_REMATCH[2]} * 1000 + 10#${BASH_REMATCH[3]}))
           else
-            echo "Expected a semantic-version tag such as 1.0.0" >&2
+            echo "Expected a semantic-version tag such as 1.0.0, or explicit version_code/version_name inputs" >&2
             exit 1
           fi
           [[ "$version_code" =~ ^[1-9][0-9]*$ ]] || {
@@ -76,68 +76,13 @@ jobs:
             echo "name=$version_name"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Check publishing credentials
-        env:
-          CI_KEYSTORE_BASE64: ${{ secrets.CI_KEYSTORE_BASE64 }}
-          CI_KEYSTORE_PASSWORD: ${{ secrets.CI_KEYSTORE_PASSWORD }}
-          CI_KEY_ALIAS: ${{ secrets.CI_KEY_ALIAS }}
-          CI_KEY_PASSWORD: ${{ secrets.CI_KEY_PASSWORD }}
-          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-        shell: bash
-        run: |
-          for name in CI_KEYSTORE_BASE64 CI_KEYSTORE_PASSWORD CI_KEY_ALIAS CI_KEY_PASSWORD PLAY_SERVICE_ACCOUNT_JSON; do
-            [[ -n "${!name}" ]] || {
-              echo "$name is required for Play publishing" >&2
-              exit 1
-            }
-          done
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '21.0.11'
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v6
-
-      - name: Decode CI signing keystore
-        id: ci_keystore
-        uses: timheuer/base64-to-file@v2
-        with:
-          fileName: 'syncwich-ci.jks'
-          encodedString: ${{ secrets.CI_KEYSTORE_BASE64 }}
-
-      - name: Run unit tests
-        run: ./gradlew testDebugUnitTest
-
-      - name: Build signed Android App Bundle
-        env:
-          CI_KEYSTORE_PATH: ${{ steps.ci_keystore.outputs.filePath }}
-          CI_KEYSTORE_PASSWORD: ${{ secrets.CI_KEYSTORE_PASSWORD }}
-          CI_KEY_ALIAS: ${{ secrets.CI_KEY_ALIAS }}
-          CI_KEY_PASSWORD: ${{ secrets.CI_KEY_PASSWORD }}
-        run: >
-          ./gradlew bundleRelease
-          -PversionCode=${{ steps.version.outputs.code }}
-          -PversionName=${{ steps.version.outputs.name }}
-          --stacktrace --build-cache
-
-      - name: Verify bundle output
-        run: test -s app/build/outputs/bundle/release/app-release.aab
-
-      - name: Upload bundle artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: syncwich-${{ steps.version.outputs.name }}-${{ steps.version.outputs.code }}-aab
-          path: app/build/outputs/bundle/release/app-release.aab
-          if-no-files-found: error
-
-      - name: Publish to Google Play internal testing
-        uses: r0adkll/upload-google-play@v1
-        with:
-          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-          packageName: dev.pschmitt.syncwich
-          releaseFiles: app/build/outputs/bundle/release/app-release.aab
-          tracks: internal
-          status: completed
+  play-store:
+    needs: version
+    uses: pschmitt/android-app-ci/.github/workflows/play-store.yaml@main
+    with:
+      application-id: dev.pschmitt.syncwich
+      artifact-label: syncwich
+      version-code: ${{ needs.version.outputs.code }}
+      version-name: ${{ needs.version.outputs.name }}
+      publish: ${{ github.event_name != 'workflow_dispatch' || inputs.publish }}
+    secrets: inherit
