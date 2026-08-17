@@ -2,6 +2,11 @@
 
 Repository instructions for AI coding agents working on Syncwich.
 
+See `.just/android-app-ci/AGENTS-shared.md` for the fleet-wide task-tracking convention, dev
+environment (`nix develop`/`git-hooks.nix`), CI-is-the-sole-lint-authority rule, and physical test
+device docs (this app has all three: Zenfone 10, Mi Pad 4, Pixel 5) - read it alongside this file,
+not instead of it.
+
 ## Project shape
 
 Syncwich is a Kotlin/Jetpack Compose Android app: a beautiful, Material You, **offline-first**
@@ -12,16 +17,7 @@ Single `:app` Gradle module - this app doesn't need a multi-module split.
 
 ## Task tracking
 
-- `TODO.md` is the running backlog/changelog for this project, one `## SW-N:` entry per feature
-  or fix, numbered sequentially (never reuse or renumber an id). Each entry has a checklist of
-  sub-items (`- [ ]`/`- [x]`) and ends with a `Status:` line (`not started` / `in progress` /
-  `mostly done` / `**done**`, plus a date and how it was verified).
-- Before starting any non-trivial new feature or fix, add (or update) an `SW-N` entry describing
-  it - even if the same conversation immediately goes on to implement it. Update the
-  checklist/status as work actually lands, rather than writing the whole entry retroactively once
-  everything's finished. This keeps `TODO.md` an accurate record of what's done vs. still open,
-  and lets another agent (or a future you) resume the work cold from just this file.
-- Trivial one-off asks (a typo, a single-line tweak) don't need their own entry.
+- This project's `TODO.md` prefix is `SW-N`.
 - Any user message that starts with `todo: ` (case-insensitive) is a direct instruction to add a
   new `SW-N` entry to `TODO.md` for whatever follows the prefix, rather than acting on it
   immediately - file the backlog entry (not started, with a checklist inferred from the ask) and
@@ -40,52 +36,26 @@ Single `:app` Gradle module - this app doesn't need a multi-module split.
 
 ## Dev environment
 
-- `nix develop` provides the full toolchain (JDK 21, Android SDK, `just`, `ktfmt`) and installs
-  the repo's pre-commit hooks (see `flake.nix`'s `git-hooks.nix` integration - trailing
-  whitespace, EOF fixer, merge-conflict/large-file checks, `nixfmt`, `statix`). The generated
-  `.pre-commit-config.yaml` is gitignored - it's regenerated from `flake.nix` on every shell
-  entry, don't hand-edit it.
-- Prefer the `justfile` recipes over raw `./gradlew`/`ssh`/`adb` invocations - run `just --list`
-  for the full set.
+See the shared doc for the `nix develop`/`git-hooks.nix` basics. Prefer the `justfile` recipes
+over raw `./gradlew`/`ssh`/`adb` invocations - run `just --list` for the full set.
 
 ## Builds
 
 - **Never run Gradle builds locally on this machine** - always build on `rofl-13.brkn.lol` or
-  `rofl-14.brkn.lol` instead. The `justfile` automates this (`just sync`, `just gradle`,
-  `just build [variant]`, `just lint`, `just test`, `just check`, `just fetch`,
-  `just build-fetch`), namespaced per git worktree so parallel agents don't clobber each other's
-  remote sync directory mid-build.
+  `rofl-14.brkn.lol` instead (`just sync`, `just gradle`, `just build [variant]`, `just lint`,
+  `just test`, `just check`, `just fetch`, `just build-fetch`).
 - Release builds are signed with the persistent CI keystore, fetched from the rbw entry
   `"Syncwich CI Signing Keystore"` (create it before the first release build - see justfile's
   `build variant=release` comment).
-- **CI is the sole authority on lint/format** - not `just lint`, not local judgment. If CI's
-  `Lint` job fails, `.github/workflows/lint.yaml`'s `ktfmt` job auto-uploads a `ktfmt-diff-patch`
-  artifact whenever `ktfmtCheck` fails, containing exactly what `./gradlew ktfmtFormat` would
-  change. Grab it with `gh run download <run-id> -n ktfmt-diff-patch` and apply it (`git apply`)
-  rather than guessing or reformatting by hand. The workflow deliberately does not create
-  formatting PRs or push an agent-generated branch automatically; apply the patch on the
-  intended branch and commit it directly. Fix every lint/format violation CI reports before
-  calling a change done, even in files the current change didn't touch or author.
-- Never tag a release from a commit whose CI hasn't gone green.
+- See the shared doc for the CI-lint-authority rule and `ktfmt-diff-patch` retrieval procedure.
+  One difference here: `lint.yaml`'s ktfmt job deliberately does not create formatting PRs or
+  push an agent-generated branch automatically (unlike the sibling apps) - apply the patch on the
+  intended branch and commit it directly instead.
 
 ## Physical test devices
 
-- **Zenfone 10** (`arm64-v8a`), connected directly over USB to this machine's adb:
-  `just zenfone-install <apk>`, `just zenfone-uninstall [pkg]`, `just zenfone-logcat [filter]`,
-  `just deploy-zenfone [variant]`.
-- **Mi Pad 4** (`arm64-v8a`, rooted), reachable via SSH at `mi-pad-4.lan` port `8022` (Termux):
-  `just mipad-install <apk>`, `just mipad-uninstall [pkg]`, `just mipad-logcat [filter]`,
-  `just deploy-mipad [variant]`.
-- **Pixel 5** (`arm64-v8a`, codename `redfin`), wireless adb at `px5.lan`, enabled on demand via
-  `zhj adb::connect px5.lan`: `just px5-install <apk>`, `just px5-uninstall [pkg]`,
-  `just px5-logcat [filter]`, `just deploy-px5 [variant]`.
-- **Always deploy to every attached adb device** after landing a verified change: run
-  `just deploy-all [variant]` rather than a single-device recipe, unless reproducing a
-  device-specific bug.
-- Signature mismatch gotcha: if a device already has a build signed with a different key, install
-  fails with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`. Fix is `just <device>-uninstall` then install
-  fresh - this wipes local app data (Room DB cache, stored server URL/token). Confirm with the
-  user before doing this if it's not their own throwaway data.
+See the shared doc - this app has recipes for all three fleet devices (Zenfone 10, Mi Pad 4,
+Pixel 5), default to `just deploy-all [variant]`.
 
 ## Architecture
 
