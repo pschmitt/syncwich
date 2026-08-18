@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Add
@@ -63,6 +64,7 @@ fun CookbooksScreen(
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val recipePreviews by viewModel.recipePreviews.collectAsStateWithLifecycle()
     val refreshState by viewModel.refreshState.collectAsStateWithLifecycle()
+    val cookbookGridState = rememberLazyGridState()
 
     Scaffold(
         modifier = modifier,
@@ -81,6 +83,7 @@ fun CookbooksScreen(
                 onClick = onCreateClick,
                 icon = { Icon(Icons.Filled.Add, contentDescription = null) },
                 text = { Text("New cookbook") },
+                expanded = !cookbookGridState.canScrollBackward,
             )
         },
     ) { innerPadding ->
@@ -124,6 +127,7 @@ fun CookbooksScreen(
                         LazyVerticalGrid(
                             columns =
                                 GridCells.Fixed(cookbookGridColumnCount(maxWidth.value.toInt())),
+                            state = cookbookGridState,
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(COOKBOOK_GRID_PADDING_DP.dp),
                             horizontalArrangement =

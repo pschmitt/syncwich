@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -51,6 +52,7 @@ fun ShoppingListDetailScreen(
     val items by viewModel.items.collectAsStateWithLifecycle()
     val refreshState by viewModel.refreshState.collectAsStateWithLifecycle()
     val addItemState by viewModel.addItemState.collectAsStateWithLifecycle()
+    val listState = rememberLazyListState()
 
     if (addItemState.isOpen) {
         AddShoppingItemDialog(
@@ -82,6 +84,7 @@ fun ShoppingListDetailScreen(
                     onClick = viewModel::startAddItem,
                     icon = { Icon(Icons.Filled.Add, contentDescription = null) },
                     text = { Text("Add item") },
+                    expanded = !listState.canScrollBackward,
                 )
             }
         },
@@ -116,7 +119,7 @@ fun ShoppingListDetailScreen(
                     onRetry = viewModel::refresh,
                 )
             } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
                     item {
                         RefreshErrorBanner(
                             errorMessage = refreshState.errorMessage,

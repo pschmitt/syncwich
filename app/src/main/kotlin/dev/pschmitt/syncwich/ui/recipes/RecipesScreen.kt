@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -95,6 +97,7 @@ fun RecipesScreen(
     var addMenuExpanded by rememberSaveable { mutableStateOf(false) }
     var importDialogVisible by rememberSaveable { mutableStateOf(false) }
     var importUrl by rememberSaveable { mutableStateOf("") }
+    val recipeGridState = rememberLazyGridState()
 
     LaunchedEffect(initialTagId, initialCategoryId) {
         initialTagId?.let(viewModel::selectTag)
@@ -118,14 +121,15 @@ fun RecipesScreen(
                 ExtendedFloatingActionButton(
                     onClick = { addMenuExpanded = true },
                     icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                    text = { Text("Add recipe") },
+                    text = { Text("New recipe") },
+                    expanded = !recipeGridState.canScrollBackward,
                 )
                 DropdownMenu(
                     expanded = addMenuExpanded,
                     onDismissRequest = { addMenuExpanded = false },
                 ) {
                     DropdownMenuItem(
-                        text = { Text("New recipe") },
+                        text = { Text("Create manually") },
                         leadingIcon = { Icon(Icons.Filled.Add, contentDescription = null) },
                         onClick = {
                             addMenuExpanded = false
@@ -197,6 +201,7 @@ fun RecipesScreen(
                         searchQuery = uiState.searchQuery,
                         favoriteRecipeIds = uiState.favoriteRecipeIds,
                         onRecipeClick = onRecipeClick,
+                        state = recipeGridState,
                     )
                 }
             }
@@ -260,12 +265,14 @@ internal fun RecipeGrid(
     favoriteRecipeIds: Set<String> = emptySet(),
     onRecipeClick: (RecipeSummaryEntity) -> Unit,
     modifier: Modifier = Modifier,
+    state: LazyGridState = rememberLazyGridState(),
 ) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 160.dp),
         contentPadding = PaddingValues(16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
+        state = state,
         modifier = modifier.fillMaxSize().testTag("recipes-grid"),
     ) {
         gridItems(
