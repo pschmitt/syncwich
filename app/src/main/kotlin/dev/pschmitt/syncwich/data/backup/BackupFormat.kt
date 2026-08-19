@@ -9,8 +9,8 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.pschmitt.syncwich.BuildConfig
 import dev.pschmitt.syncwich.data.db.AppDatabase
-import dev.pschmitt.syncwich.data.settings.NavigationBarCacheAvailability
 import dev.pschmitt.syncwich.data.settings.MealieAuthMethod
+import dev.pschmitt.syncwich.data.settings.NavigationBarCacheAvailability
 import dev.pschmitt.syncwich.data.settings.SETTINGS_BACKUP_VERSION
 import dev.pschmitt.syncwich.data.settings.SettingsBackupSnapshot
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
@@ -192,7 +192,10 @@ constructor(
             }
             restoreCache(payload)
             settingsRepository.restoreBackupSettings(payload.settings)
-            if (MealieAuthMethod.fromStorage(payload.credentials.authMethod) == MealieAuthMethod.Oidc) {
+            if (
+                MealieAuthMethod.fromStorage(payload.credentials.authMethod) ==
+                    MealieAuthMethod.Oidc
+            ) {
                 settingsRepository.saveOidc(
                     payload.credentials.serverUrl,
                     payload.credentials.apiToken,

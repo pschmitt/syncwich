@@ -6,6 +6,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import dev.pschmitt.syncwich.data.onboarding.OidcAuthClient
 import dev.pschmitt.syncwich.data.repository.CategoryRepository
 import dev.pschmitt.syncwich.data.repository.CookbookRepository
 import dev.pschmitt.syncwich.data.repository.MealPlanRepository
@@ -14,7 +15,6 @@ import dev.pschmitt.syncwich.data.repository.RecipeRepository
 import dev.pschmitt.syncwich.data.repository.RecipeTimelineRepository
 import dev.pschmitt.syncwich.data.repository.ShoppingListRepository
 import dev.pschmitt.syncwich.data.repository.TagRepository
-import dev.pschmitt.syncwich.data.onboarding.OidcAuthClient
 import dev.pschmitt.syncwich.data.settings.MealieAuthMethod
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import java.time.DayOfWeek
@@ -67,7 +67,7 @@ constructor(
         val mealPlanEnd = mealPlanStart.plusWeeks(3).minusDays(1)
 
         val failures =
-                listOf(
+            listOf(
                     syncStep("Refreshing OIDC session…") { refreshOidcSession() },
                     syncStep("Refreshing recipes…") {
                         recipeRepository.refreshRecipes(forceRefresh = false)

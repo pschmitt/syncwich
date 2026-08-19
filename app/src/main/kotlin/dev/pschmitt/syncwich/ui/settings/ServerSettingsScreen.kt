@@ -32,8 +32,8 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.pschmitt.syncwich.data.settings.MealieCredentials
 import dev.pschmitt.syncwich.data.settings.MealieAuthMethod
+import dev.pschmitt.syncwich.data.settings.MealieCredentials
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -147,7 +147,9 @@ private fun ConnectionDetailRow(credentials: MealieCredentials) {
     )
     SettingsListItem(
         headlineContent = {
-            Text(if (credentials.authMethod == MealieAuthMethod.Oidc) "OIDC session" else "API token")
+            Text(
+                if (credentials.authMethod == MealieAuthMethod.Oidc) "OIDC session" else "API token"
+            )
         },
         supportingContent = { Text(maskApiToken(credentials.apiToken)) },
     )

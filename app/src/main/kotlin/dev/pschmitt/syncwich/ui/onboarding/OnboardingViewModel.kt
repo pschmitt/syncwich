@@ -10,11 +10,11 @@ import dev.pschmitt.syncwich.data.backup.BackupManager
 import dev.pschmitt.syncwich.data.backup.BackupPasswordRequiredException
 import dev.pschmitt.syncwich.data.backup.BackupScheduler
 import dev.pschmitt.syncwich.data.backup.BackupWrongPasswordException
+import dev.pschmitt.syncwich.data.onboarding.OidcAuthClient
+import dev.pschmitt.syncwich.data.onboarding.OidcLoginException
 import dev.pschmitt.syncwich.data.onboarding.OnboardingError
 import dev.pschmitt.syncwich.data.onboarding.OnboardingValidationException
 import dev.pschmitt.syncwich.data.onboarding.OnboardingValidator
-import dev.pschmitt.syncwich.data.onboarding.OidcAuthClient
-import dev.pschmitt.syncwich.data.onboarding.OidcLoginException
 import dev.pschmitt.syncwich.data.onboarding.PasswordTokenMinter
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import dev.pschmitt.syncwich.sync.SyncScheduler
@@ -99,7 +99,9 @@ constructor(
         }
     }
 
-    /** Returns the Mealie OIDC entry URL, or reports a local URL error before opening the window. */
+    /**
+     * Returns the Mealie OIDC entry URL, or reports a local URL error before opening the window.
+     */
     fun beginOidc(serverUrl: String): String? =
         oidcAuthClient.authorizationUrl(serverUrl).getOrElse { error ->
             _uiState.value = OnboardingUiState.Error(error.message ?: "Enter a valid server URL")

@@ -6,11 +6,11 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.pschmitt.syncwich.data.api.UsersApi
 import dev.pschmitt.syncwich.data.api.dto.UserDto
+import dev.pschmitt.syncwich.data.onboarding.OidcAuthClient
+import dev.pschmitt.syncwich.data.onboarding.OidcLoginException
 import dev.pschmitt.syncwich.data.onboarding.OnboardingError
 import dev.pschmitt.syncwich.data.onboarding.OnboardingValidationException
 import dev.pschmitt.syncwich.data.onboarding.OnboardingValidator
-import dev.pschmitt.syncwich.data.onboarding.OidcAuthClient
-import dev.pschmitt.syncwich.data.onboarding.OidcLoginException
 import dev.pschmitt.syncwich.data.onboarding.PasswordTokenMinter
 import dev.pschmitt.syncwich.data.repository.AccountRepository
 import dev.pschmitt.syncwich.data.settings.DEFAULT_FONT_SCALE

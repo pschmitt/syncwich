@@ -59,7 +59,11 @@ fun OidcWebView(
                         override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean =
                             handleUrl(view, Uri.parse(url))
 
-                        override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) {
+                        override fun onPageStarted(
+                            view: WebView,
+                            url: String,
+                            favicon: android.graphics.Bitmap?,
+                        ) {
                             handleUrl(view, Uri.parse(url))
                             super.onPageStarted(view, url, favicon)
                         }
@@ -93,7 +97,8 @@ fun OidcWebView(
                             if (!isOidcCallbackUrl(serverUrl, url.toString())) return false
                             if (callbackHandled) return true
                             callbackHandled = true
-                            val cookies = CookieManager.getInstance().getCookie(url.toString()).orEmpty()
+                            val cookies =
+                                CookieManager.getInstance().getCookie(url.toString()).orEmpty()
                             view.stopLoading()
                             callbackHandler(url.toString(), cookies)
                             return true

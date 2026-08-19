@@ -1,8 +1,8 @@
 package dev.pschmitt.syncwich.data.onboarding
 
 import dev.pschmitt.syncwich.data.api.dto.MealieAuthTokenDto
-import dev.pschmitt.syncwich.data.settings.MealieCredentials
 import dev.pschmitt.syncwich.data.settings.MealieAuthMethod
+import dev.pschmitt.syncwich.data.settings.MealieCredentials
 import java.io.IOException
 import java.util.Base64
 import javax.inject.Inject
@@ -30,8 +30,9 @@ constructor(
 ) {
 
     fun authorizationUrl(serverUrl: String): Result<String> {
-        val baseUrl = parseBaseUrl(serverUrl)
-            ?: return Result.failure(OidcLoginException("Enter a valid server URL"))
+        val baseUrl =
+            parseBaseUrl(serverUrl)
+                ?: return Result.failure(OidcLoginException("Enter a valid server URL"))
         return Result.success(appendPath(baseUrl, "api/auth/oauth").toString())
     }
 
@@ -55,8 +56,12 @@ constructor(
                     OidcLoginException("The identity provider rejected the sign-in request.")
                 )
             }
-            if (callback.queryParameter("code") == null || callback.queryParameter("state") == null) {
-                return@withContext Result.failure(OidcLoginException("OIDC callback was incomplete"))
+            if (
+                callback.queryParameter("code") == null || callback.queryParameter("state") == null
+            ) {
+                return@withContext Result.failure(
+                    OidcLoginException("OIDC callback was incomplete")
+                )
             }
 
             val requestUrl =
@@ -96,15 +101,15 @@ constructor(
     fun isExpiringSoon(token: String, nowMillis: Long = System.currentTimeMillis()): Boolean {
         val expiresAt =
             runCatching {
-                    val payload = token.split('.').getOrNull(1) ?: return false
-                    val decoded = Base64.getUrlDecoder().decode(payload.withBase64Padding())
-                    json.parseToJsonElement(decoded.decodeToString())
-                        .jsonObject["exp"]
-                        ?.toString()
-                        ?.toLongOrNull()
-                }
-                .getOrNull()
-                ?: return true
+                val payload = token.split('.').getOrNull(1) ?: return false
+                val decoded = Base64.getUrlDecoder().decode(payload.withBase64Padding())
+                json
+                    .parseToJsonElement(decoded.decodeToString())
+                    .jsonObject["exp"]
+                    ?.toString()
+                    ?.toLongOrNull()
+            }
+                .getOrNull() ?: return true
         return expiresAt * 1_000L - nowMillis <= REFRESH_WINDOW_MILLIS
     }
 
@@ -113,7 +118,9 @@ constructor(
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
                     return Result.failure(
-                        OidcLoginException("Mealie rejected the OIDC session (HTTP ${response.code})")
+                        OidcLoginException(
+                            "Mealie rejected the OIDC session (HTTP ${response.code})"
+                        )
                     )
                 }
                 val body = response.body?.string().orEmpty()
@@ -125,7 +132,9 @@ constructor(
                 }
             }
         } catch (error: IOException) {
-            Result.failure(OidcLoginException("Couldn't reach Mealie to finish OIDC sign-in", error))
+            Result.failure(
+                OidcLoginException("Couldn't reach Mealie to finish OIDC sign-in", error)
+            )
         } catch (error: Exception) {
             Result.failure(OidcLoginException("Mealie returned an invalid OIDC token", error))
         }

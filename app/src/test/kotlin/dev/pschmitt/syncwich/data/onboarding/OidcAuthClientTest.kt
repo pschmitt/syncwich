@@ -87,9 +87,7 @@ class OidcAuthClientTest {
 
     @Test
     fun `refresh uses the saved OIDC JWT`() = runTest {
-        server.enqueue(
-            MockResponse().setBody("{\"access_token\":\"renewed-jwt\"}")
-        )
+        server.enqueue(MockResponse().setBody("{\"access_token\":\"renewed-jwt\"}"))
         val credentials =
             MealieCredentials(
                 serverUrl = server.url("/").toString(),
@@ -104,7 +102,10 @@ class OidcAuthClientTest {
     }
 
     private fun jwtWithExpiry(expirySeconds: Long): String {
-        val payload = Base64.getUrlEncoder().withoutPadding().encodeToString("{\"exp\":$expirySeconds}".toByteArray())
+        val payload =
+            Base64.getUrlEncoder()
+                .withoutPadding()
+                .encodeToString("{\"exp\":$expirySeconds}".toByteArray())
         return "header.$payload.signature"
     }
 }

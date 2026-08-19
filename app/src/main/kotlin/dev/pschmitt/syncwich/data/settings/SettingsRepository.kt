@@ -24,8 +24,7 @@ private val Context.syncwichDataStore by preferencesDataStore(name = "syncwich_p
 /** The user's Mealie connection. Both fields must be non-blank for the app to be usable. */
 enum class MealieAuthMethod(val storageValue: String) {
     ApiToken("api_token"),
-    Oidc("oidc"),
-    ;
+    Oidc("oidc");
 
     companion object {
         fun fromStorage(value: String?): MealieAuthMethod =
@@ -45,8 +44,8 @@ data class MealieCredentials(
 /**
  * The server base URL and Mealie bearer token, backed by [EncryptedSharedPreferences] (Android
  * Keystore-tied, hence `allowBackup=false` in the manifest - a restored backup couldn't decrypt
- * these anyway). [MealieAuthMethod] distinguishes long-lived API tokens from short-lived OIDC
- * JWTs so the latter can be refreshed before background sync. Read reactively by
+ * these anyway). [MealieAuthMethod] distinguishes long-lived API tokens from short-lived OIDC JWTs
+ * so the latter can be refreshed before background sync. Read reactively by
  * [dev.pschmitt.syncwich.data.api.DynamicBaseUrlInterceptor] and
  * [dev.pschmitt.syncwich.data.api.AuthInterceptor] at request time, so changing the connection
  * never requires rebuilding the Retrofit/OkHttp stack.
@@ -426,8 +425,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         MealieCredentials(
             serverUrl = prefs.getString(KEY_SERVER_URL, "") ?: "",
             apiToken = prefs.getString(KEY_API_TOKEN, "") ?: "",
-            authMethod =
-                MealieAuthMethod.fromStorage(prefs.getString(KEY_AUTH_METHOD, null)),
+            authMethod = MealieAuthMethod.fromStorage(prefs.getString(KEY_AUTH_METHOD, null)),
         )
 
     private fun loadScheduledBackupPassword(): String =

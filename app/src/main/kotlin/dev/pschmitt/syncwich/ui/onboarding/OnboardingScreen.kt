@@ -21,8 +21,8 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Login
+import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
@@ -154,11 +154,7 @@ fun OnboardingScreen(
                 TopAppBar(
                     title = { Text("Sign in with OIDC") },
                     navigationIcon = {
-                        TextButton(
-                            onClick = { oidcStartUrl = null },
-                        ) {
-                            Text("Cancel")
-                        }
+                        TextButton(onClick = { oidcStartUrl = null }) { Text("Cancel") }
                     },
                 )
             },
@@ -357,7 +353,8 @@ fun OnboardingScreen(
                     } else {
                         Icon(Icons.Filled.Login, contentDescription = null)
                         Text(
-                            if (oidcMode) "Sign in with OIDC" else stringResource(R.string.onboarding_connect),
+                            if (oidcMode) "Sign in with OIDC"
+                            else stringResource(R.string.onboarding_connect),
                             modifier = Modifier.padding(start = 8.dp),
                         )
                     }
