@@ -13,10 +13,18 @@ party. It has no analytics, advertising, tracking, or crash-reporting service of
 
 The only server Syncwich talks to is the Mealie server URL you configure yourself. Your Mealie
 server's base URL and the API token you provide are stored locally on your device, encrypted at
-rest. Syncwich never asks for or stores your Mealie account password. Recipes, meal plans,
+rest. Syncwich does not retain your Mealie account password; a one-time password login is used
+only to mint a long-lived API token. Recipes, meal plans,
 shopping lists, and cookbooks fetched from your Mealie server are cached locally on your device
 so the app works offline; that data never leaves your device except in requests to your own
 configured server.
+
+When OIDC is selected, Syncwich displays the Mealie OIDC sign-in flow in an in-app sign-in window.
+The identity provider receives the credentials entered there; Syncwich receives only the callback
+code, the temporary Mealie session cookie, and the resulting Mealie session token. The session
+token is stored encrypted, refreshed through Mealie when needed, and the identity-provider
+password and client secret are never stored by Syncwich. Cached data remains available while an
+OIDC session needs reauthentication.
 
 Removing the app or clearing its application data removes all locally stored information
 according to Android's normal behavior.

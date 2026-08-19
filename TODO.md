@@ -2069,3 +2069,20 @@ corrected debug APK was installed successfully on ZF10, Mi Pad 4, and PX5.
 - [x] Add focused UI coverage and verify both applications
 
 Status: **done** (2026-08-15; Syncwich CI runs 31910398107/31910398129/31910398164 and Nyetbox CI runs 31910324321/31910324373/31910324429 passed; debug APKs installed on ZF10, Mi Pad 4, and PX5).
+
+## SW-136: Support OIDC logins
+
+- [x] Confirm the target OIDC provider requirements and Mealie's supported OIDC flow
+- [x] Use Mealie's server-side OIDC configuration and authorization-code flow with PKCE through its
+      server-side OIDC login window
+- [x] Handle the redirect callback, token exchange, encrypted token storage, refresh, sign-out, and
+      account/session restoration
+- [x] Preserve offline-first behavior for cached data and surface authentication-expiry failures
+      without discarding cached data
+- [x] Add unit coverage for callback validation, cookie forwarding, token lifecycle, and refresh
+- [x] Update onboarding, privacy documentation, and README setup guidance
+
+Status: done, 2026-08-19. Verified on the Zenfone 10 against disposable Mealie v3.22.0 and Dex
+OIDC: the in-app provider login, Mealie callback exchange, encrypted OIDC-session persistence,
+credential test, and initial sync all completed successfully. Remote ktfmt, unit-test, and lint
+checks passed.

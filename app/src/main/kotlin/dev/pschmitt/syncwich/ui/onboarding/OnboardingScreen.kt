@@ -22,10 +22,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,6 +35,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -62,6 +66,7 @@ import dev.pschmitt.syncwich.ui.common.CenteredContent
  * First-run connection setup. Users can paste a long-lived Mealie API token or sign in once with a
  * username and password to mint one; only the resulting token is saved (see [OnboardingViewModel]).
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OnboardingScreen(
     onConnected: () -> Unit,
@@ -72,6 +77,8 @@ fun OnboardingScreen(
     var apiToken by rememberSaveable { mutableStateOf("") }
     var username by rememberSaveable { mutableStateOf("") }
     var passwordMode by rememberSaveable { mutableStateOf(false) }
+    var oidcMode by rememberSaveable { mutableStateOf(false) }
+    var oidcStartUrl by rememberSaveable { mutableStateOf<String?>(null) }
     var password by remember { mutableStateOf("") }
     var tokenVisible by rememberSaveable { mutableStateOf(false) }
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
@@ -126,14 +133,49 @@ fun OnboardingScreen(
 
     fun submit() {
         keyboardController?.hide()
-        if (passwordMode) {
+        if (oidcMode) {
+            oidcStartUrl = viewModel.beginOidc(serverUrl)
+        } else if (passwordMode) {
             viewModel.connectWithPassword(serverUrl, username, password)
         } else {
             viewModel.connect(serverUrl, apiToken)
         }
     }
 
-    LaunchedEffect(uiState) { if (uiState is OnboardingUiState.Success) onConnected() }
+    LaunchedEffect(uiState) {
+        if (uiState is OnboardingUiState.Success) onConnected()
+        if (uiState is OnboardingUiState.Error) oidcStartUrl = null
+    }
+
+    if (oidcStartUrl != null) {
+        Scaffold(
+            modifier = modifier,
+            topBar = {
+                TopAppBar(
+                    title = { Text("Sign in with OIDC") },
+                    navigationIcon = {
+                        TextButton(
+                            onClick = { oidcStartUrl = null },
+                        ) {
+                            Text("Cancel")
+                        }
+                    },
+                )
+            },
+        ) { innerPadding ->
+            OidcWebView(
+                serverUrl = serverUrl,
+                startUrl = oidcStartUrl!!,
+                onCallback = { callbackUrl, cookies ->
+                    oidcStartUrl = null
+                    viewModel.connectWithOidc(serverUrl, callbackUrl, cookies)
+                },
+                onError = { viewModel.failOidc(it) },
+                modifier = Modifier.padding(innerPadding),
+            )
+        }
+        return
+    }
 
     Scaffold(modifier = modifier) { innerPadding ->
         // imePadding() (on top of the scroll) keeps the fields and the Connect button reachable
@@ -187,10 +229,26 @@ fun OnboardingScreen(
 
                 OnboardingModeControls(
                     passwordMode = passwordMode,
-                    onPasswordModeChange = { passwordMode = it },
+                    oidcMode = oidcMode,
+                    onPasswordModeChange = {
+                        passwordMode = it
+                        if (it) oidcMode = false
+                    },
+                    onOidcModeChange = {
+                        oidcMode = it
+                        if (it) passwordMode = false
+                    },
                 )
 
-                if (passwordMode) {
+                if (oidcMode) {
+                    Text(
+                        text =
+                            "Your identity provider will sign you in. Syncwich stores only the " +
+                                "short-lived Mealie session token and refreshes it when needed.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else if (passwordMode) {
                     OutlinedTextField(
                         value = username,
                         onValueChange = { username = it },
@@ -297,7 +355,11 @@ fun OnboardingScreen(
                             modifier = Modifier.padding(start = 8.dp),
                         )
                     } else {
-                        Text(stringResource(R.string.onboarding_connect))
+                        Icon(Icons.Filled.Login, contentDescription = null)
+                        Text(
+                            if (oidcMode) "Sign in with OIDC" else stringResource(R.string.onboarding_connect),
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
                     }
                 }
                 androidx.compose.material3.OutlinedButton(
@@ -317,6 +379,8 @@ fun OnboardingScreen(
 fun OnboardingModeControls(
     passwordMode: Boolean,
     onPasswordModeChange: (Boolean) -> Unit,
+    oidcMode: Boolean = false,
+    onOidcModeChange: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -324,16 +388,31 @@ fun OnboardingModeControls(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         FilterChip(
-            selected = !passwordMode,
-            onClick = { onPasswordModeChange(false) },
+            selected = !passwordMode && !oidcMode,
+            onClick = {
+                onPasswordModeChange(false)
+                onOidcModeChange(false)
+            },
             label = { Text(stringResource(R.string.onboarding_mode_token)) },
             modifier = Modifier.weight(1f).fillMaxHeight().testTag("onboarding-mode-token"),
         )
         FilterChip(
             selected = passwordMode,
-            onClick = { onPasswordModeChange(true) },
+            onClick = {
+                onPasswordModeChange(true)
+                onOidcModeChange(false)
+            },
             label = { Text(stringResource(R.string.onboarding_mode_password)) },
             modifier = Modifier.weight(1f).fillMaxHeight().testTag("onboarding-mode-password"),
+        )
+        FilterChip(
+            selected = oidcMode,
+            onClick = {
+                onOidcModeChange(true)
+                onPasswordModeChange(false)
+            },
+            label = { Text("OIDC") },
+            modifier = Modifier.weight(1f).fillMaxHeight().testTag("onboarding-mode-oidc"),
         )
     }
 }

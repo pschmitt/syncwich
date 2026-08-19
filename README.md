@@ -32,10 +32,19 @@ Syncwich is an independent Mealie client. It is still under active development; 
 
 ## Connecting to your Mealie server
 
-Syncwich never asks for or stores your Mealie account password. Instead:
+Syncwich never stores your Mealie account password. Choose one of these connection methods:
 
 1. In Mealie, go to your user Profile → API Tokens and generate a long-lived token.
 2. In Syncwich, enter your server's URL and paste that token.
+
+Alternatively, choose username and password to sign in once; Syncwich immediately mints a
+long-lived API token and discards both the password and short-lived login JWT.
+
+If your Mealie server has OpenID Connect (OIDC) enabled, choose OIDC on the connection screen and
+sign in through the server's configured identity provider. Mealie's OIDC flow requires the server
+to be reachable in a web sign-in window and to be configured for authorization code with PKCE. The
+resulting Mealie session token is stored encrypted and refreshed automatically when it is close to
+expiry; Syncwich never stores the identity-provider password or client secret.
 
 The server URL is never hardcoded into the app - Syncwich works with any Mealie instance you
 point it at. When Syncwich creates an API token on your behalf, it names it

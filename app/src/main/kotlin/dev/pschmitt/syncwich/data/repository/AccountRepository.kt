@@ -4,6 +4,8 @@ import dev.pschmitt.syncwich.data.db.AppDatabase
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Signs the user out: wipes the stored server URL/API token and the offline recipe cache together,
@@ -22,7 +24,7 @@ constructor(
     suspend fun signOut() {
         settingsRepository.clear()
         settingsRepository.resetSyncState()
-        database.clearAllTables()
+        withContext(Dispatchers.IO) { database.clearAllTables() }
         recipeHistoryRepository.clear()
     }
 }

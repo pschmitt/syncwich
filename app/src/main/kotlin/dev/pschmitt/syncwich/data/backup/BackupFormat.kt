@@ -10,6 +10,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.pschmitt.syncwich.BuildConfig
 import dev.pschmitt.syncwich.data.db.AppDatabase
 import dev.pschmitt.syncwich.data.settings.NavigationBarCacheAvailability
+import dev.pschmitt.syncwich.data.settings.MealieAuthMethod
 import dev.pschmitt.syncwich.data.settings.SETTINGS_BACKUP_VERSION
 import dev.pschmitt.syncwich.data.settings.SettingsBackupSnapshot
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
@@ -58,6 +59,7 @@ data class BackupManifest(
 data class BackupCredentials(
     val serverUrl: String = "",
     val apiToken: String = "",
+    val authMethod: String = MealieAuthMethod.ApiToken.storageValue,
 )
 
 data class BackupPayload(
@@ -190,7 +192,14 @@ constructor(
             }
             restoreCache(payload)
             settingsRepository.restoreBackupSettings(payload.settings)
-            settingsRepository.save(payload.credentials.serverUrl, payload.credentials.apiToken)
+            if (MealieAuthMethod.fromStorage(payload.credentials.authMethod) == MealieAuthMethod.Oidc) {
+                settingsRepository.saveOidc(
+                    payload.credentials.serverUrl,
+                    payload.credentials.apiToken,
+                )
+            } else {
+                settingsRepository.save(payload.credentials.serverUrl, payload.credentials.apiToken)
+            }
             payload.manifest
         }
 
@@ -233,7 +242,13 @@ constructor(
                 zip,
                 CREDENTIALS_ENTRY,
                 json
-                    .encodeToString(BackupCredentials(credentials.serverUrl, credentials.apiToken))
+                    .encodeToString(
+                        BackupCredentials(
+                            credentials.serverUrl,
+                            credentials.apiToken,
+                            credentials.authMethod.storageValue,
+                        )
+                    )
                     .toByteArray(),
             )
             writeEntry(zip, SETTINGS_ENTRY, json.encodeToString(settings).toByteArray())

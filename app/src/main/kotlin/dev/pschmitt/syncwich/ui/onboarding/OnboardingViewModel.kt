@@ -13,6 +13,8 @@ import dev.pschmitt.syncwich.data.backup.BackupWrongPasswordException
 import dev.pschmitt.syncwich.data.onboarding.OnboardingError
 import dev.pschmitt.syncwich.data.onboarding.OnboardingValidationException
 import dev.pschmitt.syncwich.data.onboarding.OnboardingValidator
+import dev.pschmitt.syncwich.data.onboarding.OidcAuthClient
+import dev.pschmitt.syncwich.data.onboarding.OidcLoginException
 import dev.pschmitt.syncwich.data.onboarding.PasswordTokenMinter
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import dev.pschmitt.syncwich.sync.SyncScheduler
@@ -38,6 +40,7 @@ sealed interface OnboardingUiState {
 enum class OnboardingMode {
     Token,
     Password,
+    Oidc,
 }
 
 @HiltViewModel
@@ -46,6 +49,7 @@ class OnboardingViewModel
 constructor(
     private val validator: OnboardingValidator,
     private val passwordTokenMinter: PasswordTokenMinter,
+    private val oidcAuthClient: OidcAuthClient,
     private val settingsRepository: SettingsRepository,
     private val syncScheduler: SyncScheduler,
     private val backupManager: BackupManager,
@@ -95,6 +99,34 @@ constructor(
         }
     }
 
+    /** Returns the Mealie OIDC entry URL, or reports a local URL error before opening the window. */
+    fun beginOidc(serverUrl: String): String? =
+        oidcAuthClient.authorizationUrl(serverUrl).getOrElse { error ->
+            _uiState.value = OnboardingUiState.Error(error.message ?: "Enter a valid server URL")
+            null
+        }
+
+    /** Exchanges the callback captured by [OidcWebView] and persists only Mealie's JWT. */
+    fun connectWithOidc(serverUrl: String, callbackUrl: String, cookies: String) {
+        _uiState.value = OnboardingUiState.Validating
+        viewModelScope.launch {
+            oidcAuthClient
+                .exchangeCallback(serverUrl, callbackUrl, cookies)
+                .onSuccess { persistAndSucceed(serverUrl, it, oidc = true) }
+                .onFailure { error ->
+                    _uiState.value =
+                        OnboardingUiState.Error(
+                            (error as? OidcLoginException)?.message
+                                ?: "Couldn't finish OIDC sign-in."
+                        )
+                }
+        }
+    }
+
+    fun failOidc(message: String) {
+        _uiState.value = OnboardingUiState.Error(message)
+    }
+
     fun restoreBackup(uri: Uri, password: String? = null) {
         _uiState.value = OnboardingUiState.Validating
         viewModelScope.launch {
@@ -127,10 +159,11 @@ constructor(
         _uiState.value = OnboardingUiState.Idle
     }
 
-    private fun persistAndSucceed(serverUrl: String, apiToken: String) {
+    private fun persistAndSucceed(serverUrl: String, apiToken: String, oidc: Boolean = false) {
         // Only persisted - and only now starts being read by the network layer's interceptors -
         // once the server has actually confirmed this token works.
-        settingsRepository.save(serverUrl, apiToken)
+        if (oidc) settingsRepository.saveOidc(serverUrl, apiToken)
+        else settingsRepository.save(serverUrl, apiToken)
         // The first pass is run in the blocking InitialSyncScreen. Cancel the startup request
         // queued by Application so it cannot race that foreground pass.
         syncScheduler.cancelStartup()
@@ -149,6 +182,7 @@ constructor(
                                 "That server rejected the API token. Generate a new long-lived " +
                                     "token in Mealie under Profile → API Tokens and try again."
                             OnboardingMode.Password -> "Incorrect username or password."
+                            OnboardingMode.Oidc -> "The identity provider rejected the sign-in."
                         }
                     OnboardingError.Unreachable ->
                         "Couldn't reach that server. Check the URL and your network connection."

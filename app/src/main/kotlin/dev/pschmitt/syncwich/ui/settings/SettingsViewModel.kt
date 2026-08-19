@@ -9,6 +9,8 @@ import dev.pschmitt.syncwich.data.api.dto.UserDto
 import dev.pschmitt.syncwich.data.onboarding.OnboardingError
 import dev.pschmitt.syncwich.data.onboarding.OnboardingValidationException
 import dev.pschmitt.syncwich.data.onboarding.OnboardingValidator
+import dev.pschmitt.syncwich.data.onboarding.OidcAuthClient
+import dev.pschmitt.syncwich.data.onboarding.OidcLoginException
 import dev.pschmitt.syncwich.data.onboarding.PasswordTokenMinter
 import dev.pschmitt.syncwich.data.repository.AccountRepository
 import dev.pschmitt.syncwich.data.settings.DEFAULT_FONT_SCALE
@@ -55,6 +57,7 @@ constructor(
     private val accountRepository: AccountRepository,
     private val validator: OnboardingValidator,
     private val passwordTokenMinter: PasswordTokenMinter,
+    private val oidcAuthClient: OidcAuthClient,
     private val usersApi: UsersApi,
     private val syncScheduler: SyncScheduler,
 ) : ViewModel() {
@@ -220,6 +223,33 @@ constructor(
         }
     }
 
+    fun beginOidc(serverUrl: String): String? =
+        oidcAuthClient.authorizationUrl(serverUrl).getOrElse { error ->
+            _connectionUpdateState.value =
+                ConnectionUpdateState.Error(error.message ?: "Enter a valid server URL")
+            null
+        }
+
+    fun updateConnectionWithOidc(serverUrl: String, callbackUrl: String, cookies: String) {
+        _connectionUpdateState.value = ConnectionUpdateState.Validating
+        viewModelScope.launch {
+            oidcAuthClient
+                .exchangeCallback(serverUrl, callbackUrl, cookies)
+                .onSuccess { persistConnection(serverUrl, it, oidc = true) }
+                .onFailure { error ->
+                    _connectionUpdateState.value =
+                        ConnectionUpdateState.Error(
+                            (error as? OidcLoginException)?.message
+                                ?: "Couldn't finish OIDC sign-in."
+                        )
+                }
+        }
+    }
+
+    fun failOidc(message: String) {
+        _connectionUpdateState.value = ConnectionUpdateState.Error(message)
+    }
+
     fun testCredentials() {
         if (_credentialsTestState.value is CredentialsTestState.Testing) return
         _credentialsTestState.value = CredentialsTestState.Testing
@@ -247,7 +277,11 @@ constructor(
         }
     }
 
-    private suspend fun persistConnection(serverUrl: String, apiToken: String) {
+    private suspend fun persistConnection(
+        serverUrl: String,
+        apiToken: String,
+        oidc: Boolean = false,
+    ) {
         val normalizedUrl = serverUrl.trim().trimEnd('/')
         val currentCredentials = settingsRepository.credentials.value
         if (currentCredentials.isValid && currentCredentials.serverUrl != normalizedUrl) {
@@ -255,7 +289,8 @@ constructor(
             // offline launch can never present recipes from the previous account as current.
             accountRepository.signOut()
         }
-        settingsRepository.save(normalizedUrl, apiToken)
+        if (oidc) settingsRepository.saveOidc(normalizedUrl, apiToken)
+        else settingsRepository.save(normalizedUrl, apiToken)
         // A replacement token can keep using the existing cache; a server switch starts a
         // best-effort refresh without making this settings flow depend on network availability.
         syncScheduler.scheduleStartup()

@@ -1,0 +1,21 @@
+issuer: http://{{ .Env.SYNCWICH_TEST_HOST }}:5556/dex
+storage:
+  type: sqlite3
+  config:
+    file: /tmp/dex.db
+web:
+  http: 0.0.0.0:5556
+oauth2:
+  skipApprovalScreen: true
+staticClients:
+  - id: syncwich-oidc
+    name: Syncwich OIDC test client
+    secret: syncwich-oidc-client-secret
+    redirectURIs:
+      - http://{{ .Env.SYNCWICH_TEST_HOST }}:9926/login
+enablePasswordDB: true
+staticPasswords:
+  - email: syncwich-oidc@example.invalid
+    hash: "$2a$10$ui41IjSNX62AiOOmgER4FOP01lu5kO4PZzGJsDokcrRs4na3Z3wAq"
+    username: syncwich-oidc
+    userID: 00000000-0000-0000-0000-000000000001

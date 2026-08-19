@@ -1,0 +1,42 @@
+# Disposable Mealie + Dex OIDC stack for physical-device verification.
+# Set SYNCWICH_TEST_HOST to this machine's LAN address when it is not 10.5.0.125.
+services:
+  dex:
+    image: ghcr.io/dexidp/dex:v2.41.1
+    command: ["dex", "serve", "/etc/dex/config.yaml"]
+    ports:
+      - "5556:5556"
+    environment:
+      SYNCWICH_TEST_HOST: ${SYNCWICH_TEST_HOST:-10.5.0.125}
+    volumes:
+      - ./dex-config.yaml:/etc/dex/config.yaml:ro
+
+  mealie:
+    image: ghcr.io/mealie-recipes/mealie:v3.22.0
+    depends_on:
+      - dex
+    ports:
+      - "9926:9000"
+    environment:
+      ALLOW_SIGNUP: "true"
+      BASE_URL: http://${SYNCWICH_TEST_HOST:-10.5.0.125}:9926
+      DEFAULT_EMAIL: syncwich-oidc-admin@example.invalid
+      DEFAULT_GROUP: Syncwich OIDC
+      DEFAULT_HOUSEHOLD: Syncwich OIDC Kitchen
+      DEFAULT_PASSWORD: syncwich-oidc-admin-password
+      OIDC_AUTH_ENABLED: "true"
+      OIDC_SIGNUP_ENABLED: "true"
+      OIDC_CONFIGURATION_URL: http://${SYNCWICH_TEST_HOST:-10.5.0.125}:5556/dex/.well-known/openid-configuration
+      OIDC_CLIENT_ID: syncwich-oidc
+      OIDC_CLIENT_SECRET: syncwich-oidc-client-secret
+      OIDC_PROVIDER_NAME: Dex test provider
+      OIDC_AUTO_REDIRECT: "false"
+      OIDC_REMEMBER_ME: "true"
+      OIDC_REQUIRES_EMAIL_VERIFICATION: "false"
+      TZ: UTC
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:9000/login >/dev/null"]
+      start_period: 60s
+      interval: 5s
+      timeout: 5s
+      retries: 60

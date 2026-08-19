@@ -14,6 +14,8 @@ import dev.pschmitt.syncwich.data.repository.RecipeRepository
 import dev.pschmitt.syncwich.data.repository.RecipeTimelineRepository
 import dev.pschmitt.syncwich.data.repository.ShoppingListRepository
 import dev.pschmitt.syncwich.data.repository.TagRepository
+import dev.pschmitt.syncwich.data.onboarding.OidcAuthClient
+import dev.pschmitt.syncwich.data.settings.MealieAuthMethod
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -47,6 +49,7 @@ constructor(
     private val shoppingListRepository: ShoppingListRepository,
     private val cookbookRepository: CookbookRepository,
     private val mealPlanRepository: MealPlanRepository,
+    private val oidcAuthClient: OidcAuthClient,
     private val settingsRepository: SettingsRepository,
     private val recipeImagePrefetcher: RecipeImagePrefetcher,
     private val syncNotifier: SyncNotifier,
@@ -64,7 +67,8 @@ constructor(
         val mealPlanEnd = mealPlanStart.plusWeeks(3).minusDays(1)
 
         val failures =
-            listOf(
+                listOf(
+                    syncStep("Refreshing OIDC session…") { refreshOidcSession() },
                     syncStep("Refreshing recipes…") {
                         recipeRepository.refreshRecipes(forceRefresh = false)
                     },
@@ -124,6 +128,20 @@ constructor(
                 Result.failure()
             }
         }
+    }
+
+    private suspend fun refreshOidcSession(): kotlin.Result<Unit> {
+        val credentials = settingsRepository.credentials.value
+        if (
+            credentials.authMethod != MealieAuthMethod.Oidc ||
+                !oidcAuthClient.isExpiringSoon(credentials.apiToken)
+        ) {
+            return kotlin.Result.success(Unit)
+        }
+        val refreshed = oidcAuthClient.refresh(credentials)
+        refreshed.onSuccess { settingsRepository.saveOidc(credentials.serverUrl, it) }
+        return if (refreshed.isSuccess) kotlin.Result.success(Unit)
+        else kotlin.Result.failure(refreshed.exceptionOrNull()!!)
     }
 
     private suspend fun syncStep(

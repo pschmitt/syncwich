@@ -33,6 +33,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.pschmitt.syncwich.data.settings.MealieCredentials
+import dev.pschmitt.syncwich.data.settings.MealieAuthMethod
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,7 +80,7 @@ fun ServerSettingsScreen(
                     ConnectionDetailRow(credentials)
                     SettingsActionRow(
                         title = "Change connection",
-                        subtitle = "Change the server URL or replace the API token",
+                        subtitle = "Change the server URL or replace the saved credentials",
                         onClick = onChangeConnection,
                     )
                     SettingsActionRow(
@@ -132,7 +133,7 @@ fun ServerSettingsScreen(
 
 internal fun credentialsTestSubtitle(state: CredentialsTestState): String =
     when (state) {
-        CredentialsTestState.Idle -> "Verify the saved API token and show the current user"
+        CredentialsTestState.Idle -> "Verify the saved credentials and show the current user"
         CredentialsTestState.Testing -> "Contacting the Mealie server…"
         is CredentialsTestState.Success -> "Signed in as ${state.userDisplayName}"
         is CredentialsTestState.Error -> state.message
@@ -145,7 +146,9 @@ private fun ConnectionDetailRow(credentials: MealieCredentials) {
         supportingContent = { Text(credentials.serverUrl.ifBlank { "Not configured" }) },
     )
     SettingsListItem(
-        headlineContent = { Text("API token") },
+        headlineContent = {
+            Text(if (credentials.authMethod == MealieAuthMethod.Oidc) "OIDC session" else "API token")
+        },
         supportingContent = { Text(maskApiToken(credentials.apiToken)) },
     )
 }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
@@ -25,6 +26,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -58,6 +60,8 @@ fun ConnectionSettingsScreen(
     var apiToken by rememberSaveable { mutableStateOf("") }
     var username by rememberSaveable { mutableStateOf("") }
     var passwordMode by rememberSaveable { mutableStateOf(false) }
+    var oidcMode by rememberSaveable { mutableStateOf(false) }
+    var oidcStartUrl by rememberSaveable { mutableStateOf<String?>(null) }
     var password by remember { mutableStateOf("") }
     var tokenVisible by rememberSaveable { mutableStateOf(false) }
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
@@ -71,11 +75,39 @@ fun ConnectionSettingsScreen(
 
     fun submit() {
         keyboardController?.hide()
-        if (passwordMode) {
+        if (oidcMode) {
+            oidcStartUrl = viewModel.beginOidc(serverUrl)
+        } else if (passwordMode) {
             viewModel.updateConnectionWithPassword(serverUrl, username, password)
         } else {
             viewModel.updateConnection(serverUrl, apiToken)
         }
+    }
+
+    if (oidcStartUrl != null) {
+        Scaffold(
+            modifier = modifier,
+            topBar = {
+                TopAppBar(
+                    title = { Text("Sign in with OIDC") },
+                    navigationIcon = {
+                        TextButton(onClick = { oidcStartUrl = null }) { Text("Cancel") }
+                    },
+                )
+            },
+        ) { innerPadding ->
+            dev.pschmitt.syncwich.ui.onboarding.OidcWebView(
+                serverUrl = serverUrl,
+                startUrl = oidcStartUrl!!,
+                onCallback = { callbackUrl, cookies ->
+                    oidcStartUrl = null
+                    viewModel.updateConnectionWithOidc(serverUrl, callbackUrl, cookies)
+                },
+                onError = { viewModel.failOidc(it) },
+                modifier = Modifier.padding(innerPadding),
+            )
+        }
+        return
     }
 
     Scaffold(
@@ -122,22 +154,43 @@ fun ConnectionSettingsScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         FilterChip(
-                            selected = !passwordMode,
-                            onClick = { passwordMode = false },
+                            selected = !passwordMode && !oidcMode,
+                            onClick = {
+                                passwordMode = false
+                                oidcMode = false
+                            },
                             label = { Text("API token") },
                             enabled = !isValidating,
                             modifier = Modifier.weight(1f),
                         )
                         FilterChip(
                             selected = passwordMode,
-                            onClick = { passwordMode = true },
+                            onClick = {
+                                passwordMode = true
+                                oidcMode = false
+                            },
                             label = { Text("Username & password") },
+                            enabled = !isValidating,
+                            modifier = Modifier.weight(1f),
+                        )
+                        FilterChip(
+                            selected = oidcMode,
+                            onClick = {
+                                oidcMode = true
+                                passwordMode = false
+                            },
+                            label = { Text("OIDC") },
                             enabled = !isValidating,
                             modifier = Modifier.weight(1f),
                         )
                     }
                 }
-                if (passwordMode) {
+                if (oidcMode) {
+                    Text(
+                        "Sign in through your Mealie server's configured identity provider. " +
+                            "Syncwich stores only the Mealie session token."
+                    )
+                } else if (passwordMode) {
                     OutlinedTextField(
                         value = username,
                         onValueChange = { username = it },
@@ -226,7 +279,11 @@ fun ConnectionSettingsScreen(
                         )
                         Text("Saving…", modifier = Modifier.padding(start = 8.dp))
                     } else {
-                        Text("Save connection")
+                        Icon(Icons.Filled.Login, contentDescription = null)
+                        Text(
+                            if (oidcMode) "Sign in with OIDC" else "Save connection",
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
                     }
                 }
             }

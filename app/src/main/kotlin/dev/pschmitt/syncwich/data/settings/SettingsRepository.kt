@@ -22,15 +22,32 @@ import kotlinx.coroutines.flow.map
 private val Context.syncwichDataStore by preferencesDataStore(name = "syncwich_prefs")
 
 /** The user's Mealie connection. Both fields must be non-blank for the app to be usable. */
-data class MealieCredentials(val serverUrl: String, val apiToken: String) {
+enum class MealieAuthMethod(val storageValue: String) {
+    ApiToken("api_token"),
+    Oidc("oidc"),
+    ;
+
+    companion object {
+        fun fromStorage(value: String?): MealieAuthMethod =
+            entries.firstOrNull { it.storageValue == value } ?: ApiToken
+    }
+}
+
+data class MealieCredentials(
+    val serverUrl: String,
+    val apiToken: String,
+    val authMethod: MealieAuthMethod = MealieAuthMethod.ApiToken,
+) {
     val isValid: Boolean
         get() = serverUrl.isNotBlank() && apiToken.isNotBlank()
 }
 
 /**
- * The server base URL and long-lived API token, backed by [EncryptedSharedPreferences] (Android
+ * The server base URL and Mealie bearer token, backed by [EncryptedSharedPreferences] (Android
  * Keystore-tied, hence `allowBackup=false` in the manifest - a restored backup couldn't decrypt
- * these anyway). Read reactively by [dev.pschmitt.syncwich.data.api.DynamicBaseUrlInterceptor] and
+ * these anyway). [MealieAuthMethod] distinguishes long-lived API tokens from short-lived OIDC
+ * JWTs so the latter can be refreshed before background sync. Read reactively by
+ * [dev.pschmitt.syncwich.data.api.DynamicBaseUrlInterceptor] and
  * [dev.pschmitt.syncwich.data.api.AuthInterceptor] at request time, so changing the connection
  * never requires rebuilding the Retrofit/OkHttp stack.
  *
@@ -153,14 +170,23 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
 
     /** Persists a validated connection. Callers should confirm it works before calling this. */
     fun save(serverUrl: String, apiToken: String) {
+        save(serverUrl, apiToken, MealieAuthMethod.ApiToken)
+    }
+
+    fun saveOidc(serverUrl: String, apiToken: String) {
+        save(serverUrl, apiToken, MealieAuthMethod.Oidc)
+    }
+
+    private fun save(serverUrl: String, apiToken: String, authMethod: MealieAuthMethod) {
         val normalizedUrl = serverUrl.trim().trimEnd('/')
         val trimmedToken = apiToken.trim()
         prefs
             .edit()
             .putString(KEY_SERVER_URL, normalizedUrl)
             .putString(KEY_API_TOKEN, trimmedToken)
+            .putString(KEY_AUTH_METHOD, authMethod.storageValue)
             .apply()
-        _credentials.value = MealieCredentials(normalizedUrl, trimmedToken)
+        _credentials.value = MealieCredentials(normalizedUrl, trimmedToken, authMethod)
     }
 
     /**
@@ -400,6 +426,8 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         MealieCredentials(
             serverUrl = prefs.getString(KEY_SERVER_URL, "") ?: "",
             apiToken = prefs.getString(KEY_API_TOKEN, "") ?: "",
+            authMethod =
+                MealieAuthMethod.fromStorage(prefs.getString(KEY_AUTH_METHOD, null)),
         )
 
     private fun loadScheduledBackupPassword(): String =
@@ -408,6 +436,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
     private companion object {
         const val KEY_SERVER_URL = "server_url"
         const val KEY_API_TOKEN = "api_token"
+        const val KEY_AUTH_METHOD = "auth_method"
         const val MAX_SYNC_ERROR_LENGTH = 500
         const val MAX_BACKUP_ERROR_LENGTH = 500
         val KEY_NAV_BAR_ORDER = stringPreferencesKey("navigation_bar_order")
