@@ -2208,3 +2208,14 @@ Recipe Actions needs its own local type name).
 - [x] Verify the new subscreen visually on a real device
 
 Status: **done** (new SW-139 verticals get their own row here as they land).
+
+## SW-141: Collapse SimpleCatalog FABs ("New tag"/"New tool"/"New category") like "New recipe"
+
+- [ ] `RecipesScreen`/`CookbooksScreen`/`ShoppingListDetailScreen`'s `ExtendedFloatingActionButton`s
+      already collapse to icon-only once their list scrolls away from the top and re-expand at the
+      top (`expanded = !state.canScrollBackward`, see commit 37d856f) - `SimpleCatalogScreen`'s
+      "New category"/"New tag"/"New tool" FAB (`ui/organizers/SimpleCatalogScreen.kt`) doesn't do
+      this yet; its `LazyColumn` has no `rememberLazyListState()` threaded through
+- [ ] Apply the same collapse/expand behavior for consistency with the rest of the app's list FABs
+
+Status: **not started**.
