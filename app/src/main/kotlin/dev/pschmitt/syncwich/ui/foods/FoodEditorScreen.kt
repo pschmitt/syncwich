@@ -44,6 +44,7 @@ fun FoodEditorScreen(
 ) {
     val draft by viewModel.draft.collectAsStateWithLifecycle()
     val saveState by viewModel.saveState.collectAsStateWithLifecycle()
+    val isEditing by viewModel.isEditing.collectAsStateWithLifecycle()
     val isSaving = saveState is FoodEditorSaveState.Saving
     val validationMessage = (saveState as? FoodEditorSaveState.Error)?.message
     val nameErrorMessage = validationMessage?.takeIf { it == "Enter a food name" }
@@ -54,7 +55,7 @@ fun FoodEditorScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(if (viewModel.isEditing) "Edit food" else "New food") },
+                title = { Text(if (isEditing) "Edit food" else "New food") },
                 navigationIcon = {
                     IconButton(onClick = onBack, enabled = !isSaving) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -71,7 +72,7 @@ fun FoodEditorScreen(
             ) {
                 Text(
                     text =
-                        if (viewModel.isEditing) {
+                        if (isEditing) {
                             "Changes are saved to Mealie explicitly. Your cached food remains " +
                                 "available if saving is unavailable."
                         } else {

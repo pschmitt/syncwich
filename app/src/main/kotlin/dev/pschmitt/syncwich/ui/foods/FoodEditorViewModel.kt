@@ -5,13 +5,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.pschmitt.syncwich.data.db.entity.FoodEntity
 import dev.pschmitt.syncwich.data.repository.FoodRepository
 import dev.pschmitt.syncwich.ui.navigation.Route
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 sealed interface FoodEditorSaveState {
@@ -24,7 +28,15 @@ sealed interface FoodEditorSaveState {
     data object Saved : FoodEditorSaveState
 }
 
-/** Coordinates one explicit food mutation without replacing the user's draft on failure. */
+/**
+ * Coordinates one explicit food mutation without replacing the user's draft on failure.
+ *
+ * A long-pressed recipe ingredient only ever carries [Route.FoodEditor.seedName] (no `foodId` -
+ * there's no structured food reference to follow, see [dev.pschmitt.syncwich.data.api.dto.FoodDto]'s
+ * kdoc), so that path alone would always create a brand-new food - including a duplicate of one
+ * that already matches by name. [resolveExistingFoodMatch] looks the seeded text up against the
+ * cached food dictionary first and switches into a real edit of the matching entry when found.
+ */
 @HiltViewModel
 class FoodEditorViewModel
 @Inject
@@ -32,12 +44,18 @@ constructor(savedStateHandle: SavedStateHandle, private val foodRepository: Food
     ViewModel() {
 
     private val route = savedStateHandle.toRoute<Route.FoodEditor>()
-    private val foodId = route.foodId
-    val isEditing: Boolean = foodId.isNotBlank()
+    private val routeFoodId = route.foodId.takeIf(String::isNotBlank)
+
+    private val _editingFoodId = MutableStateFlow(routeFoodId)
+    val isEditing: StateFlow<Boolean> =
+        _editingFoodId
+            .map { it != null }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, routeFoodId != null)
 
     private val _draft =
         MutableStateFlow(
-            route.seedName?.takeIf { it.isNotBlank() }?.let(FoodEditorDraft::seeded)
+            routeFoodId?.let { FoodEditorDraft() }
+                ?: route.seedName?.takeIf(String::isNotBlank)?.let(FoodEditorDraft::seeded)
                 ?: FoodEditorDraft()
         )
     val draft: StateFlow<FoodEditorDraft> = _draft.asStateFlow()
@@ -48,7 +66,11 @@ constructor(savedStateHandle: SavedStateHandle, private val foodRepository: Food
     private var draftTouched = false
 
     init {
-        if (isEditing) loadCachedDraft()
+        if (routeFoodId != null) {
+            loadCachedDraft(routeFoodId)
+        } else {
+            route.seedName?.takeIf(String::isNotBlank)?.let(::resolveExistingFoodMatch)
+        }
     }
 
     fun onNameChange(value: String) = updateDraft { copy(name = value) }
@@ -66,11 +88,12 @@ constructor(savedStateHandle: SavedStateHandle, private val foodRepository: Food
             return
         }
 
+        val targetFoodId = _editingFoodId.value
         _saveState.value = FoodEditorSaveState.Saving
         viewModelScope.launch {
             val result =
-                if (isEditing) {
-                    foodRepository.updateFood(foodId, draftSnapshot.toRequest())
+                if (targetFoodId != null) {
+                    foodRepository.updateFood(targetFoodId, draftSnapshot.toRequest())
                 } else {
                     foodRepository.createFood(draftSnapshot.toRequest())
                 }
@@ -87,12 +110,21 @@ constructor(savedStateHandle: SavedStateHandle, private val foodRepository: Food
         }
     }
 
-    private fun loadCachedDraft() {
+    private fun loadCachedDraft(foodId: String) {
         viewModelScope.launch {
             val cachedFood = foodRepository.observeFood(foodId).first()
             if (!draftTouched && cachedFood != null) {
                 _draft.value = FoodEditorDraft.from(cachedFood)
             }
+        }
+    }
+
+    private fun resolveExistingFoodMatch(seedName: String) {
+        viewModelScope.launch {
+            val match = findFoodMatch(foodRepository.observeFoods().first(), seedName) ?: return@launch
+            if (draftTouched) return@launch
+            _editingFoodId.value = match.id
+            _draft.value = FoodEditorDraft.from(match)
         }
     }
 
@@ -102,4 +134,21 @@ constructor(savedStateHandle: SavedStateHandle, private val foodRepository: Food
         _draft.value = _draft.value.update()
         _saveState.value = FoodEditorSaveState.Idle
     }
+}
+
+/**
+ * Finds the cached food, if any, that a freeform ingredient line (e.g. "2 cups all-purpose
+ * flour") most specifically names - a whole-word, case-insensitive match of the food's name or
+ * plural name anywhere in the text. Ties (or no match) prefer not guessing: the longest matching
+ * name wins, since it's the most specific; a genuine tie falls back to list order.
+ */
+internal fun findFoodMatch(foods: List<FoodEntity>, ingredientText: String): FoodEntity? {
+    val haystack = ingredientText.lowercase()
+    fun matches(name: String?): Boolean {
+        if (name.isNullOrBlank()) return false
+        return Regex("\\b${Regex.escape(name.lowercase())}\\b").containsMatchIn(haystack)
+    }
+    return foods
+        .filter { matches(it.name) || matches(it.pluralName) }
+        .maxByOrNull { maxOf(it.name.length, it.pluralName?.length ?: 0) }
 }
