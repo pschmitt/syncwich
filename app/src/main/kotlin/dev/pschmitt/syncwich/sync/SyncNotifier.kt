@@ -18,7 +18,7 @@ import dev.pschmitt.syncwich.R
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Posts low-priority sync results only when the app is not visible. */
+/** Posts a low-priority notification for sync failures only when the app is not visible. */
 @Singleton
 @SuppressLint("MissingPermission")
 class SyncNotifier @Inject constructor(@ApplicationContext private val context: Context) {
@@ -39,7 +39,7 @@ class SyncNotifier @Inject constructor(@ApplicationContext private val context: 
                     NotificationManager.IMPORTANCE_LOW,
                 )
                 .apply {
-                    description = "Reports when the cached recipe sync finishes or fails"
+                    description = "Reports when the cached recipe sync fails"
                     setSound(null, null)
                     enableVibration(false)
                     setShowBadge(false)
@@ -71,15 +71,9 @@ class SyncNotifier @Inject constructor(@ApplicationContext private val context: 
 
     fun notifySyncSucceeded() {
         syncActive = false
+        // Only errors are worth surfacing as a notification; a successful sync just clears
+        // the ongoing "Syncing…" one.
         NotificationManagerCompat.from(context).cancel(SYNC_NOTIFICATION_ID)
-        if (!shouldPostBackgroundNotification(appInForeground, notificationsAllowed())) return
-        NotificationManagerCompat.from(context)
-            .notify(
-                SYNC_NOTIFICATION_ID,
-                notificationBuilder("Sync complete", "Your saved recipe data is up to date.")
-                    .setAutoCancel(true)
-                    .build(),
-            )
     }
 
     fun notifySyncFailed(message: String) {
