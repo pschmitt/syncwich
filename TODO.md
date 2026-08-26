@@ -2105,19 +2105,27 @@ Status: **not started**.
 
 ## SW-138: Strike through completed recipe step text
 
-- [ ] `InstructionRow` (`ui/recipes/RecipeDetailScreen.kt`, shared by the inline step list and the
+- [x] `InstructionRow` (`ui/recipes/RecipeDetailScreen.kt`, shared by the inline step list and the
       full-screen steps dialog) already applies `TextDecoration.LineThrough` to a step's title when
       checked off, but the step body wraps the markdown content in a literal `<del>...</del>` string
       instead - `com.mikepenz:multiplatform-markdown-renderer` (CommonMark-based) doesn't interpret
-      raw inline HTML as styled text, so this almost certainly renders as literal `<del>`/`</del>`
-      characters rather than an actual strikethrough. Confirm this live before assuming it's the
-      only issue.
-- [ ] Replace the `<del>` wrapping with a real strikethrough render for the step body text -
-      likely needs post-processing the rendered `Markdown` composable's text style, or building the
-      completed step's `AnnotatedString` directly with `TextDecoration.LineThrough` instead of
-      going through the raw Markdown string, since the renderer library has no built-in "wrap this
-      block in a decoration" hook
-- [ ] Verify visually on a real device that checking off a step now shows genuine struck-through
+      raw inline HTML as styled text; confirmed this renders as literal `<del>`/`</del>` characters
+      rather than an actual strikethrough
+- [x] Replace the `<del>` wrapping with a real strikethrough render for the step body text - built
+      on `markdownTypography()`'s own defaults and added `TextDecoration.LineThrough` to the
+      text-bearing styles (text/paragraph/ordered/bullet/list) only when completed, since the
+      library has no built-in "wrap this block in a decoration" hook and `MarkdownTypography` isn't
+      a data class (no `.copy()`)
+- [x] Verify visually on a real device that checking off a step now shows genuine struck-through
       text, and that toggling it back off restores normal styling
 
-Status: **not started**.
+Status: **done**, 2026-08-26. `just check` (ktfmtCheck, unit tests, Android Lint) green on
+rofl-13. Verified live on the Zenfone 10: the real Mealie server and the other two physical test
+devices were all unreachable this session (a device-specific network fault on the Zenfone itself,
+and a PIN lock with no known code on the Mi Pad 4/Pixel 5), so a synthetic recipe (three real
+markdown steps, one with inline bold) was seeded directly into the debug app's Room cache via
+`run-as`/`sqlite3` to test entirely offline. Checking off a step showed a genuine strikethrough
+that correctly combined with the inline bold formatting, wrapped across multiple lines, and left
+other steps unstyled; unchecking restored normal text. Compiling against the real library caught
+two real mistakes before this landed: `MarkdownTypography` has no `.copy()` (it's an interface, not
+a data class), and `markdownTypography()` itself is `@Composable`.
