@@ -154,7 +154,8 @@ fun BackupSettingsScreen(
                                     if (restorePasswordVisible) Icons.Filled.VisibilityOff
                                     else Icons.Filled.Visibility,
                                 contentDescription =
-                                    if (restorePasswordVisible) "Hide password" else "Show password",
+                                    if (restorePasswordVisible) "Hide password"
+                                    else "Show password",
                             )
                         }
                     },
