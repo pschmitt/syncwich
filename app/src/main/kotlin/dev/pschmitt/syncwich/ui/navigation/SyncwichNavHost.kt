@@ -41,6 +41,7 @@ import dev.pschmitt.syncwich.ui.recipes.RecipeEditorScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipeTimelineScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipesScreen
 import dev.pschmitt.syncwich.ui.settings.ConnectionSettingsScreen
+import dev.pschmitt.syncwich.ui.settings.DataManagementScreen
 import dev.pschmitt.syncwich.ui.settings.LibrariesScreen
 import dev.pschmitt.syncwich.ui.settings.SettingsCategoryScreen
 import dev.pschmitt.syncwich.ui.settings.SettingsScreen
@@ -345,6 +346,12 @@ fun SyncwichNavHost(
                     onCategoryClick = { category ->
                         navController.navigate(Route.SettingsCategory(category))
                     },
+                    onDataManagementClick = { navController.navigate(Route.DataManagement) },
+                )
+            }
+            composable<Route.DataManagement> {
+                DataManagementScreen(
+                    onBack = { navController.popBackStack() },
                     onFoodsClick = { navController.navigate(Route.Foods) },
                 )
             }

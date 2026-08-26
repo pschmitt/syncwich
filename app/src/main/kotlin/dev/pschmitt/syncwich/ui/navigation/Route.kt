@@ -59,6 +59,9 @@ sealed interface Route {
     /** Empty [cookbookId] opens a create draft; a cached id opens an edit draft. */
     @Serializable data class CookbookEditor(val cookbookId: String = "") : Route
 
+    /** Settings > Data Management - a menu of Mealie data-catalog verticals, see SW-140. */
+    @Serializable data object DataManagement : Route
+
     /** Mealie's structured ingredient-food catalog - see SW-137. */
     @Serializable data object Foods : Route
 
@@ -153,6 +156,7 @@ enum class TopLevelDestination(
             Route.SettingsCategory::class,
             Route.SettingsConnection::class,
             Route.Libraries::class,
+            Route.DataManagement::class,
             Route.Foods::class,
             Route.FoodEditor::class,
         ),

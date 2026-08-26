@@ -64,7 +64,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onCategoryClick: (SettingsCategory) -> Unit,
     modifier: Modifier = Modifier,
-    onFoodsClick: () -> Unit = {},
+    onDataManagementClick: () -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier,
@@ -98,19 +98,19 @@ fun SettingsScreen(
                 }
             }
             item {
-                SettingsGroupCard(title = "Recipe Data", icon = Icons.Filled.Egg) {
+                SettingsGroupCard(title = "Data Management", icon = Icons.Filled.Egg) {
                     SettingsListItem(
                         modifier =
                             Modifier.fillMaxWidth()
-                                .clickable(role = Role.Button, onClick = onFoodsClick)
+                                .clickable(role = Role.Button, onClick = onDataManagementClick)
                                 .semantics {
                                     contentDescription =
-                                        "Foods: Mealie's structured ingredient catalog"
+                                        "Data Management: Foods and other Mealie data catalogs"
                                     role = Role.Button
                                 },
                         leadingContent = { Icon(Icons.Filled.Egg, contentDescription = null) },
-                        headlineContent = { Text("Foods") },
-                        supportingContent = { Text("Mealie's structured ingredient catalog") },
+                        headlineContent = { Text("Data Management") },
+                        supportingContent = { Text("Foods and other Mealie data catalogs") },
                         trailingContent = {
                             Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
                         },
