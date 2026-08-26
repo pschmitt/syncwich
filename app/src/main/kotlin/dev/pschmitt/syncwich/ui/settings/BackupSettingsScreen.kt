@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Backup
@@ -17,6 +19,8 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -45,7 +49,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -81,6 +88,7 @@ fun BackupSettingsScreen(
     var exportPassword by rememberSaveable { mutableStateOf("") }
     var scheduledPassword by rememberSaveable { mutableStateOf("") }
     var restorePassword by rememberSaveable { mutableStateOf("") }
+    var restorePasswordVisible by rememberSaveable { mutableStateOf(false) }
     var frequencyExpanded by remember { mutableStateOf(false) }
 
     val exportLauncher =
@@ -114,6 +122,7 @@ fun BackupSettingsScreen(
         AlertDialog(
             onDismissRequest = {
                 restorePassword = ""
+                restorePasswordVisible = false
                 viewModel.consumeOperation()
             },
             title = { Text("Password required") },
@@ -122,7 +131,33 @@ fun BackupSettingsScreen(
                     value = restorePassword,
                     onValueChange = { restorePassword = it },
                     label = { Text("Backup password") },
-                    visualTransformation = PasswordVisualTransformation(),
+                    visualTransformation =
+                        if (restorePasswordVisible) VisualTransformation.None
+                        else PasswordVisualTransformation(),
+                    keyboardOptions =
+                        KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done,
+                            autoCorrectEnabled = false,
+                        ),
+                    keyboardActions =
+                        KeyboardActions(
+                            onDone = {
+                                viewModel.restore(passwordRequired.uri, restorePassword)
+                                restorePassword = ""
+                            }
+                        ),
+                    trailingIcon = {
+                        IconButton(onClick = { restorePasswordVisible = !restorePasswordVisible }) {
+                            Icon(
+                                imageVector =
+                                    if (restorePasswordVisible) Icons.Filled.VisibilityOff
+                                    else Icons.Filled.Visibility,
+                                contentDescription =
+                                    if (restorePasswordVisible) "Hide password" else "Show password",
+                            )
+                        }
+                    },
                     singleLine = true,
                 )
             },
@@ -140,6 +175,7 @@ fun BackupSettingsScreen(
                 TextButton(
                     onClick = {
                         restorePassword = ""
+                        restorePasswordVisible = false
                         viewModel.consumeOperation()
                     }
                 ) {

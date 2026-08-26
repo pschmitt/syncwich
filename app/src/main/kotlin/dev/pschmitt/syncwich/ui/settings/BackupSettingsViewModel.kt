@@ -11,6 +11,7 @@ import dev.pschmitt.syncwich.data.backup.BackupScheduler
 import dev.pschmitt.syncwich.data.backup.BackupWrongPasswordException
 import dev.pschmitt.syncwich.data.settings.BackupFrequency
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
+import dev.pschmitt.syncwich.sync.SyncScheduler
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,6 +37,7 @@ constructor(
     val settingsRepository: SettingsRepository,
     private val backupManager: BackupManager,
     private val backupScheduler: BackupScheduler,
+    private val syncScheduler: SyncScheduler,
 ) : ViewModel() {
     private val _operation = MutableStateFlow<BackupOperationState>(BackupOperationState.Idle)
     val operation: StateFlow<BackupOperationState> = _operation.asStateFlow()
@@ -62,6 +64,10 @@ constructor(
             try {
                 val manifest = backupManager.restore(uri, password)
                 backupScheduler.schedule()
+                // The restored settings (including the sync network policy) are already in
+                // effect at this point, so scheduleStartup()'s WorkManager constraints honor
+                // whatever the restore brought back (e.g. wifi-only sync).
+                syncScheduler.scheduleStartup()
                 _operation.value =
                     BackupOperationState.Success(
                         "Restored Syncwich backup from ${manifest.appVersionName}"
