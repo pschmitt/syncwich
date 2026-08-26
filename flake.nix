@@ -3,8 +3,12 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # Pinned to a known-good revision: unpinned "latest" briefly shipped a broken cmdline-tools
+    # wrapper (missing .android-wrapped), which broke `nix develop` fleet-wide since this repo had
+    # no committed flake.lock. Sibling fleet repos (augh, nyetbox, jollyfin) pin the same input via
+    # their own flake.lock - this uses the newest revision known to work there.
     android-nixpkgs = {
-      url = "github:tadfisher/android-nixpkgs";
+      url = "github:tadfisher/android-nixpkgs/50c0f56240ca8c9196c42b0f36ba8cc0b0398cfe";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     git-hooks = {
