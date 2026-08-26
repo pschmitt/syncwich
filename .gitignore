@@ -30,3 +30,6 @@ captures/
 
 # Codex session/worktree metadata
 /.codex/
+
+# Playwright MCP browser session data
+/.playwright-mcp/
