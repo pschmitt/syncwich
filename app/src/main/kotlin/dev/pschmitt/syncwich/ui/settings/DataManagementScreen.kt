@@ -111,6 +111,8 @@ private fun DataManagementRow(
         leadingContent = { Icon(icon, contentDescription = null) },
         headlineContent = { Text(title) },
         supportingContent = { Text(subtitle) },
-        trailingContent = { Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null) },
+        trailingContent = {
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
+        },
     )
 }

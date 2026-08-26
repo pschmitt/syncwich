@@ -22,8 +22,10 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class CategoryEditorViewModel
 @Inject
-constructor(savedStateHandle: SavedStateHandle, private val categoryRepository: CategoryRepository) :
-    ViewModel() {
+constructor(
+    savedStateHandle: SavedStateHandle,
+    private val categoryRepository: CategoryRepository,
+) : ViewModel() {
 
     private val route = savedStateHandle.toRoute<Route.CategoryEditor>()
     private val categoryId = route.categoryId

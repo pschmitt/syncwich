@@ -25,9 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 
-/**
- * Shared name-only create/edit form for Categories/Tags/Tools - see [SimpleCatalogItem]'s kdoc.
- */
+/** Shared name-only create/edit form for Categories/Tags/Tools - see [SimpleCatalogItem]'s kdoc. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SimpleCatalogEditorScreen(
@@ -53,7 +51,7 @@ fun SimpleCatalogEditorScreen(
                     }
                 },
             )
-        },
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(innerPadding).padding(16.dp),
@@ -77,7 +75,8 @@ fun SimpleCatalogEditorScreen(
                 isError = validationMessage != null,
                 supportingText = validationMessage?.let { { Text(it) } },
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                keyboardOptions =
+                    KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 enabled = !isSaving,
                 modifier = Modifier.fillMaxWidth(),
             )

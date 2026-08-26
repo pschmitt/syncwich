@@ -48,18 +48,20 @@ constructor(private val organizersApi: OrganizersApi, private val categoryDao: C
                 .onFailure { Timber.w(it, "Category refresh failed; keeping cached data") }
         }
 
-    suspend fun createCategory(name: String): Result<CategoryEntity> =
-        mutate { organizersApi.createCategory(OrganizerMutationDto(name)) }
+    suspend fun createCategory(name: String): Result<CategoryEntity> = mutate {
+        organizersApi.createCategory(OrganizerMutationDto(name))
+    }
 
-    suspend fun updateCategory(categoryId: String, name: String): Result<CategoryEntity> =
-        mutate { organizersApi.updateCategory(categoryId, OrganizerMutationDto(name)) }
+    suspend fun updateCategory(categoryId: String, name: String): Result<CategoryEntity> = mutate {
+        organizersApi.updateCategory(categoryId, OrganizerMutationDto(name))
+    }
 
     suspend fun deleteCategory(categoryId: String): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                    organizersApi.deleteCategory(categoryId).use {}
-                    categoryDao.deleteById(categoryId)
-                }
+                organizersApi.deleteCategory(categoryId).use {}
+                categoryDao.deleteById(categoryId)
+            }
                 .onFailure {
                     Timber.w(it, "Category deletion failed for '$categoryId'; keeping cached data")
                 }
@@ -68,10 +70,10 @@ constructor(private val organizersApi: OrganizersApi, private val categoryDao: C
     private suspend fun mutate(request: suspend () -> OrganizerDto): Result<CategoryEntity> =
         withContext(Dispatchers.IO) {
             runCatching {
-                    val entity = request().toEntity()
-                    categoryDao.upsertAll(listOf(entity))
-                    entity
-                }
+                val entity = request().toEntity()
+                categoryDao.upsertAll(listOf(entity))
+                entity
+            }
                 .onFailure { Timber.w(it, "Category mutation failed; keeping cached data") }
         }
 

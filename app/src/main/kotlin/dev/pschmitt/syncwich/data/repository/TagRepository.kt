@@ -42,28 +42,30 @@ constructor(private val organizersApi: OrganizersApi, private val tagDao: TagDao
                 .onFailure { Timber.w(it, "Tag refresh failed; keeping cached data") }
         }
 
-    suspend fun createTag(name: String): Result<TagEntity> =
-        mutate { organizersApi.createTag(OrganizerMutationDto(name)) }
+    suspend fun createTag(name: String): Result<TagEntity> = mutate {
+        organizersApi.createTag(OrganizerMutationDto(name))
+    }
 
-    suspend fun updateTag(tagId: String, name: String): Result<TagEntity> =
-        mutate { organizersApi.updateTag(tagId, OrganizerMutationDto(name)) }
+    suspend fun updateTag(tagId: String, name: String): Result<TagEntity> = mutate {
+        organizersApi.updateTag(tagId, OrganizerMutationDto(name))
+    }
 
     suspend fun deleteTag(tagId: String): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                    organizersApi.deleteTag(tagId).use {}
-                    tagDao.deleteById(tagId)
-                }
+                organizersApi.deleteTag(tagId).use {}
+                tagDao.deleteById(tagId)
+            }
                 .onFailure { Timber.w(it, "Tag deletion failed for '$tagId'; keeping cached data") }
         }
 
     private suspend fun mutate(request: suspend () -> OrganizerDto): Result<TagEntity> =
         withContext(Dispatchers.IO) {
             runCatching {
-                    val entity = request().toEntity()
-                    tagDao.upsertAll(listOf(entity))
-                    entity
-                }
+                val entity = request().toEntity()
+                tagDao.upsertAll(listOf(entity))
+                entity
+            }
                 .onFailure { Timber.w(it, "Tag mutation failed; keeping cached data") }
         }
 
