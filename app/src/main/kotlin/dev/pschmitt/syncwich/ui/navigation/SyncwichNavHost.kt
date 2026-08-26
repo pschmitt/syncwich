@@ -32,6 +32,12 @@ import dev.pschmitt.syncwich.ui.cookbooks.CookbooksScreen
 import dev.pschmitt.syncwich.ui.foods.FoodEditorScreen
 import dev.pschmitt.syncwich.ui.foods.FoodsScreen
 import dev.pschmitt.syncwich.ui.home.HomeScreen
+import dev.pschmitt.syncwich.ui.organizers.CategoriesScreen
+import dev.pschmitt.syncwich.ui.organizers.CategoryEditorScreen
+import dev.pschmitt.syncwich.ui.organizers.TagEditorScreen
+import dev.pschmitt.syncwich.ui.organizers.TagsScreen
+import dev.pschmitt.syncwich.ui.organizers.ToolEditorScreen
+import dev.pschmitt.syncwich.ui.organizers.ToolsScreen
 import dev.pschmitt.syncwich.ui.initialsync.InitialSyncScreen
 import dev.pschmitt.syncwich.ui.mealplan.MealPlanScreen
 import dev.pschmitt.syncwich.ui.onboarding.OnboardingScreen
@@ -353,6 +359,9 @@ fun SyncwichNavHost(
                 DataManagementScreen(
                     onBack = { navController.popBackStack() },
                     onFoodsClick = { navController.navigate(Route.Foods) },
+                    onCategoriesClick = { navController.navigate(Route.Categories) },
+                    onTagsClick = { navController.navigate(Route.Tags) },
+                    onToolsClick = { navController.navigate(Route.Tools) },
                 )
             }
             composable<Route.Foods> {
@@ -364,6 +373,45 @@ fun SyncwichNavHost(
             }
             composable<Route.FoodEditor> {
                 FoodEditorScreen(
+                    onSaved = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() },
+                )
+            }
+            composable<Route.Categories> {
+                CategoriesScreen(
+                    onBack = { navController.popBackStack() },
+                    onCategoryClick = { id -> navController.navigate(Route.CategoryEditor(id)) },
+                    onCreateClick = { navController.navigate(Route.CategoryEditor()) },
+                )
+            }
+            composable<Route.CategoryEditor> {
+                CategoryEditorScreen(
+                    onSaved = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() },
+                )
+            }
+            composable<Route.Tags> {
+                TagsScreen(
+                    onBack = { navController.popBackStack() },
+                    onTagClick = { id -> navController.navigate(Route.TagEditor(id)) },
+                    onCreateClick = { navController.navigate(Route.TagEditor()) },
+                )
+            }
+            composable<Route.TagEditor> {
+                TagEditorScreen(
+                    onSaved = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() },
+                )
+            }
+            composable<Route.Tools> {
+                ToolsScreen(
+                    onBack = { navController.popBackStack() },
+                    onToolClick = { id -> navController.navigate(Route.ToolEditor(id)) },
+                    onCreateClick = { navController.navigate(Route.ToolEditor()) },
+                )
+            }
+            composable<Route.ToolEditor> {
+                ToolEditorScreen(
                     onSaved = { navController.popBackStack() },
                     onBack = { navController.popBackStack() },
                 )

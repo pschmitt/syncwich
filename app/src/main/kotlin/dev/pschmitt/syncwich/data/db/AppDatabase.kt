@@ -12,6 +12,7 @@ import dev.pschmitt.syncwich.data.db.dao.RecipeStepProgressDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeTimelineEventDao
 import dev.pschmitt.syncwich.data.db.dao.ShoppingListDao
 import dev.pschmitt.syncwich.data.db.dao.TagDao
+import dev.pschmitt.syncwich.data.db.dao.ToolDao
 import dev.pschmitt.syncwich.data.db.entity.CategoryEntity
 import dev.pschmitt.syncwich.data.db.entity.CookbookEntity
 import dev.pschmitt.syncwich.data.db.entity.FoodEntity
@@ -27,6 +28,7 @@ import dev.pschmitt.syncwich.data.db.entity.RecipeTimelineEventEntity
 import dev.pschmitt.syncwich.data.db.entity.ShoppingListEntity
 import dev.pschmitt.syncwich.data.db.entity.ShoppingListItemEntity
 import dev.pschmitt.syncwich.data.db.entity.TagEntity
+import dev.pschmitt.syncwich.data.db.entity.ToolEntity
 
 /**
  * The offline recipe cache - see AGENTS.md's architecture section. Every read path in the app reads
@@ -54,7 +56,10 @@ import dev.pschmitt.syncwich.data.db.entity.TagEntity
             MealPlanEntryEntity::class,
             RecipeCookbookCrossRef::class,
             FoodEntity::class,
+            ToolEntity::class,
         ],
+    // v12: SW-139 adds a cached dictionary of Mealie's recipe-tool organizer (`/api/organizers/
+    // tools`) and mutation support for the already-cached category/tag dictionaries.
     // v11: SW-137 adds a cached dictionary of Mealie's structured ingredient-food catalog
     // (`/api/foods`), independent of any recipe's own (freeform-note) ingredient lines.
     // v10: SW-72 adds durable local completion state for recipe steps.
@@ -74,7 +79,7 @@ import dev.pschmitt.syncwich.data.db.entity.TagEntity
     // this pre-1.0, in their own worktrees, to different version numbers with different entities;
     // reconciled to v4 on merge. No migration path exists yet - see DatabaseModule's
     // fallbackToDestructiveMigration().
-    version = 11,
+    version = 12,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -98,7 +103,9 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun foodDao(): FoodDao
 
+    abstract fun toolDao(): ToolDao
+
     companion object {
-        const val SCHEMA_VERSION = 11
+        const val SCHEMA_VERSION = 12
     }
 }

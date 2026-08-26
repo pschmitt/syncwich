@@ -9,7 +9,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Egg
+import androidx.compose.material.icons.filled.Label
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -26,13 +29,19 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
 /**
- * A menu of Mealie's data-catalog verticals (Foods today; Units/Labels/Categories/Tags/Tools/
+ * A menu of Mealie's data-catalog verticals (Foods/Categories/Tags/Tools today; Units/Labels/
  * Recipe Actions land here as their own rows once built - see SW-139/SW-140 in TODO.md), each
  * reached from Settings' "Data Management" row rather than the flat top-level Settings list.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DataManagementScreen(onBack: () -> Unit, onFoodsClick: () -> Unit) {
+fun DataManagementScreen(
+    onBack: () -> Unit,
+    onFoodsClick: () -> Unit,
+    onCategoriesClick: () -> Unit,
+    onTagsClick: () -> Unit,
+    onToolsClick: () -> Unit,
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -56,6 +65,30 @@ fun DataManagementScreen(onBack: () -> Unit, onFoodsClick: () -> Unit) {
                     title = "Foods",
                     subtitle = "Mealie's structured ingredient catalog",
                     onClick = onFoodsClick,
+                )
+            }
+            item {
+                DataManagementRow(
+                    icon = Icons.Filled.Category,
+                    title = "Categories",
+                    subtitle = "Organize your recipes into categories",
+                    onClick = onCategoriesClick,
+                )
+            }
+            item {
+                DataManagementRow(
+                    icon = Icons.Filled.Label,
+                    title = "Tags",
+                    subtitle = "Label recipes for easier searching",
+                    onClick = onTagsClick,
+                )
+            }
+            item {
+                DataManagementRow(
+                    icon = Icons.Filled.Build,
+                    title = "Tools",
+                    subtitle = "Kitchen equipment recipes can call for",
+                    onClick = onToolsClick,
                 )
             }
         }

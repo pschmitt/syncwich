@@ -2162,32 +2162,44 @@ a data class), and `markdownTypography()` itself is `@Composable`.
       `GET/PUT/DELETE /api/<resource>/{item_id}`):
       - [ ] Units (`/api/units`)
       - [ ] Labels (`/api/groups/labels`) - group-scoped, not `/api`-rooted like the others
-      - [ ] Categories (`/api/organizers/categories`) - this app already has read-only
-            `OrganizersApi.getCategories`/`CategoryEntity`/`CategoryDao`/`CategoryRepository` for
-            recipe filtering; add create/edit/delete UI on top rather than duplicating the data layer
-      - [ ] Tags (`/api/organizers/tags`) - same situation as Categories (`TagRepository` etc.
-            already exist read-only)
-      - [ ] Tools (`/api/organizers/tools`) - fully new, no existing data layer
+      - [x] Categories (`/api/organizers/categories`) - added create/edit/delete on top of the
+            existing read-only `OrganizersApi.getCategories`/`CategoryEntity`/`CategoryDao`/
+            `CategoryRepository` rather than duplicating the data layer; UI is the new shared
+            `SimpleCatalogScreen`/`SimpleCatalogEditorScreen` (a thin `CategoriesScreen`/
+            `CategoryEditorScreen` wrapper), since Categories/Tags/Tools are all identical
+            `{id, name, slug}` organizers - a deliberate, scoped exception to avoiding premature
+            abstraction
+      - [x] Tags (`/api/organizers/tags`) - same treatment as Categories, on top of the existing
+            read-only `TagRepository`/`TagDao`
+      - [x] Tools (`/api/organizers/tools`) - fully new data layer (`ToolEntity`/`ToolDao`/
+            `ToolRepository`), same shared `SimpleCatalog*` UI; `AppDatabase` bumped to v12
       - [ ] Recipe Actions (`/api/households/recipe-actions`) - Mealie's household-level automation
             actions (triggerable per recipe, e.g. webhooks) - a distinct concept from this app's own
             `RecipeActionEntity` (the local favorite/rating cache); pick a different local type name
             to avoid confusion
-- [ ] Confirm each resource's actual field set against a live read (not just the public schema)
-      before modeling its DTO, per this repo's established practice
-- [ ] Decide navigation/IA together with SW-140 (the "Data Management" settings subscreen) rather
-      than bolting each one onto the flat Settings list individually
-- [ ] Add focused test coverage per vertical, mirroring SW-137's tests
+- [x] Confirm each resource's actual field set against a live read (not just the public schema)
+      before modeling its DTO, per this repo's established practice - confirmed `CategoryIn`/
+      `TagIn`/`RecipeToolCreate` are all just `{name}` via `/openapi.json`
+- [x] Decide navigation/IA together with SW-140 (the "Data Management" settings subscreen) rather
+      than bolting each one onto the flat Settings list individually - Categories/Tags/Tools rows
+      added to `DataManagementScreen`
+- [x] Add focused test coverage per vertical, mirroring SW-137's tests - extended
+      `CategoryRepositoryTest`'s create/delete coverage (stands in for Tag/Tool since they mirror
+      `CategoryRepository`'s shape exactly, per this repo's convention of not exhaustively
+      duplicating near-identical coverage)
 
-Status: **not started**.
+Status: **in progress** - Categories/Tags/Tools done and CI-verified; Units/Labels/Recipe Actions
+remain (each needs a dedicated, non-shared screen: Units has more fields, Labels has a color field,
+Recipe Actions needs its own local type name).
 
 ## SW-140: "Data Management" settings subscreen
 
-- [ ] Rename the "Recipe Data" Settings group (`SettingsScreen.kt`) to "Data Management"
-- [ ] Give it its own settings subscreen (a real destination with a back stack, not just a group
-      card on the flat Settings list) that hosts Foods (SW-137) and, once built, every SW-139
-      vertical (Units/Labels/Categories/Tags/Tools/Recipe Actions) as rows navigating into their
-      own list/editor screens - mirrors how "Server"/"Sync"/"Backup" etc. are already grouped under
-      Settings, but one level deeper since this group is on track to hold many rows
-- [ ] Verify the new subscreen visually on a real device
+- [x] Rename the "Recipe Data" Settings group (`SettingsScreen.kt`) to "Data Management"
+- [x] Give it its own settings subscreen (`DataManagementScreen`/`Route.DataManagement`, a real
+      destination with a back stack) that hosts Foods (SW-137) and, so far, Categories/Tags/Tools
+      (SW-139) as rows navigating into their own list/editor screens - mirrors how "Server"/"Sync"/
+      "Backup" etc. are already grouped under Settings, one level deeper. Units/Labels/Recipe
+      Actions rows land here once built.
+- [x] Verify the new subscreen visually on a real device
 
-Status: **not started**.
+Status: **done** (new SW-139 verticals get their own row here as they land).

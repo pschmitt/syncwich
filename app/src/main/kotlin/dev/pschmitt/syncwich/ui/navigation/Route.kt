@@ -73,6 +73,21 @@ sealed interface Route {
     @Serializable
     data class FoodEditor(val foodId: String = "", val seedName: String? = null) : Route
 
+    /** Data Management > Categories - SW-139. */
+    @Serializable data object Categories : Route
+
+    @Serializable data class CategoryEditor(val categoryId: String = "") : Route
+
+    /** Data Management > Tags - SW-139. */
+    @Serializable data object Tags : Route
+
+    @Serializable data class TagEditor(val tagId: String = "") : Route
+
+    /** Data Management > Tools - SW-139. */
+    @Serializable data object Tools : Route
+
+    @Serializable data class ToolEditor(val toolId: String = "") : Route
+
     @Serializable data object Settings : Route
 
     /** Open-source dependency and license list, reached from Settings > About. */
@@ -159,6 +174,12 @@ enum class TopLevelDestination(
             Route.DataManagement::class,
             Route.Foods::class,
             Route.FoodEditor::class,
+            Route.Categories::class,
+            Route.CategoryEditor::class,
+            Route.Tags::class,
+            Route.TagEditor::class,
+            Route.Tools::class,
+            Route.ToolEditor::class,
         ),
     ),
 }

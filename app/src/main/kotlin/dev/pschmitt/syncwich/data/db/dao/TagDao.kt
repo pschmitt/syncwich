@@ -13,7 +13,11 @@ interface TagDao {
     @Query("SELECT * FROM tags ORDER BY name COLLATE NOCASE ASC")
     fun observeAll(): Flow<List<TagEntity>>
 
+    @Query("SELECT * FROM tags WHERE id = :id") fun observeById(id: String): Flow<TagEntity?>
+
     @Upsert suspend fun upsertAll(tags: List<TagEntity>)
+
+    @Query("DELETE FROM tags WHERE id = :id") suspend fun deleteById(id: String)
 
     @Query("DELETE FROM tags") suspend fun deleteAll()
 
