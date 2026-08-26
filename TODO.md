@@ -2187,6 +2187,11 @@ a data class), and `markdownTypography()` itself is `@Composable`.
       `CategoryRepositoryTest`'s create/delete coverage (stands in for Tag/Tool since they mirror
       `CategoryRepository`'s shape exactly, per this repo's convention of not exhaustively
       duplicating near-identical coverage)
+- [x] Wire each vertical into the background sync (`SyncWorker`), not just on-demand
+      screen-open/pull-to-refresh - Categories/Tags were already refreshed there (pre-dating this
+      ticket, for recipe-filtering); added `foodRepository.refreshFoods()` and
+      `toolRepository.refreshTools()` alongside them so Foods/Tools stay current offline too, per
+      user report that they weren't being synced
 
 Status: **in progress** - Categories/Tags/Tools done and CI-verified; Units/Labels/Recipe Actions
 remain (each needs a dedicated, non-shared screen: Units has more fields, Labels has a color field,
