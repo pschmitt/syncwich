@@ -123,8 +123,10 @@ import coil3.compose.AsyncImagePainter
 import coil3.compose.rememberAsyncImagePainter
 import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
 import com.mikepenz.markdown.m3.Markdown
+import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.ImageData
 import com.mikepenz.markdown.model.ImageTransformer
+import com.mikepenz.markdown.model.MarkdownTypography
 import dev.pschmitt.syncwich.data.api.dto.RecipeDetailDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeIngredientDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeInstructionDto
@@ -1073,8 +1075,9 @@ internal fun InstructionRow(
             }
             val stepContent = stripLeadingStepNumber(stripRecipeImageSyntax(instruction.text))
             Markdown(
-                content = if (completed) "<del>$stepContent</del>" else stepContent,
+                content = stepContent,
                 imageTransformer = SafeRecipeImageTransformer,
+                typography = completedStepTypography(markdownTypography(), completed = completed),
                 modifier = Modifier.fillMaxWidth(),
             )
             if (imageReferences.isNotEmpty()) {
@@ -1103,6 +1106,28 @@ internal fun InstructionRow(
             }
         }
     }
+}
+
+/**
+ * The markdown-renderer library doesn't interpret raw inline HTML (e.g. `<del>`), so a completed
+ * step's strikethrough has to come from the typography itself - copies [base]'s text-bearing styles
+ * with [TextDecoration.LineThrough] added when [completed], leaving every other typography detail
+ * (font size, headers, code, etc.) exactly as the library's own default already resolved.
+ */
+@Composable
+private fun completedStepTypography(
+    base: MarkdownTypography,
+    completed: Boolean,
+): MarkdownTypography {
+    if (!completed) return base
+    val decoration = TextDecoration.LineThrough
+    return markdownTypography(
+        text = base.text.copy(textDecoration = decoration),
+        paragraph = base.paragraph.copy(textDecoration = decoration),
+        ordered = base.ordered.copy(textDecoration = decoration),
+        bullet = base.bullet.copy(textDecoration = decoration),
+        list = base.list.copy(textDecoration = decoration),
+    )
 }
 
 private val MARKDOWN_IMAGE_SYNTAX =
