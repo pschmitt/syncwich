@@ -2102,3 +2102,22 @@ checks passed.
       focused test coverage, per this repo's established pattern for new verticals
 
 Status: **not started**.
+
+## SW-138: Strike through completed recipe step text
+
+- [ ] `InstructionRow` (`ui/recipes/RecipeDetailScreen.kt`, shared by the inline step list and the
+      full-screen steps dialog) already applies `TextDecoration.LineThrough` to a step's title when
+      checked off, but the step body wraps the markdown content in a literal `<del>...</del>` string
+      instead - `com.mikepenz:multiplatform-markdown-renderer` (CommonMark-based) doesn't interpret
+      raw inline HTML as styled text, so this almost certainly renders as literal `<del>`/`</del>`
+      characters rather than an actual strikethrough. Confirm this live before assuming it's the
+      only issue.
+- [ ] Replace the `<del>` wrapping with a real strikethrough render for the step body text -
+      likely needs post-processing the rendered `Markdown` composable's text style, or building the
+      completed step's `AnnotatedString` directly with `TextDecoration.LineThrough` instead of
+      going through the raw Markdown string, since the renderer library has no built-in "wrap this
+      block in a decoration" hook
+- [ ] Verify visually on a real device that checking off a step now shows genuine struck-through
+      text, and that toggling it back off restores normal styling
+
+Status: **not started**.
