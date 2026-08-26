@@ -11,6 +11,7 @@ import dev.pschmitt.syncwich.BuildConfig
 import dev.pschmitt.syncwich.data.api.AuthInterceptor
 import dev.pschmitt.syncwich.data.api.CookbooksApi
 import dev.pschmitt.syncwich.data.api.DynamicBaseUrlInterceptor
+import dev.pschmitt.syncwich.data.api.FoodsApi
 import dev.pschmitt.syncwich.data.api.MealPlanApi
 import dev.pschmitt.syncwich.data.api.OrganizersApi
 import dev.pschmitt.syncwich.data.api.RecipesApi
@@ -140,6 +141,10 @@ object NetworkModule {
     @Singleton
     fun provideTimelineApi(retrofit: Retrofit): TimelineApi =
         retrofit.create(TimelineApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideFoodsApi(retrofit: Retrofit): FoodsApi = retrofit.create(FoodsApi::class.java)
 
     private const val API_CACHE_BYTES = 32L * 1024L * 1024L
 }

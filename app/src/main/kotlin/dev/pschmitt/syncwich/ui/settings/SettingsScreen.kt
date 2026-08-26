@@ -16,6 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.Egg
 import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Sync
@@ -63,6 +64,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onCategoryClick: (SettingsCategory) -> Unit,
     modifier: Modifier = Modifier,
+    onFoodsClick: () -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier,
@@ -93,6 +95,26 @@ fun SettingsScreen(
                 SettingsGroupCard(title = "Personalization", icon = Icons.Filled.Palette) {
                     SettingsCategoryRow(SettingsCategory.Appearance, onCategoryClick)
                     SettingsCategoryRow(SettingsCategory.NavigationBar, onCategoryClick)
+                }
+            }
+            item {
+                SettingsGroupCard(title = "Recipe Data", icon = Icons.Filled.Egg) {
+                    SettingsListItem(
+                        modifier =
+                            Modifier.fillMaxWidth()
+                                .clickable(role = Role.Button, onClick = onFoodsClick)
+                                .semantics {
+                                    contentDescription =
+                                        "Foods: Mealie's structured ingredient catalog"
+                                    role = Role.Button
+                                },
+                        leadingContent = { Icon(Icons.Filled.Egg, contentDescription = null) },
+                        headlineContent = { Text("Foods") },
+                        supportingContent = { Text("Mealie's structured ingredient catalog") },
+                        trailingContent = {
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
+                        },
+                    )
                 }
             }
             item {

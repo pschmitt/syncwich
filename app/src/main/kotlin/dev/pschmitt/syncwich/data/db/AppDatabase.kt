@@ -4,6 +4,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import dev.pschmitt.syncwich.data.db.dao.CategoryDao
 import dev.pschmitt.syncwich.data.db.dao.CookbookDao
+import dev.pschmitt.syncwich.data.db.dao.FoodDao
 import dev.pschmitt.syncwich.data.db.dao.MealPlanDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeActionDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeDao
@@ -13,6 +14,7 @@ import dev.pschmitt.syncwich.data.db.dao.ShoppingListDao
 import dev.pschmitt.syncwich.data.db.dao.TagDao
 import dev.pschmitt.syncwich.data.db.entity.CategoryEntity
 import dev.pschmitt.syncwich.data.db.entity.CookbookEntity
+import dev.pschmitt.syncwich.data.db.entity.FoodEntity
 import dev.pschmitt.syncwich.data.db.entity.MealPlanEntryEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeActionEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeCategoryCrossRef
@@ -51,7 +53,10 @@ import dev.pschmitt.syncwich.data.db.entity.TagEntity
             ShoppingListItemEntity::class,
             MealPlanEntryEntity::class,
             RecipeCookbookCrossRef::class,
+            FoodEntity::class,
         ],
+    // v11: SW-137 adds a cached dictionary of Mealie's structured ingredient-food catalog
+    // (`/api/foods`), independent of any recipe's own (freeform-note) ingredient lines.
     // v10: SW-72 adds durable local completion state for recipe steps.
     // v9: Recover installs that were created with a conflicting v8 schema identity. The cache is
     // intentionally rebuildable, so the existing destructive-migration policy recreates it and
@@ -69,7 +74,7 @@ import dev.pschmitt.syncwich.data.db.entity.TagEntity
     // this pre-1.0, in their own worktrees, to different version numbers with different entities;
     // reconciled to v4 on merge. No migration path exists yet - see DatabaseModule's
     // fallbackToDestructiveMigration().
-    version = 10,
+    version = 11,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -91,7 +96,9 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun cookbookDao(): CookbookDao
 
+    abstract fun foodDao(): FoodDao
+
     companion object {
-        const val SCHEMA_VERSION = 10
+        const val SCHEMA_VERSION = 11
     }
 }

@@ -59,6 +59,17 @@ sealed interface Route {
     /** Empty [cookbookId] opens a create draft; a cached id opens an edit draft. */
     @Serializable data class CookbookEditor(val cookbookId: String = "") : Route
 
+    /** Mealie's structured ingredient-food catalog - see SW-137. */
+    @Serializable data object Foods : Route
+
+    /**
+     * Empty [foodId] opens a create draft, optionally pre-filled from [seedName] (a long-pressed
+     * recipe ingredient's text - see RecipeDetailScreen's IngredientRow); a cached id opens an edit
+     * draft.
+     */
+    @Serializable
+    data class FoodEditor(val foodId: String = "", val seedName: String? = null) : Route
+
     @Serializable data object Settings : Route
 
     /** Open-source dependency and license list, reached from Settings > About. */
@@ -142,6 +153,8 @@ enum class TopLevelDestination(
             Route.SettingsCategory::class,
             Route.SettingsConnection::class,
             Route.Libraries::class,
+            Route.Foods::class,
+            Route.FoodEditor::class,
         ),
     ),
 }

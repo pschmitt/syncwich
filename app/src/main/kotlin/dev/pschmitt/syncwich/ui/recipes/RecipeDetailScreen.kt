@@ -1,9 +1,11 @@
 package dev.pschmitt.syncwich.ui.recipes
 
 import android.os.SystemClock
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -149,6 +151,7 @@ fun RecipeDetailScreen(
     modifier: Modifier = Modifier,
     onEditClick: (recipeId: String, slug: String) -> Unit = { _, _ -> },
     onDeleted: () -> Unit = {},
+    onEditIngredient: (String) -> Unit = {},
     viewModel: RecipeDetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -271,6 +274,7 @@ fun RecipeDetailScreen(
                             onOpenCookbook = onOpenCookbook,
                             onOpenTag = onOpenTag,
                             onOpenCategory = onOpenCategory,
+                            onEditIngredient = onEditIngredient,
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
@@ -406,6 +410,7 @@ internal fun RecipeDetailContent(
     onOpenCookbook: (String) -> Unit,
     onOpenTag: (String) -> Unit,
     onOpenCategory: (String) -> Unit = {},
+    onEditIngredient: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val imageUrl = imageIndex.coverUrl
@@ -518,7 +523,11 @@ internal fun RecipeDetailContent(
                     Column {
                         SectionHeader(icon = Icons.Filled.Checklist, title = "Ingredients")
                         recipe.recipeIngredient.forEach { ingredient ->
-                            IngredientRow(ingredient, checklistEnabled = ingredientChecklistEnabled)
+                            IngredientRow(
+                                ingredient,
+                                checklistEnabled = ingredientChecklistEnabled,
+                                onLongPress = onEditIngredient,
+                            )
                         }
                     }
                 }
@@ -1012,15 +1021,27 @@ private fun LabeledRow(icon: ImageVector, label: String, value: String) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun IngredientRow(ingredient: RecipeIngredientDto, checklistEnabled: Boolean) {
+private fun IngredientRow(
+    ingredient: RecipeIngredientDto,
+    checklistEnabled: Boolean,
+    onLongPress: (String) -> Unit = {},
+) {
     val text =
         ingredient.display?.takeIf { it.isNotBlank() }
             ?: ingredient.note?.takeIf { it.isNotBlank() }
     if (text.isNullOrBlank()) return
     var checked by rememberSaveable { mutableStateOf(false) }
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 1.dp),
+        modifier =
+            Modifier.fillMaxWidth()
+                .combinedClickable(
+                    onClick = {},
+                    onLongClick = { onLongPress(text) },
+                    onLongClickLabel = "Edit ingredient in the food catalog",
+                )
+                .padding(horizontal = 12.dp, vertical = 1.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (checklistEnabled) {

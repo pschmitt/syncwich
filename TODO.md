@@ -2089,19 +2089,42 @@ checks passed.
 
 ## SW-137: Food/ingredients management UI
 
-- [ ] Confirm whether Mealie exposes a structured Foods API (`/api/foods` or similar master
-      ingredient data) to back this - `RecipeDetailDto`'s existing kdoc notes this server's
-      recipes currently carry freeform-note ingredients with no structured food/unit data, so this
-      needs a live-schema check before any DTO/repository work starts
-- [ ] Add a dedicated ingredients/food management screen: list, create, edit, and delete entries
-- [ ] Add a long-press action on each ingredient row in the recipe detail/editor screens that opens
-      an edit affordance for that ingredient
-- [ ] Wire a navigation entry point to the new management screen (Settings submenu or a top-level
-      destination - decide which fits the existing IA)
-- [ ] Preserve offline-first behavior (cache-first reads, no data loss on failed mutations) and add
+- [x] Confirm whether Mealie exposes a structured Foods API to back this - confirmed live (read-only,
+      "Mealie (AI Agent)" account) against v3.24.0: `GET/POST /api/foods` and
+      `GET/PUT/DELETE /api/foods/{item_id}`, same `PagedResponseDto` envelope as `/api/recipes`. This
+      catalog is populated (189 real foods) even though, per `RecipeDetailDto`'s existing kdoc, this
+      server's recipe ingredient lines don't reference it - the catalog is edited standalone, not
+      resolved automatically from a recipe
+- [x] Add a dedicated ingredients/food management screen: list, create, edit, and delete entries -
+      `FoodsScreen`/`FoodsViewModel` (search, delete-with-confirmation) and
+      `FoodEditorScreen`/`FoodEditorViewModel`/`FoodEditorDraft` (create/edit, mirrors
+      `CookbookEditorScreen`'s explicit-save/cache-first-on-failure pattern), backed by
+      `FoodsApi`/`FoodEntity`/`FoodDao`/`FoodRepository` (mirrors `TagRepository`'s refresh shape and
+      `CookbookRepository`'s mutation shape; `AppDatabase` bumped to v11)
+- [x] Add a long-press action on each ingredient row in the recipe detail screen that opens an edit
+      affordance for that ingredient - `IngredientRow` gained `combinedClickable`'s `onLongClick`,
+      seeding a new-food draft's name from the ingredient's display text (there's no structured food
+      reference to resolve on this server, so the seed is a starting point the user trims/edits, not
+      an exact match)
+- [x] Wire a navigation entry point to the new management screen - a new "Recipe Data" Settings group
+      (`Route.Foods`/`Route.FoodEditor`, included in `SETTINGS`'s `routeTypes` alongside `Libraries`)
+- [x] Preserve offline-first behavior (cache-first reads, no data loss on failed mutations) and add
       focused test coverage, per this repo's established pattern for new verticals
 
-Status: **not started**.
+Status: **done**, 2026-08-26. `just check` (ktfmtCheck, unit tests including new `FoodApiDtoTest`
+pinned to a real captured `/api/foods` response, `FoodRepositoryTest`, `FoodSearchTest`,
+`FoodEditorDraftTest`, Android Lint) green on rofl-13; a full clean `assembleDebug` also passed.
+Verified live on the Zenfone 10: the real Mealie server was unreachable from this device this
+session (a device-specific network fault, confirmed unrelated to this app - `curl` to the same host
+timed out from this device while succeeding instantly from two other test devices and the build
+host), so the release app's already-stored credentials (preserved across every `adb install -r`
+this session) were carried into a fresh debug install via a cache-free settings-only backup/restore
+(bypasses both onboarding's network validation and the schema-version check, since no cache entry
+means no schema check), then Room was seeded offline via `run-as`/`sqlite3` with two foods and a
+recipe with two ingredients. Confirmed: the Foods list renders seeded entries with search and
+delete-with-confirmation; tapping a food opens the editor correctly pre-filled from cache;
+long-pressing a recipe ingredient opens a "New food" draft pre-seeded with that ingredient's text;
+no crashes throughout.
 
 ## SW-138: Strike through completed recipe step text
 

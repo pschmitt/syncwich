@@ -10,6 +10,7 @@ import dagger.hilt.components.SingletonComponent
 import dev.pschmitt.syncwich.data.db.AppDatabase
 import dev.pschmitt.syncwich.data.db.dao.CategoryDao
 import dev.pschmitt.syncwich.data.db.dao.CookbookDao
+import dev.pschmitt.syncwich.data.db.dao.FoodDao
 import dev.pschmitt.syncwich.data.db.dao.MealPlanDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeActionDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeDao
@@ -56,4 +57,6 @@ object DatabaseModule {
     @Provides fun provideMealPlanDao(database: AppDatabase): MealPlanDao = database.mealPlanDao()
 
     @Provides fun provideCookbookDao(database: AppDatabase): CookbookDao = database.cookbookDao()
+
+    @Provides fun provideFoodDao(database: AppDatabase): FoodDao = database.foodDao()
 }

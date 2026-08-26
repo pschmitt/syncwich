@@ -29,6 +29,8 @@ import androidx.navigation.toRoute
 import dev.pschmitt.syncwich.ui.cookbooks.CookbookDetailScreen
 import dev.pschmitt.syncwich.ui.cookbooks.CookbookEditorScreen
 import dev.pschmitt.syncwich.ui.cookbooks.CookbooksScreen
+import dev.pschmitt.syncwich.ui.foods.FoodEditorScreen
+import dev.pschmitt.syncwich.ui.foods.FoodsScreen
 import dev.pschmitt.syncwich.ui.home.HomeScreen
 import dev.pschmitt.syncwich.ui.initialsync.InitialSyncScreen
 import dev.pschmitt.syncwich.ui.mealplan.MealPlanScreen
@@ -343,6 +345,20 @@ fun SyncwichNavHost(
                     onCategoryClick = { category ->
                         navController.navigate(Route.SettingsCategory(category))
                     },
+                    onFoodsClick = { navController.navigate(Route.Foods) },
+                )
+            }
+            composable<Route.Foods> {
+                FoodsScreen(
+                    onBack = { navController.popBackStack() },
+                    onFoodClick = { foodId -> navController.navigate(Route.FoodEditor(foodId)) },
+                    onCreateClick = { navController.navigate(Route.FoodEditor()) },
+                )
+            }
+            composable<Route.FoodEditor> {
+                FoodEditorScreen(
+                    onSaved = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() },
                 )
             }
             composable<Route.SettingsCategory> { backStackEntry ->
@@ -383,6 +399,9 @@ fun SyncwichNavHost(
                     onOpenTag = { tagId -> navController.navigate(Route.TagRecipes(tagId)) },
                     onOpenCategory = { categoryId ->
                         navController.navigate(Route.CategoryRecipes(categoryId))
+                    },
+                    onEditIngredient = { seedName ->
+                        navController.navigate(Route.FoodEditor(seedName = seedName))
                     },
                 )
             }
