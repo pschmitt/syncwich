@@ -147,9 +147,7 @@ fun FoodsScreen(
                     Text("Delete")
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { pendingDelete = null }) { Text("Cancel") }
-            },
+            dismissButton = { TextButton(onClick = { pendingDelete = null }) { Text("Cancel") } },
         )
     }
 }

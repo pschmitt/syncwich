@@ -28,17 +28,17 @@ constructor(private val foodsApi: FoodsApi, private val foodDao: FoodDao) {
     suspend fun refreshFoods(): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                    val allItems = mutableListOf<FoodDto>()
-                    var page = 1
-                    while (true) {
-                        val response =
-                            foodsApi.getFoods(page = page, perPage = FoodsApi.DEFAULT_PAGE_SIZE)
-                        allItems += response.items
-                        if (response.items.isEmpty() || page >= response.totalPages) break
-                        page++
-                    }
-                    foodDao.replaceAll(allItems.map { it.toEntity() })
+                val allItems = mutableListOf<FoodDto>()
+                var page = 1
+                while (true) {
+                    val response =
+                        foodsApi.getFoods(page = page, perPage = FoodsApi.DEFAULT_PAGE_SIZE)
+                    allItems += response.items
+                    if (response.items.isEmpty() || page >= response.totalPages) break
+                    page++
                 }
+                foodDao.replaceAll(allItems.map { it.toEntity() })
+            }
                 .onFailure { Timber.w(it, "Food refresh failed; keeping cached data") }
         }
 
@@ -57,9 +57,9 @@ constructor(private val foodsApi: FoodsApi, private val foodDao: FoodDao) {
     suspend fun deleteFood(foodId: String): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                    foodsApi.deleteFood(foodId).use {}
-                    foodDao.deleteById(foodId)
-                }
+                foodsApi.deleteFood(foodId).use {}
+                foodDao.deleteById(foodId)
+            }
                 .onFailure {
                     Timber.w(it, "Food deletion failed for '$foodId'; keeping cached data")
                 }
@@ -68,10 +68,10 @@ constructor(private val foodsApi: FoodsApi, private val foodDao: FoodDao) {
     private suspend fun mutateFood(request: suspend () -> FoodDto): Result<FoodEntity> =
         withContext(Dispatchers.IO) {
             runCatching {
-                    val entity = request().toEntity()
-                    foodDao.upsertAll(listOf(entity))
-                    entity
-                }
+                val entity = request().toEntity()
+                foodDao.upsertAll(listOf(entity))
+                entity
+            }
                 .onFailure { Timber.w(it, "Food mutation failed; keeping cached data") }
         }
 
