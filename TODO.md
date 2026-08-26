@@ -2086,3 +2086,19 @@ Status: done, 2026-08-19. Verified on the Zenfone 10 against disposable Mealie v
 OIDC: the in-app provider login, Mealie callback exchange, encrypted OIDC-session persistence,
 credential test, and initial sync all completed successfully. Remote ktfmt, unit-test, and lint
 checks passed.
+
+## SW-137: Food/ingredients management UI
+
+- [ ] Confirm whether Mealie exposes a structured Foods API (`/api/foods` or similar master
+      ingredient data) to back this - `RecipeDetailDto`'s existing kdoc notes this server's
+      recipes currently carry freeform-note ingredients with no structured food/unit data, so this
+      needs a live-schema check before any DTO/repository work starts
+- [ ] Add a dedicated ingredients/food management screen: list, create, edit, and delete entries
+- [ ] Add a long-press action on each ingredient row in the recipe detail/editor screens that opens
+      an edit affordance for that ingredient
+- [ ] Wire a navigation entry point to the new management screen (Settings submenu or a top-level
+      destination - decide which fits the existing IA)
+- [ ] Preserve offline-first behavior (cache-first reads, no data loss on failed mutations) and add
+      focused test coverage, per this repo's established pattern for new verticals
+
+Status: **not started**.
