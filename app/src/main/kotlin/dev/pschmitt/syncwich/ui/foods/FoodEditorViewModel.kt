@@ -32,10 +32,11 @@ sealed interface FoodEditorSaveState {
  * Coordinates one explicit food mutation without replacing the user's draft on failure.
  *
  * A long-pressed recipe ingredient only ever carries [Route.FoodEditor.seedName] (no `foodId` -
- * there's no structured food reference to follow, see [dev.pschmitt.syncwich.data.api.dto.FoodDto]'s
- * kdoc), so that path alone would always create a brand-new food - including a duplicate of one
- * that already matches by name. [resolveExistingFoodMatch] looks the seeded text up against the
- * cached food dictionary first and switches into a real edit of the matching entry when found.
+ * there's no structured food reference to follow, see
+ * [dev.pschmitt.syncwich.data.api.dto.FoodDto]'s kdoc), so that path alone would always create a
+ * brand-new food - including a duplicate of one that already matches by name.
+ * [resolveExistingFoodMatch] looks the seeded text up against the cached food dictionary first and
+ * switches into a real edit of the matching entry when found.
  */
 @HiltViewModel
 class FoodEditorViewModel
@@ -121,7 +122,8 @@ constructor(savedStateHandle: SavedStateHandle, private val foodRepository: Food
 
     private fun resolveExistingFoodMatch(seedName: String) {
         viewModelScope.launch {
-            val match = findFoodMatch(foodRepository.observeFoods().first(), seedName) ?: return@launch
+            val match =
+                findFoodMatch(foodRepository.observeFoods().first(), seedName) ?: return@launch
             if (draftTouched) return@launch
             _editingFoodId.value = match.id
             _draft.value = FoodEditorDraft.from(match)
@@ -137,10 +139,10 @@ constructor(savedStateHandle: SavedStateHandle, private val foodRepository: Food
 }
 
 /**
- * Finds the cached food, if any, that a freeform ingredient line (e.g. "2 cups all-purpose
- * flour") most specifically names - a whole-word, case-insensitive match of the food's name or
- * plural name anywhere in the text. Ties (or no match) prefer not guessing: the longest matching
- * name wins, since it's the most specific; a genuine tie falls back to list order.
+ * Finds the cached food, if any, that a freeform ingredient line (e.g. "2 cups all-purpose flour")
+ * most specifically names - a whole-word, case-insensitive match of the food's name or plural name
+ * anywhere in the text. Ties (or no match) prefer not guessing: the longest matching name wins,
+ * since it's the most specific; a genuine tie falls back to list order.
  */
 internal fun findFoodMatch(foods: List<FoodEntity>, ingredientText: String): FoodEntity? {
     val haystack = ingredientText.lowercase()
