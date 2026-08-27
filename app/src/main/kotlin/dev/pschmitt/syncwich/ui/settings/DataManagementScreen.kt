@@ -31,8 +31,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
 /**
- * A menu of Mealie's data-catalog verticals (SW-139/SW-140 in TODO.md), each reached from
- * Settings' "Data Management" row rather than the flat top-level Settings list.
+ * A menu of Mealie's data-catalog verticals (SW-139/SW-140 in TODO.md), each reached from Settings'
+ * "Data Management" row rather than the flat top-level Settings list.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

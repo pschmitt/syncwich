@@ -107,5 +107,4 @@ constructor(savedStateHandle: SavedStateHandle, private val labelRepository: Lab
     }
 }
 
-private fun isValidHexColor(value: String): Boolean =
-    Regex("^#[0-9a-fA-F]{6}$").matches(value)
+private fun isValidHexColor(value: String): Boolean = Regex("^#[0-9a-fA-F]{6}$").matches(value)

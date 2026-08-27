@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -32,7 +33,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -53,8 +53,9 @@ fun LabelEditorScreen(
     val isSaving = saveState is LabelEditorSaveState.Saving
     val validationMessage = (saveState as? LabelEditorSaveState.Error)?.message
     val nameErrorMessage = validationMessage?.takeIf { it == "Enter a label name" }
-    val colorErrorMessage =
-        validationMessage?.takeIf { it == "Color must be a hex code like #959595" }
+    val colorErrorMessage = validationMessage?.takeIf {
+        it == "Color must be a hex code like #959595"
+    }
 
     LaunchedEffect(saveState) { if (saveState is LabelEditorSaveState.Saved) onSaved() }
 
@@ -108,8 +109,7 @@ fun LabelEditorScreen(
                 ) {
                     androidx.compose.foundation.layout.Box(
                         modifier =
-                            Modifier.size(40.dp)
-                                .background(parseLabelColor(color), CircleShape)
+                            Modifier.size(40.dp).background(parseLabelColor(color), CircleShape)
                     )
                     OutlinedTextField(
                         value = color,
@@ -123,9 +123,10 @@ fun LabelEditorScreen(
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
-                if (validationMessage != null &&
-                    nameErrorMessage == null &&
-                    colorErrorMessage == null
+                if (
+                    validationMessage != null &&
+                        nameErrorMessage == null &&
+                        colorErrorMessage == null
                 ) {
                     Card(
                         colors =

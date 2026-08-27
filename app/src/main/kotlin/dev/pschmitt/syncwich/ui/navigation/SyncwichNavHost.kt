@@ -31,10 +31,10 @@ import dev.pschmitt.syncwich.ui.cookbooks.CookbookEditorScreen
 import dev.pschmitt.syncwich.ui.cookbooks.CookbooksScreen
 import dev.pschmitt.syncwich.ui.foods.FoodEditorScreen
 import dev.pschmitt.syncwich.ui.foods.FoodsScreen
-import dev.pschmitt.syncwich.ui.labels.LabelEditorScreen
-import dev.pschmitt.syncwich.ui.labels.LabelsScreen
 import dev.pschmitt.syncwich.ui.home.HomeScreen
 import dev.pschmitt.syncwich.ui.initialsync.InitialSyncScreen
+import dev.pschmitt.syncwich.ui.labels.LabelEditorScreen
+import dev.pschmitt.syncwich.ui.labels.LabelsScreen
 import dev.pschmitt.syncwich.ui.mealplan.MealPlanScreen
 import dev.pschmitt.syncwich.ui.onboarding.OnboardingScreen
 import dev.pschmitt.syncwich.ui.organizers.CategoriesScreen
@@ -52,13 +52,13 @@ import dev.pschmitt.syncwich.ui.recipes.RecipeTimelineScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipesScreen
 import dev.pschmitt.syncwich.ui.settings.ConnectionSettingsScreen
 import dev.pschmitt.syncwich.ui.settings.DataManagementScreen
-import dev.pschmitt.syncwich.ui.units.UnitEditorScreen
-import dev.pschmitt.syncwich.ui.units.UnitsScreen
 import dev.pschmitt.syncwich.ui.settings.LibrariesScreen
 import dev.pschmitt.syncwich.ui.settings.SettingsCategoryScreen
 import dev.pschmitt.syncwich.ui.settings.SettingsScreen
 import dev.pschmitt.syncwich.ui.shoppinglists.ShoppingListDetailScreen
 import dev.pschmitt.syncwich.ui.shoppinglists.ShoppingListsScreen
+import dev.pschmitt.syncwich.ui.units.UnitEditorScreen
+import dev.pschmitt.syncwich.ui.units.UnitsScreen
 
 private data class TopLevelNavItem(
     val destination: TopLevelDestination,

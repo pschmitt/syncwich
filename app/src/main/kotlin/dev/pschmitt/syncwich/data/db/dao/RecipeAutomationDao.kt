@@ -22,7 +22,9 @@ interface RecipeAutomationDao {
 
     @Query("DELETE FROM recipe_automations") suspend fun deleteAll()
 
-    /** Atomically replaces the whole recipe-action dictionary - see [CategoryDao.replaceAll]'s kdoc. */
+    /**
+     * Atomically replaces the whole recipe-action dictionary - see [CategoryDao.replaceAll]'s kdoc.
+     */
     @Transaction
     suspend fun replaceAll(automations: List<RecipeAutomationEntity>) {
         deleteAll()

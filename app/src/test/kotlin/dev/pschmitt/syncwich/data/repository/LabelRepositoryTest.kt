@@ -20,11 +20,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Verifies the "hard requirement" from AGENTS.md's architecture section (see
- * [FoodRepositoryTest]'s equivalent coverage), plus [LabelUpdateDto]'s specific risk: unlike
- * Categories/Tags/Tools, Mealie's label `PUT` requires `groupId` in the request body itself, not
- * just the path - [RecipeAutomationRepository] has the identical shape/risk (`groupId` +
- * `householdId`), so this coverage stands in for both (SW-139).
+ * Verifies the "hard requirement" from AGENTS.md's architecture section (see [FoodRepositoryTest]'s
+ * equivalent coverage), plus [LabelUpdateDto]'s specific risk: unlike Categories/Tags/Tools,
+ * Mealie's label `PUT` requires `groupId` in the request body itself, not just the
+ * path - [RecipeAutomationRepository] has the identical shape/risk (`groupId` + `householdId`), so
+ * this coverage stands in for both (SW-139).
  */
 class LabelRepositoryTest {
 
@@ -32,14 +32,27 @@ class LabelRepositoryTest {
     fun `updateLabel round-trips groupId from the cached entity`() = runTest {
         val labelDao =
             FakeLabelDao(
-                seed = listOf(LabelEntity(id = "label-1", groupId = "group-1", name = "Old", color = "#111111"))
+                seed =
+                    listOf(
+                        LabelEntity(
+                            id = "label-1",
+                            groupId = "group-1",
+                            name = "Old",
+                            color = "#111111",
+                        )
+                    )
             )
         var capturedRequest: LabelUpdateDto? = null
         val labelsApi =
             FakeLabelsApi(
                 updateResponse = { request ->
                     capturedRequest = request
-                    LabelDto(id = "label-1", groupId = request.groupId, name = request.name, color = request.color)
+                    LabelDto(
+                        id = "label-1",
+                        groupId = request.groupId,
+                        name = request.name,
+                        color = request.color,
+                    )
                 }
             )
         val repository = LabelRepository(labelsApi, labelDao)
@@ -53,7 +66,8 @@ class LabelRepositoryTest {
 
     @Test
     fun `a failed updateLabel leaves the cached row untouched`() = runTest {
-        val cached = LabelEntity(id = "keep-1", groupId = "group-1", name = "Keep me", color = "#959595")
+        val cached =
+            LabelEntity(id = "keep-1", groupId = "group-1", name = "Keep me", color = "#959595")
         val labelDao = FakeLabelDao(seed = listOf(cached))
         val repository =
             LabelRepository(FakeLabelsApi(mutationFailure = IOException("offline")), labelDao)

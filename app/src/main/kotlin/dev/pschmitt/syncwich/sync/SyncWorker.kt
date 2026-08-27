@@ -29,12 +29,12 @@ import timber.log.Timber
 
 /**
  * Refreshes the offline recipe cache in the background: recipe list, category/tag/food/tool/unit/
- * label/recipe-action dictionaries, cookbooks (plus each cookbook's matching recipes), the
- * shopping list-of-lists, a rolling meal-plan window, and best-effort image prefetching from the
- * existing Room cache. Never
- * wipes or blocks what's already cached on failure - each repository's own `refresh*` function
- * already logs and swallows its own errors (see [RecipeRepository.refreshRecipes]'s kdoc), so a bad
- * run here only means "still showing what's last cached", never a blank screen.
+ * label/recipe-action dictionaries, cookbooks (plus each cookbook's matching recipes), the shopping
+ * list-of-lists, a rolling meal-plan window, and best-effort image prefetching from the existing
+ * Room cache. Never wipes or blocks what's already cached on failure - each repository's own
+ * `refresh*` function already logs and swallows its own errors (see
+ * [RecipeRepository.refreshRecipes]'s kdoc), so a bad run here only means "still showing what's
+ * last cached", never a blank screen.
  *
  * Deliberately does *not* bulk-fetch every recipe's full detail - that's comparatively expensive
  * (one request per recipe) and detail is instead refreshed lazily by

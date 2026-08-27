@@ -19,9 +19,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Verifies the "hard requirement" from AGENTS.md's architecture section (see
- * [FoodRepositoryTest]'s equivalent coverage), plus [UnitDto]'s specific risk: a `PUT` that only
- * sent the fields this app's editor exposes would silently reset every other field
+ * Verifies the "hard requirement" from AGENTS.md's architecture section (see [FoodRepositoryTest]'s
+ * equivalent coverage), plus [UnitDto]'s specific risk: a `PUT` that only sent the fields this
+ * app's editor exposes would silently reset every other field
  * (fraction/useAbbreviation/pluralAbbreviation/aliases/standardQuantity/standardUnit/extras) to
  * this app's own Kotlin defaults, clobbering whatever the user had actually configured on Mealie.
  */

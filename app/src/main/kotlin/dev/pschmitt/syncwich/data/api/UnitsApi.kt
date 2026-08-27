@@ -33,7 +33,8 @@ interface UnitsApi {
         @Body request: UnitMutationDto,
     ): UnitDto
 
-    @DELETE("api/units/{itemId}") suspend fun deleteUnit(@Path("itemId") itemId: String): ResponseBody
+    @DELETE("api/units/{itemId}")
+    suspend fun deleteUnit(@Path("itemId") itemId: String): ResponseBody
 
     companion object {
         const val DEFAULT_PAGE_SIZE = 50

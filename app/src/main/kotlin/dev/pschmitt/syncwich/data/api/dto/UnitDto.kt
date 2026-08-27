@@ -29,7 +29,9 @@ data class UnitDto(
     val standardUnit: String? = null,
 )
 
-/** Shared body shape for `POST /api/units` and `PUT /api/units/{id}` (both `CreateIngredientUnit`). */
+/**
+ * Shared body shape for `POST /api/units` and `PUT /api/units/{id}` (both `CreateIngredientUnit`).
+ */
 @Serializable
 data class UnitMutationDto(
     val name: String,

@@ -56,9 +56,7 @@ fun RecipeAutomationEditorScreen(
     val titleErrorMessage = validationMessage?.takeIf { it == "Enter a title" }
     val urlErrorMessage = validationMessage?.takeIf { it == "Enter a URL" }
 
-    LaunchedEffect(saveState) {
-        if (saveState is RecipeAutomationEditorSaveState.Saved) onSaved()
-    }
+    LaunchedEffect(saveState) { if (saveState is RecipeAutomationEditorSaveState.Saved) onSaved() }
 
     Scaffold(
         modifier = modifier,
@@ -141,9 +139,10 @@ fun RecipeAutomationEditorScreen(
                     enabled = !isSaving,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                if (validationMessage != null &&
-                    titleErrorMessage == null &&
-                    urlErrorMessage == null
+                if (
+                    validationMessage != null &&
+                        titleErrorMessage == null &&
+                        urlErrorMessage == null
                 ) {
                     Card(
                         colors =

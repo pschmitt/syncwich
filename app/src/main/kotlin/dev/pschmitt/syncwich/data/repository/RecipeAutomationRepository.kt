@@ -36,20 +36,20 @@ constructor(
     suspend fun refreshAutomations(): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                    val allItems = mutableListOf<RecipeAutomationDto>()
-                    var page = 1
-                    while (true) {
-                        val response =
-                            recipeAutomationsApi.getRecipeAutomations(
-                                page = page,
-                                perPage = RecipeAutomationsApi.DEFAULT_PAGE_SIZE,
-                            )
-                        allItems += response.items
-                        if (response.items.isEmpty() || page >= response.totalPages) break
-                        page++
-                    }
-                    recipeAutomationDao.replaceAll(allItems.map { it.toEntity() })
+                val allItems = mutableListOf<RecipeAutomationDto>()
+                var page = 1
+                while (true) {
+                    val response =
+                        recipeAutomationsApi.getRecipeAutomations(
+                            page = page,
+                            perPage = RecipeAutomationsApi.DEFAULT_PAGE_SIZE,
+                        )
+                    allItems += response.items
+                    if (response.items.isEmpty() || page >= response.totalPages) break
+                    page++
                 }
+                recipeAutomationDao.replaceAll(allItems.map { it.toEntity() })
+            }
                 .onFailure { Timber.w(it, "Recipe-action refresh failed; keeping cached data") }
         }
 
@@ -60,19 +60,19 @@ constructor(
     ): Result<RecipeAutomationEntity> =
         withContext(Dispatchers.IO) {
             runCatching {
-                    val entity =
-                        recipeAutomationsApi
-                            .createRecipeAutomation(
-                                RecipeAutomationCreateDto(
-                                    actionType = actionType,
-                                    title = title,
-                                    url = url,
-                                )
+                val entity =
+                    recipeAutomationsApi
+                        .createRecipeAutomation(
+                            RecipeAutomationCreateDto(
+                                actionType = actionType,
+                                title = title,
+                                url = url,
                             )
-                            .toEntity()
-                    recipeAutomationDao.upsertAll(listOf(entity))
-                    entity
-                }
+                        )
+                        .toEntity()
+                recipeAutomationDao.upsertAll(listOf(entity))
+                entity
+            }
                 .onFailure { Timber.w(it, "Recipe-action creation failed; keeping cached data") }
         }
 
@@ -84,41 +84,47 @@ constructor(
     ): Result<RecipeAutomationEntity> =
         withContext(Dispatchers.IO) {
             runCatching {
-                    val cached =
-                        recipeAutomationDao.observeById(automationId).first()
-                            ?: error(
-                                "No cached recipe action '$automationId' to round-trip " +
-                                    "groupId/householdId from"
-                            )
-                    val entity =
-                        recipeAutomationsApi
-                            .updateRecipeAutomation(
-                                automationId,
-                                RecipeAutomationSaveDto(
-                                    actionType = actionType,
-                                    title = title,
-                                    url = url,
-                                    groupId = cached.groupId,
-                                    householdId = cached.householdId,
-                                ),
-                            )
-                            .toEntity()
-                    recipeAutomationDao.upsertAll(listOf(entity))
-                    entity
-                }
+                val cached =
+                    recipeAutomationDao.observeById(automationId).first()
+                        ?: error(
+                            "No cached recipe action '$automationId' to round-trip " +
+                                "groupId/householdId from"
+                        )
+                val entity =
+                    recipeAutomationsApi
+                        .updateRecipeAutomation(
+                            automationId,
+                            RecipeAutomationSaveDto(
+                                actionType = actionType,
+                                title = title,
+                                url = url,
+                                groupId = cached.groupId,
+                                householdId = cached.householdId,
+                            ),
+                        )
+                        .toEntity()
+                recipeAutomationDao.upsertAll(listOf(entity))
+                entity
+            }
                 .onFailure {
-                    Timber.w(it, "Recipe-action update failed for '$automationId'; keeping cached data")
+                    Timber.w(
+                        it,
+                        "Recipe-action update failed for '$automationId'; keeping cached data",
+                    )
                 }
         }
 
     suspend fun deleteAutomation(automationId: String): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                    recipeAutomationsApi.deleteRecipeAutomation(automationId).use {}
-                    recipeAutomationDao.deleteById(automationId)
-                }
+                recipeAutomationsApi.deleteRecipeAutomation(automationId).use {}
+                recipeAutomationDao.deleteById(automationId)
+            }
                 .onFailure {
-                    Timber.w(it, "Recipe-action deletion failed for '$automationId'; keeping cached data")
+                    Timber.w(
+                        it,
+                        "Recipe-action deletion failed for '$automationId'; keeping cached data",
+                    )
                 }
         }
 
