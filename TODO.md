@@ -2219,3 +2219,36 @@ Status: **done** (new SW-139 verticals get their own row here as they land).
 - [ ] Apply the same collapse/expand behavior for consistency with the rest of the app's list FABs
 
 Status: **not started**.
+
+## SW-142: Search/filter recipes by ingredient (food) and by tool, not just tags/categories
+
+- [ ] Today's recipe filtering is fully local/offline: `RecipesViewModel` picks one of
+      `observeRecipesByCategory`/`observeRecipesByTag`/`observeRecipes` (`RecipeDao.kt:24-40`, via
+      `recipe_category_cross_refs`/`recipe_tag_cross_refs`), then free-text searches only
+      `name`/`description` in-memory (`RecipeSearch.kt:12-20`). `RecipesApi.getRecipes` takes only
+      `page`/`perPage` - no server-side category/tag/tool/food query params exist client-side
+- [ ] `RecipeSummaryDto` (the list-endpoint DTO) has no `tools` or ingredient/food fields - Mealie's
+      list response doesn't return them (this repo's own `ignoreUnknownKeys` comment documents what's
+      dropped). Tool/ingredient data only exists in `RecipeDetailDto` (per-recipe full fetch), which
+      `SyncWorker`'s kdoc explicitly avoids bulk-fetching ("comparatively expensive - one request per
+      recipe")
+- [ ] Before implementing, confirm live (per this repo's established practice) whether Mealie's
+      `/api/recipes` list endpoint actually supports `tools`/`foods` query params for server-side
+      filtering (undocumented here today) - if yes, this is a much smaller job (add query params,
+      mirroring how tag/category filtering could have been server-side); if no, this needs new local
+      `recipe_tool_cross_refs`/`recipe_food_cross_refs` tables, which likely requires bulk-fetching
+      recipe detail (a real cost/architecture tradeoff, not a small addition)
+- [ ] Add ingredient/tool filter UI to `RecipesScreen` once the above is resolved, mirroring the
+      existing tag/category filter chips
+
+Status: **not started** - needs a live API capability check before scoping further.
+
+## SW-143: Move "Data Management" into the "Personalization" Settings card
+
+- [ ] `SettingsScreen.kt` currently has "Data Management" as its own top-level `SettingsGroupCard`
+      (`SettingsScreen.kt:101`), separate from "Personalization" (`SettingsScreen.kt:95`) - move the
+      "Data Management" row into the "Personalization" card instead of keeping it as a standalone
+      group
+- [ ] Verify the change visually on a real device
+
+Status: **not started**.
