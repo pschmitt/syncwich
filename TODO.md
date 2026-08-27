@@ -2264,10 +2264,16 @@ Status: **done** - confirmed on the Zenfone 10.
       `RecipeDao.observeByFood`; `RecipesScreen`/`RecipesViewModel` gained a fifth mutually-exclusive
       filter dimension (food/"Ingredients"), with its own filter-chip row in `RecipeFilterSheet`.
       `AppDatabase` bumped to v14
+- [x] Verified live on the Zenfone 10: a real sync run first crashed with a `UNIQUE constraint
+      failed: recipe_food_cross_refs.recipeId, recipe_food_cross_refs.foodId` (a recipe referencing
+      the same food across multiple ingredient lines, e.g. onion in both a marinade and a garnish
+      step, produced duplicate pairs in one insert batch) - fixed with `.distinct()` before the
+      insert. After the fix, a full sync completed cleanly and selecting "Tofu (tofu)" in the new
+      Ingredients filter correctly narrowed the grid to exactly the tofu recipes (Geschmorter Tofu,
+      Mapo Tofu, Misosuppe, 5-Minute Silken Tofu, Baek Jong-won's Soft Tofu Stew)
 
-Status: **in progress** - both tool-based and food-based recipe filtering implemented (local/offline,
-matching the existing tag/category pattern), CI-verified; food filtering still needs the same kind
-of real-device confirmation tool filtering already got on the Zenfone 10.
+Status: **done** - both tool-based and food-based recipe filtering shipped (local/offline, matching
+the existing tag/category pattern), CI-verified and confirmed live end-to-end on the Zenfone 10.
 
 ## SW-143: Move "Data Management" into the "Personalization" Settings card
 
