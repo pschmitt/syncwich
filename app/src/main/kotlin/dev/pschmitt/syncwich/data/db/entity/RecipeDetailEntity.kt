@@ -17,9 +17,10 @@ data class RecipeDetailEntity(
     val detailJson: String,
     val fetchedAt: Long,
     /**
-     * The source recipe's `dateUpdated` at fetch time (see [RecipeSummaryEntity.dateUpdated]) - lets
-     * [dev.pschmitt.syncwich.data.repository.RecipeRepository]'s bulk detail fetch (SW-142) skip
-     * recipes whose cache is already current instead of re-fetching every recipe on every sync.
+     * The source recipe's `dateUpdated` at fetch time (see [RecipeSummaryEntity.dateUpdated]) -
+     * lets [dev.pschmitt.syncwich.data.repository.RecipeRepository]'s bulk detail fetch (SW-142)
+     * skip recipes whose cache is already current instead of re-fetching every recipe on every
+     * sync.
      */
     val sourceUpdatedAt: String? = null,
 )

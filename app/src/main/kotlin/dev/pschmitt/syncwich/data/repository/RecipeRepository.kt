@@ -343,12 +343,12 @@ constructor(
     /**
      * Populates the recipe<->food cross-ref that backs SW-142's "filter recipes by food" - unlike
      * category/tag/tool (embedded in `/api/recipes`'s list response), food references only exist in
-     * each recipe's full detail, so this bulk-fetches every recipe whose cached detail is missing or
-     * stale (its [RecipeDetailEntity.sourceUpdatedAt] doesn't match the summary's current
+     * each recipe's full detail, so this bulk-fetches every recipe whose cached detail is missing
+     * or stale (its [RecipeDetailEntity.sourceUpdatedAt] doesn't match the summary's current
      * [RecipeSummaryEntity.dateUpdated]) - deliberately expensive (one request per changed recipe),
-     * accepted per SW-142's documented tradeoff rather than left as an unused "unit"-style JSON blob.
-     * Skips a recipe's fetch on failure and keeps whatever cross-refs already exist for it, matching
-     * this repository's "never block/wipe on a bad run" contract.
+     * accepted per SW-142's documented tradeoff rather than left as an unused "unit"-style JSON
+     * blob. Skips a recipe's fetch on failure and keeps whatever cross-refs already exist for it,
+     * matching this repository's "never block/wipe on a bad run" contract.
      */
     suspend fun refreshRecipeFoodCrossRefs(): Result<Unit> =
         withContext(Dispatchers.IO) {

@@ -466,10 +466,11 @@ internal fun RecipeFilterSheet(
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
                 horizontalArrangement = Arrangement.End,
             ) {
-                if (selectedCategoryId != null ||
-                    selectedTagId != null ||
-                    selectedToolId != null ||
-                    selectedFoodId != null
+                if (
+                    selectedCategoryId != null ||
+                        selectedTagId != null ||
+                        selectedToolId != null ||
+                        selectedFoodId != null
                 ) {
                     TextButton(
                         onClick = onClearFilters,
