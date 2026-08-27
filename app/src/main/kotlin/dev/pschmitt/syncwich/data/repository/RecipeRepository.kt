@@ -403,7 +403,8 @@ constructor(
                 val distinctFoodRefs = foodRefs.distinct()
                 database.withTransaction {
                     recipeDao.deleteAllFoodCrossRefs()
-                    if (distinctFoodRefs.isNotEmpty()) recipeDao.insertFoodCrossRefs(distinctFoodRefs)
+                    if (distinctFoodRefs.isNotEmpty())
+                        recipeDao.insertFoodCrossRefs(distinctFoodRefs)
                 }
                 Timber.d("Recipe-food cross-ref refresh cached ${distinctFoodRefs.size} references")
             }
