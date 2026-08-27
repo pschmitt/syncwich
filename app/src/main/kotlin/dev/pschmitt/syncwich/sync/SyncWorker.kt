@@ -83,6 +83,11 @@ constructor(
                     syncStep("Refreshing recipes…") {
                         recipeRepository.refreshRecipes(forceRefresh = false)
                     },
+                    // Bulk-fetches each recipe's full detail (skipping ones already current) so
+                    // recipes can be filtered by food offline - see its kdoc for the cost tradeoff.
+                    syncStep("Refreshing recipe ingredients…") {
+                        recipeRepository.refreshRecipeFoodCrossRefs()
+                    },
                     // No request is made when there are no pending offline actions; pending
                     // favorite/rating flags are retried only after Room has made them visible.
                     syncStep("Syncing recipe actions…") {

@@ -29,5 +29,6 @@ data class RecipeSummaryEntity(
     val prepTime: String?,
     val totalTime: String?,
     val dateAdded: String?,
+    val dateUpdated: String?,
     val lastMade: String?,
 )

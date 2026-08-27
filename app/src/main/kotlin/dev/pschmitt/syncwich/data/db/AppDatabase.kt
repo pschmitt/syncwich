@@ -26,6 +26,7 @@ import dev.pschmitt.syncwich.data.db.entity.RecipeAutomationEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeCategoryCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeCookbookCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeDetailEntity
+import dev.pschmitt.syncwich.data.db.entity.RecipeFoodCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeStepProgressEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeTagCrossRef
@@ -68,7 +69,13 @@ import dev.pschmitt.syncwich.data.db.entity.UnitEntity
             LabelEntity::class,
             RecipeAutomationEntity::class,
             RecipeToolCrossRef::class,
+            RecipeFoodCrossRef::class,
         ],
+    // v14: SW-142 adds a recipe<->food cross-ref (populated by a bulk fetch of every recipe's full
+    // detail, since food references only exist in `/api/recipes/{slug}`, not the list endpoint -
+    // see RecipeRepository.refreshRecipeFoodCrossRefs) and RecipeSummaryEntity/RecipeDetailEntity
+    // gain a dateUpdated/sourceUpdatedAt pair so that bulk fetch can skip recipes whose cached
+    // detail is already current instead of re-fetching every recipe on every sync.
     // v13: SW-139 adds cached dictionaries for Mealie's unit (`/api/units`), label (`/api/groups/
     // labels`), and household recipe-action (`/api/households/recipe-actions`) catalogs; SW-142
     // adds a recipe<->tool cross-ref so recipes can be filtered by tool offline, the same way
@@ -94,7 +101,7 @@ import dev.pschmitt.syncwich.data.db.entity.UnitEntity
     // this pre-1.0, in their own worktrees, to different version numbers with different entities;
     // reconciled to v4 on merge. No migration path exists yet - see DatabaseModule's
     // fallbackToDestructiveMigration().
-    version = 13,
+    version = 14,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -127,6 +134,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun recipeAutomationDao(): RecipeAutomationDao
 
     companion object {
-        const val SCHEMA_VERSION = 13
+        const val SCHEMA_VERSION = 14
     }
 }

@@ -224,6 +224,7 @@ constructor(
             prepTime = prepTime,
             totalTime = totalTime,
             dateAdded = dateAdded,
+            dateUpdated = dateUpdated,
             lastMade = lastMade,
         )
 

@@ -12,10 +12,13 @@ import kotlinx.serialization.json.JsonObject
  * a consumer (e.g. the recipe detail screen) should use to decode that stored JSON with
  * `Json.decodeFromString<RecipeDetailDto>(...)`.
  *
- * `unit`/`food` on [RecipeIngredientDto] and `tools`/`comments`/`extras` here are left as loose
- * [JsonElement]/[JsonObject] rather than fully modeled - every recipe checked on the verification
- * instance had them null/empty (freeform-note ingredients, no structured food/unit data), so their
+ * `unit`/`tools`/`comments`/`extras` here are left as loose [JsonElement]/[JsonObject] rather than
+ * fully modeled - every recipe checked on the verification instance had them null/empty, so their
  * populated shape wasn't confirmed live; decode them further only once actually seen non-empty.
+ * `food` on [RecipeIngredientDto] WAS re-confirmed populated on a live re-check for SW-142 (this
+ * server's ingredient lines are now food-referenced almost universally - unlike SW-2's original
+ * verification, which predates this server's library being curated with structured foods), so it's
+ * fully modeled (id/name only - the rest of `IngredientFood-Output`'s shape is irrelevant here).
  */
 @Serializable
 data class RecipeDetailDto(
@@ -52,13 +55,16 @@ data class RecipeDetailDto(
 data class RecipeIngredientDto(
     val quantity: Double? = null,
     val unit: JsonElement? = null,
-    val food: JsonElement? = null,
+    val food: RecipeIngredientFoodDto? = null,
     val note: String? = null,
     val display: String? = null,
     val title: String? = null,
     val originalText: String? = null,
     val referenceId: String? = null,
 )
+
+/** Only the fields SW-142's recipe-by-food filter needs from `IngredientFood-Output`. */
+@Serializable data class RecipeIngredientFoodDto(val id: String, val name: String? = null)
 
 @Serializable
 data class RecipeInstructionDto(

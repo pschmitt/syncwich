@@ -2249,17 +2249,25 @@ Status: **done** - confirmed on the Zenfone 10.
       populated it in `RecipeRepository.refreshRecipes` exactly like categories/tags. `RecipesScreen`
       /`RecipesViewModel` gained a fourth mutually-exclusive filter dimension (tool), with its own
       filter-chip row in `RecipeFilterSheet`
-- [ ] `RecipeSummary` has no ingredient/food field at all (confirmed live) - only `RecipeDetailDto`
-      (per-recipe full fetch) carries ingredients, and `SyncWorker`'s kdoc explicitly avoids
-      bulk-fetching every recipe's detail ("comparatively expensive - one request per recipe"), so
-      offline food-based filtering isn't feasible without a real architecture tradeoff. Left open:
-      either accept the bulk-fetch cost, or make food search an online-only path that calls
-      `GET /api/recipes?foods=...` directly instead of filtering the local cache
+- [x] `RecipeSummary` has no ingredient/food field at all - only `RecipeDetailDto` (per-recipe full
+      fetch) carries ingredients. User explicitly chose the bulk-fetch tradeoff over an online-only
+      search path. Live re-verification for this decision found `RecipeIngredientDto.food` is now
+      populated on this server for nearly every ingredient (unlike SW-2's original verification,
+      which predates this server's library being curated with structured foods) - so `food` is now
+      fully modeled (`RecipeIngredientFoodDto`, id/name only) instead of left as `JsonElement`
+- [x] Added `RecipeSummaryDto.dateUpdated`/`RecipeSummaryEntity.dateUpdated` and
+      `RecipeDetailEntity.sourceUpdatedAt` so `RecipeRepository.refreshRecipeFoodCrossRefs()` (new
+      `SyncWorker` step "Refreshing recipe ingredients…") only re-fetches a recipe's detail when its
+      cached copy is missing or stale, instead of re-fetching every recipe on every sync - keeps the
+      accepted bulk-fetch cost bounded to what actually changed
+- [x] New `recipe_food_cross_refs` table (`RecipeFoodCrossRef`, mirroring `RecipeToolCrossRef`),
+      `RecipeDao.observeByFood`; `RecipesScreen`/`RecipesViewModel` gained a fifth mutually-exclusive
+      filter dimension (food/"Ingredients"), with its own filter-chip row in `RecipeFilterSheet`.
+      `AppDatabase` bumped to v14
 
-Status: **partially done** - tool-based filtering shipped (local/offline, matching the existing
-tag/category pattern) and confirmed live on the Zenfone 10 (selecting a tool chip correctly
-narrowed the recipe grid to the matching recipe); food-based filtering remains open pending a
-bulk-fetch-vs-online-search decision.
+Status: **in progress** - both tool-based and food-based recipe filtering implemented (local/offline,
+matching the existing tag/category pattern), CI-verified; food filtering still needs the same kind
+of real-device confirmation tool filtering already got on the Zenfone 10.
 
 ## SW-143: Move "Data Management" into the "Personalization" Settings card
 

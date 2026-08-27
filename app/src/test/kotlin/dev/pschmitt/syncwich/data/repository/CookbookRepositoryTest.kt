@@ -17,6 +17,7 @@ import dev.pschmitt.syncwich.data.db.entity.RecipeCookbookCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeDetailEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeTagCrossRef
+import dev.pschmitt.syncwich.data.db.entity.RecipeFoodCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeToolCrossRef
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
@@ -192,6 +193,7 @@ class CookbookRepositoryTest {
                     prepTime = null,
                     totalTime = null,
                     dateAdded = null,
+                    dateUpdated = null,
                     lastMade = null,
                 )
             )
@@ -334,6 +336,9 @@ class CookbookRepositoryTest {
         override fun observeByTool(toolId: String): Flow<List<RecipeSummaryEntity>> =
             error("not used by CookbookRepository")
 
+        override fun observeByFood(foodId: String): Flow<List<RecipeSummaryEntity>> =
+            error("not used by CookbookRepository")
+
         override fun observeDetail(id: String): Flow<RecipeDetailEntity?> =
             error("not used by CookbookRepository")
 
@@ -371,6 +376,8 @@ class CookbookRepositoryTest {
 
         override suspend fun deleteToolCrossRefs(recipeId: String) = Unit
 
+        override suspend fun deleteFoodCrossRefs(recipeId: String) = Unit
+
         override suspend fun deleteRecipeCookbookCrossRefs(recipeId: String) {
             cookbookRefs.value = cookbookRefs.value.filterNot { it.recipeId == recipeId }
         }
@@ -395,6 +402,10 @@ class CookbookRepositoryTest {
             error("not used by CookbookRepository")
         }
 
+        override suspend fun insertFoodCrossRefs(refs: List<RecipeFoodCrossRef>) {
+            error("not used by CookbookRepository")
+        }
+
         override suspend fun insertCookbookCrossRefs(refs: List<RecipeCookbookCrossRef>) {
             cookbookRefs.value = cookbookRefs.value + refs
         }
@@ -412,6 +423,10 @@ class CookbookRepositoryTest {
         }
 
         override suspend fun deleteAllToolCrossRefs() {
+            error("not used by CookbookRepository")
+        }
+
+        override suspend fun deleteAllFoodCrossRefs() {
             error("not used by CookbookRepository")
         }
 
@@ -540,6 +555,7 @@ class CookbookRepositoryTest {
                 prepTime = null,
                 totalTime = null,
                 dateAdded = null,
+                dateUpdated = null,
                 lastMade = null,
             )
     }

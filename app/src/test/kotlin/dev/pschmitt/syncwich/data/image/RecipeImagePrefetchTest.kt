@@ -198,6 +198,7 @@ class RecipeImagePrefetchTest {
             prepTime = null,
             totalTime = null,
             dateAdded = null,
+            dateUpdated = null,
             lastMade = null,
         )
 

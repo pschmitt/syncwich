@@ -18,6 +18,7 @@ import dev.pschmitt.syncwich.data.db.dao.RecipeStepProgressDao
 import dev.pschmitt.syncwich.data.db.entity.CategoryEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeCategoryCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeDetailEntity
+import dev.pschmitt.syncwich.data.db.entity.RecipeFoodCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeTagCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeToolCrossRef
@@ -200,6 +201,9 @@ constructor(
     fun observeRecipesByTool(toolId: String): Flow<List<RecipeSummaryEntity>> =
         recipeDao.observeByTool(toolId)
 
+    fun observeRecipesByFood(foodId: String): Flow<List<RecipeSummaryEntity>> =
+        recipeDao.observeByFood(foodId)
+
     /** The full recipe, decoded lazily by the caller - see [RecipeDetailEntity]'s kdoc. */
     fun observeRecipeDetail(recipeId: String): Flow<RecipeDetailEntity?> =
         recipeDao.observeDetail(recipeId)
@@ -336,6 +340,74 @@ constructor(
             }
         }
 
+    /**
+     * Populates the recipe<->food cross-ref that backs SW-142's "filter recipes by food" - unlike
+     * category/tag/tool (embedded in `/api/recipes`'s list response), food references only exist in
+     * each recipe's full detail, so this bulk-fetches every recipe whose cached detail is missing or
+     * stale (its [RecipeDetailEntity.sourceUpdatedAt] doesn't match the summary's current
+     * [RecipeSummaryEntity.dateUpdated]) - deliberately expensive (one request per changed recipe),
+     * accepted per SW-142's documented tradeoff rather than left as an unused "unit"-style JSON blob.
+     * Skips a recipe's fetch on failure and keeps whatever cross-refs already exist for it, matching
+     * this repository's "never block/wipe on a bad run" contract.
+     */
+    suspend fun refreshRecipeFoodCrossRefs(): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val summaries = recipeDao.getAll()
+                val cachedDetails = recipeDao.getAllDetails().associateBy { it.id }
+                val foodRefs = mutableListOf<RecipeFoodCrossRef>()
+                for (summary in summaries) {
+                    val cached = cachedDetails[summary.id]
+                    val detailJson =
+                        if (cached != null && cached.sourceUpdatedAt == summary.dateUpdated) {
+                            cached.detailJson
+                        } else {
+                            runCatching { recipesApi.getRecipeDetailRaw(summary.slug).string() }
+                                .onSuccess { body ->
+                                    recipeDao.upsertDetail(
+                                        RecipeDetailEntity(
+                                            id = summary.id,
+                                            slug = summary.slug,
+                                            detailJson = body,
+                                            fetchedAt = System.currentTimeMillis(),
+                                            sourceUpdatedAt = summary.dateUpdated,
+                                        )
+                                    )
+                                }
+                                .onFailure {
+                                    Timber.w(
+                                        it,
+                                        "Recipe detail fetch failed for '${summary.slug}' during" +
+                                            " food cross-ref refresh; using stale/no cached detail",
+                                    )
+                                }
+                                .getOrNull() ?: cached?.detailJson
+                        }
+                    detailJson ?: continue
+                    runCatching { json.decodeFromString<RecipeDetailDto>(detailJson) }
+                        .onSuccess { detail ->
+                            detail.recipeIngredient.forEach { ingredient ->
+                                ingredient.food?.id?.let { foodId ->
+                                    foodRefs +=
+                                        RecipeFoodCrossRef(recipeId = summary.id, foodId = foodId)
+                                }
+                            }
+                        }
+                        .onFailure {
+                            Timber.w(it, "Couldn't decode cached detail for '${summary.slug}'")
+                        }
+                }
+                database.withTransaction {
+                    recipeDao.deleteAllFoodCrossRefs()
+                    if (foodRefs.isNotEmpty()) recipeDao.insertFoodCrossRefs(foodRefs)
+                }
+                Timber.d("Recipe-food cross-ref refresh cached ${foodRefs.size} references")
+            }
+                .onFailure {
+                    Timber.w(it, "Recipe food cross-ref refresh failed; keeping cached data")
+                }
+        }
+
     private fun isFresh(lastRefreshAt: Long?): Boolean =
         lastRefreshAt != null &&
             System.currentTimeMillis() - lastRefreshAt < AUTOMATIC_REFRESH_WINDOW_MS
@@ -364,6 +436,7 @@ constructor(
             prepTime = prepTime,
             totalTime = totalTime,
             dateAdded = dateAdded,
+            dateUpdated = dateUpdated,
             lastMade = lastMade,
         )
 

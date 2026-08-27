@@ -71,6 +71,7 @@ class HomeOrderingTest {
             prepTime = null,
             totalTime = null,
             dateAdded = dateAdded,
+            dateUpdated = null,
             lastMade = null,
         )
 }

@@ -8,6 +8,7 @@ import androidx.room.Upsert
 import dev.pschmitt.syncwich.data.db.entity.RecipeCategoryCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeCookbookCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeDetailEntity
+import dev.pschmitt.syncwich.data.db.entity.RecipeFoodCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeTagCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeToolCrossRef
@@ -50,6 +51,16 @@ interface RecipeDao {
     )
     fun observeByTool(toolId: String): Flow<List<RecipeSummaryEntity>>
 
+    @Query(
+        """
+        SELECT recipe_summaries.* FROM recipe_summaries
+        INNER JOIN recipe_food_cross_refs ON recipe_summaries.id = recipe_food_cross_refs.recipeId
+        WHERE recipe_food_cross_refs.foodId = :foodId
+        ORDER BY name COLLATE NOCASE ASC
+        """
+    )
+    fun observeByFood(foodId: String): Flow<List<RecipeSummaryEntity>>
+
     @Query("SELECT * FROM recipe_details WHERE id = :id")
     fun observeDetail(id: String): Flow<RecipeDetailEntity?>
 
@@ -83,6 +94,8 @@ interface RecipeDao {
 
     @Insert suspend fun insertToolCrossRefs(refs: List<RecipeToolCrossRef>)
 
+    @Insert suspend fun insertFoodCrossRefs(refs: List<RecipeFoodCrossRef>)
+
     @Insert suspend fun insertCookbookCrossRefs(refs: List<RecipeCookbookCrossRef>)
 
     @Query("DELETE FROM recipe_summaries") suspend fun deleteAll()
@@ -92,6 +105,8 @@ interface RecipeDao {
     @Query("DELETE FROM recipe_tag_cross_refs") suspend fun deleteAllTagCrossRefs()
 
     @Query("DELETE FROM recipe_tool_cross_refs") suspend fun deleteAllToolCrossRefs()
+
+    @Query("DELETE FROM recipe_food_cross_refs") suspend fun deleteAllFoodCrossRefs()
 
     @Query("DELETE FROM recipe_cookbook_cross_refs") suspend fun deleteAllCookbookCrossRefs()
 
@@ -113,6 +128,9 @@ interface RecipeDao {
     @Query("DELETE FROM recipe_tool_cross_refs WHERE recipeId = :recipeId")
     suspend fun deleteToolCrossRefs(recipeId: String)
 
+    @Query("DELETE FROM recipe_food_cross_refs WHERE recipeId = :recipeId")
+    suspend fun deleteFoodCrossRefs(recipeId: String)
+
     @Query("DELETE FROM recipe_cookbook_cross_refs WHERE recipeId = :recipeId")
     suspend fun deleteRecipeCookbookCrossRefs(recipeId: String)
 
@@ -124,6 +142,7 @@ interface RecipeDao {
         deleteCategoryCrossRefs(recipeId)
         deleteTagCrossRefs(recipeId)
         deleteToolCrossRefs(recipeId)
+        deleteFoodCrossRefs(recipeId)
         deleteRecipeCookbookCrossRefs(recipeId)
     }
 
