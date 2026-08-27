@@ -45,6 +45,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Fullscreen
@@ -217,6 +218,10 @@ fun RecipeDetailScreen(
                                         ),
                                     )
                                 },
+                                originalUrl = loadedState.recipe.orgURL,
+                                onOpenOriginalUrlClick = {
+                                    openRecipeInBrowser(context, loadedState.recipe.orgURL)
+                                },
                                 onDeleteClick = { deleteDialogVisible = true },
                             )
                         }
@@ -306,6 +311,8 @@ internal fun RecipeOverflowMenu(
     onOpenTimelineClick: () -> Unit,
     onShareClick: () -> Unit,
     onOpenBrowserClick: () -> Unit,
+    originalUrl: String? = null,
+    onOpenOriginalUrlClick: () -> Unit = {},
     onDeleteClick: () -> Unit,
 ) {
     var ratingDialogVisible by rememberSaveable { mutableStateOf(false) }
@@ -369,6 +376,16 @@ internal fun RecipeOverflowMenu(
                 onOpenBrowserClick()
             },
         )
+        if (!originalUrl.isNullOrBlank()) {
+            DropdownMenuItem(
+                text = { Text("Open original URL") },
+                leadingIcon = { Icon(Icons.Filled.Link, contentDescription = null) },
+                onClick = {
+                    onDismiss()
+                    onOpenOriginalUrlClick()
+                },
+            )
+        }
         DropdownMenuItem(
             text = { Text("Delete") },
             leadingIcon = {

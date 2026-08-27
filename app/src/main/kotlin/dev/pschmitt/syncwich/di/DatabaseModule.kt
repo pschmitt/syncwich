@@ -11,14 +11,17 @@ import dev.pschmitt.syncwich.data.db.AppDatabase
 import dev.pschmitt.syncwich.data.db.dao.CategoryDao
 import dev.pschmitt.syncwich.data.db.dao.CookbookDao
 import dev.pschmitt.syncwich.data.db.dao.FoodDao
+import dev.pschmitt.syncwich.data.db.dao.LabelDao
 import dev.pschmitt.syncwich.data.db.dao.MealPlanDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeActionDao
+import dev.pschmitt.syncwich.data.db.dao.RecipeAutomationDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeStepProgressDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeTimelineEventDao
 import dev.pschmitt.syncwich.data.db.dao.ShoppingListDao
 import dev.pschmitt.syncwich.data.db.dao.TagDao
 import dev.pschmitt.syncwich.data.db.dao.ToolDao
+import dev.pschmitt.syncwich.data.db.dao.UnitDao
 import javax.inject.Singleton
 
 @Module
@@ -62,4 +65,12 @@ object DatabaseModule {
     @Provides fun provideFoodDao(database: AppDatabase): FoodDao = database.foodDao()
 
     @Provides fun provideToolDao(database: AppDatabase): ToolDao = database.toolDao()
+
+    @Provides fun provideUnitDao(database: AppDatabase): UnitDao = database.unitDao()
+
+    @Provides fun provideLabelDao(database: AppDatabase): LabelDao = database.labelDao()
+
+    @Provides
+    fun provideRecipeAutomationDao(database: AppDatabase): RecipeAutomationDao =
+        database.recipeAutomationDao()
 }

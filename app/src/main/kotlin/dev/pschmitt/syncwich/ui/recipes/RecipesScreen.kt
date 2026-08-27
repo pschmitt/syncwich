@@ -24,6 +24,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FilterList
@@ -73,6 +74,7 @@ import dev.pschmitt.syncwich.data.api.recipeImageUrl
 import dev.pschmitt.syncwich.data.db.entity.CategoryEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.data.db.entity.TagEntity
+import dev.pschmitt.syncwich.data.db.entity.ToolEntity
 import dev.pschmitt.syncwich.ui.common.NavigationTitle
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
 import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
@@ -157,11 +159,15 @@ fun RecipesScreen(
                 RecipeSearchControls(
                     searchQuery = uiState.searchQuery,
                     onSearchQueryChange = viewModel::onSearchQueryChange,
-                    filtersAvailable = uiState.categories.isNotEmpty() || uiState.tags.isNotEmpty(),
+                    filtersAvailable =
+                        uiState.categories.isNotEmpty() ||
+                            uiState.tags.isNotEmpty() ||
+                            uiState.tools.isNotEmpty(),
                     selectedFilterCount =
                         listOfNotNull(
                                 uiState.selectedCategoryId,
                                 uiState.selectedTagId,
+                                uiState.selectedToolId,
                             )
                             .size,
                     onFilterClick = { filterSheetVisible = true },
@@ -176,7 +182,8 @@ fun RecipesScreen(
                     val hasFilter =
                         uiState.searchQuery.isNotBlank() ||
                             uiState.selectedCategoryId != null ||
-                            uiState.selectedTagId != null
+                            uiState.selectedTagId != null ||
+                            uiState.selectedToolId != null
                     PlaceholderScreen(
                         icon = Icons.Filled.Restaurant,
                         title =
@@ -212,10 +219,13 @@ fun RecipesScreen(
         RecipeFilterSheet(
             categories = uiState.categories,
             tags = uiState.tags,
+            tools = uiState.tools,
             selectedCategoryId = uiState.selectedCategoryId,
             selectedTagId = uiState.selectedTagId,
+            selectedToolId = uiState.selectedToolId,
             onCategorySelected = viewModel::onCategorySelected,
             onTagSelected = viewModel::onTagSelected,
+            onToolSelected = viewModel::onToolSelected,
             onClearFilters = viewModel::clearFilters,
             onDismiss = { filterSheetVisible = false },
         )
@@ -354,10 +364,13 @@ internal fun recipeFilterButtonContentDescription(selectedFilterCount: Int): Str
 internal fun RecipeFilterSheet(
     categories: List<CategoryEntity>,
     tags: List<TagEntity>,
+    tools: List<ToolEntity>,
     selectedCategoryId: String?,
     selectedTagId: String?,
+    selectedToolId: String?,
     onCategorySelected: (String) -> Unit,
     onTagSelected: (String) -> Unit,
+    onToolSelected: (String) -> Unit,
     onClearFilters: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -406,11 +419,27 @@ internal fun RecipeFilterSheet(
                     contentPadding = PaddingValues(vertical = 4.dp),
                 )
             }
+            if (tools.isNotEmpty()) {
+                Text(
+                    text = "Tools",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(top = 16.dp),
+                )
+                FilterChipRow(
+                    entries = tools,
+                    key = { it.id },
+                    label = { it.name },
+                    selectedId = selectedToolId,
+                    onSelected = onToolSelected,
+                    leadingIcon = { ToolFilterIcon() },
+                    contentPadding = PaddingValues(vertical = 4.dp),
+                )
+            }
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
                 horizontalArrangement = Arrangement.End,
             ) {
-                if (selectedCategoryId != null || selectedTagId != null) {
+                if (selectedCategoryId != null || selectedTagId != null || selectedToolId != null) {
                     TextButton(
                         onClick = onClearFilters,
                         modifier = Modifier.testTag("recipe-filter-clear-button"),
@@ -439,6 +468,15 @@ private fun CategoryFilterIcon() {
         imageVector = Icons.Filled.Category,
         contentDescription = null,
         modifier = Modifier.size(18.dp).testTag("recipe-search-category-icon"),
+    )
+}
+
+@Composable
+private fun ToolFilterIcon() {
+    Icon(
+        imageVector = Icons.Filled.Build,
+        contentDescription = null,
+        modifier = Modifier.size(18.dp).testTag("recipe-search-tool-icon"),
     )
 }
 

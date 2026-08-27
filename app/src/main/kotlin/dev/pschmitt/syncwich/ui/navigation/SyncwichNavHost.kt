@@ -31,6 +31,8 @@ import dev.pschmitt.syncwich.ui.cookbooks.CookbookEditorScreen
 import dev.pschmitt.syncwich.ui.cookbooks.CookbooksScreen
 import dev.pschmitt.syncwich.ui.foods.FoodEditorScreen
 import dev.pschmitt.syncwich.ui.foods.FoodsScreen
+import dev.pschmitt.syncwich.ui.labels.LabelEditorScreen
+import dev.pschmitt.syncwich.ui.labels.LabelsScreen
 import dev.pschmitt.syncwich.ui.home.HomeScreen
 import dev.pschmitt.syncwich.ui.initialsync.InitialSyncScreen
 import dev.pschmitt.syncwich.ui.mealplan.MealPlanScreen
@@ -41,6 +43,8 @@ import dev.pschmitt.syncwich.ui.organizers.TagEditorScreen
 import dev.pschmitt.syncwich.ui.organizers.TagsScreen
 import dev.pschmitt.syncwich.ui.organizers.ToolEditorScreen
 import dev.pschmitt.syncwich.ui.organizers.ToolsScreen
+import dev.pschmitt.syncwich.ui.recipeautomations.RecipeAutomationEditorScreen
+import dev.pschmitt.syncwich.ui.recipeautomations.RecipeAutomationsScreen
 import dev.pschmitt.syncwich.ui.recipes.FavoritesScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipeDetailScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipeEditorScreen
@@ -48,6 +52,8 @@ import dev.pschmitt.syncwich.ui.recipes.RecipeTimelineScreen
 import dev.pschmitt.syncwich.ui.recipes.RecipesScreen
 import dev.pschmitt.syncwich.ui.settings.ConnectionSettingsScreen
 import dev.pschmitt.syncwich.ui.settings.DataManagementScreen
+import dev.pschmitt.syncwich.ui.units.UnitEditorScreen
+import dev.pschmitt.syncwich.ui.units.UnitsScreen
 import dev.pschmitt.syncwich.ui.settings.LibrariesScreen
 import dev.pschmitt.syncwich.ui.settings.SettingsCategoryScreen
 import dev.pschmitt.syncwich.ui.settings.SettingsScreen
@@ -362,6 +368,9 @@ fun SyncwichNavHost(
                     onCategoriesClick = { navController.navigate(Route.Categories) },
                     onTagsClick = { navController.navigate(Route.Tags) },
                     onToolsClick = { navController.navigate(Route.Tools) },
+                    onUnitsClick = { navController.navigate(Route.Units) },
+                    onLabelsClick = { navController.navigate(Route.Labels) },
+                    onRecipeActionsClick = { navController.navigate(Route.RecipeAutomations) },
                 )
             }
             composable<Route.Foods> {
@@ -412,6 +421,47 @@ fun SyncwichNavHost(
             }
             composable<Route.ToolEditor> {
                 ToolEditorScreen(
+                    onSaved = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() },
+                )
+            }
+            composable<Route.Units> {
+                UnitsScreen(
+                    onBack = { navController.popBackStack() },
+                    onUnitClick = { id -> navController.navigate(Route.UnitEditor(id)) },
+                    onCreateClick = { navController.navigate(Route.UnitEditor()) },
+                )
+            }
+            composable<Route.UnitEditor> {
+                UnitEditorScreen(
+                    onSaved = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() },
+                )
+            }
+            composable<Route.Labels> {
+                LabelsScreen(
+                    onBack = { navController.popBackStack() },
+                    onLabelClick = { id -> navController.navigate(Route.LabelEditor(id)) },
+                    onCreateClick = { navController.navigate(Route.LabelEditor()) },
+                )
+            }
+            composable<Route.LabelEditor> {
+                LabelEditorScreen(
+                    onSaved = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() },
+                )
+            }
+            composable<Route.RecipeAutomations> {
+                RecipeAutomationsScreen(
+                    onBack = { navController.popBackStack() },
+                    onAutomationClick = { id ->
+                        navController.navigate(Route.RecipeAutomationEditor(id))
+                    },
+                    onCreateClick = { navController.navigate(Route.RecipeAutomationEditor()) },
+                )
+            }
+            composable<Route.RecipeAutomationEditor> {
+                RecipeAutomationEditorScreen(
                     onSaved = { navController.popBackStack() },
                     onBack = { navController.popBackStack() },
                 )

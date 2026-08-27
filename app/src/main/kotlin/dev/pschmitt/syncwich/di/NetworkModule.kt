@@ -12,11 +12,14 @@ import dev.pschmitt.syncwich.data.api.AuthInterceptor
 import dev.pschmitt.syncwich.data.api.CookbooksApi
 import dev.pschmitt.syncwich.data.api.DynamicBaseUrlInterceptor
 import dev.pschmitt.syncwich.data.api.FoodsApi
+import dev.pschmitt.syncwich.data.api.LabelsApi
 import dev.pschmitt.syncwich.data.api.MealPlanApi
 import dev.pschmitt.syncwich.data.api.OrganizersApi
+import dev.pschmitt.syncwich.data.api.RecipeAutomationsApi
 import dev.pschmitt.syncwich.data.api.RecipesApi
 import dev.pschmitt.syncwich.data.api.ShoppingListsApi
 import dev.pschmitt.syncwich.data.api.TimelineApi
+import dev.pschmitt.syncwich.data.api.UnitsApi
 import dev.pschmitt.syncwich.data.api.UsersApi
 import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
@@ -145,6 +148,19 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideFoodsApi(retrofit: Retrofit): FoodsApi = retrofit.create(FoodsApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideUnitsApi(retrofit: Retrofit): UnitsApi = retrofit.create(UnitsApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideLabelsApi(retrofit: Retrofit): LabelsApi = retrofit.create(LabelsApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideRecipeAutomationsApi(retrofit: Retrofit): RecipeAutomationsApi =
+        retrofit.create(RecipeAutomationsApi::class.java)
 
     private const val API_CACHE_BYTES = 32L * 1024L * 1024L
 }

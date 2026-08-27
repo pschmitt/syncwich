@@ -20,7 +20,9 @@ import dev.pschmitt.syncwich.data.db.entity.RecipeCategoryCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeDetailEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeTagCrossRef
+import dev.pschmitt.syncwich.data.db.entity.RecipeToolCrossRef
 import dev.pschmitt.syncwich.data.db.entity.TagEntity
+import dev.pschmitt.syncwich.data.db.entity.ToolEntity
 import dev.pschmitt.syncwich.data.image.selectRecipeImagePrefetchUrls
 import java.io.FileInputStream
 import javax.inject.Inject
@@ -195,6 +197,9 @@ constructor(
     fun observeRecipesByTag(tagId: String): Flow<List<RecipeSummaryEntity>> =
         recipeDao.observeByTag(tagId)
 
+    fun observeRecipesByTool(toolId: String): Flow<List<RecipeSummaryEntity>> =
+        recipeDao.observeByTool(toolId)
+
     /** The full recipe, decoded lazily by the caller - see [RecipeDetailEntity]'s kdoc. */
     fun observeRecipeDetail(recipeId: String): Flow<RecipeDetailEntity?> =
         recipeDao.observeDetail(recipeId)
@@ -242,8 +247,10 @@ constructor(
 
                     val categories = mutableMapOf<String, CategoryEntity>()
                     val tags = mutableMapOf<String, TagEntity>()
+                    val tools = mutableMapOf<String, ToolEntity>()
                     val categoryRefs = mutableListOf<RecipeCategoryCrossRef>()
                     val tagRefs = mutableListOf<RecipeTagCrossRef>()
+                    val toolRefs = mutableListOf<RecipeToolCrossRef>()
                     val recipes = allItems.map { dto ->
                         dto.recipeCategory.forEach { category ->
                             categories[category.id] = category.toCategoryEntity()
@@ -254,6 +261,10 @@ constructor(
                             tags[tag.id] = tag.toTagEntity()
                             tagRefs += RecipeTagCrossRef(recipeId = dto.id, tagId = tag.id)
                         }
+                        dto.tools.forEach { tool ->
+                            tools[tool.id] = tool.toToolEntity()
+                            toolRefs += RecipeToolCrossRef(recipeId = dto.id, toolId = tool.id)
+                        }
                         dto.toEntity()
                     }
 
@@ -261,10 +272,11 @@ constructor(
                         recipeDao.deleteAll()
                         recipeDao.deleteAllCategoryCrossRefs()
                         recipeDao.deleteAllTagCrossRefs()
-                        // Non-destructive: unlike the recipe list itself, the category/tag
+                        recipeDao.deleteAllToolCrossRefs()
+                        // Non-destructive: unlike the recipe list itself, the category/tag/tool
                         // dictionaries
-                        // are authoritatively refreshed by CategoryRepository/TagRepository -
-                        // upsert
+                        // are authoritatively refreshed by CategoryRepository/TagRepository/
+                        // ToolRepository - upsert
                         // here only so a name/slug embedded in this response is never stale,
                         // without
                         // racing a delete of a category that has no recipes (and thus never shows
@@ -273,10 +285,12 @@ constructor(
                         if (categories.isNotEmpty())
                             database.categoryDao().upsertAll(categories.values.toList())
                         if (tags.isNotEmpty()) database.tagDao().upsertAll(tags.values.toList())
+                        if (tools.isNotEmpty()) database.toolDao().upsertAll(tools.values.toList())
                         recipeDao.upsertAll(recipes)
                         if (categoryRefs.isNotEmpty())
                             recipeDao.insertCategoryCrossRefs(categoryRefs)
                         if (tagRefs.isNotEmpty()) recipeDao.insertTagCrossRefs(tagRefs)
+                        if (toolRefs.isNotEmpty()) recipeDao.insertToolCrossRefs(toolRefs)
                     }
                     lastRecipeListRefreshAt = System.currentTimeMillis()
                     Timber.d("Recipe-list refresh cached ${recipes.size} summaries")
@@ -385,3 +399,5 @@ private fun readLocalMedia(uri: Uri, contentResolver: ContentResolver): LocalMed
 }
 
 private fun OrganizerDto.toTagEntity() = TagEntity(id = id, name = name, slug = slug)
+
+private fun OrganizerDto.toToolEntity() = ToolEntity(id = id, name = name, slug = slug)

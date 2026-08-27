@@ -5,19 +5,24 @@ import androidx.room.RoomDatabase
 import dev.pschmitt.syncwich.data.db.dao.CategoryDao
 import dev.pschmitt.syncwich.data.db.dao.CookbookDao
 import dev.pschmitt.syncwich.data.db.dao.FoodDao
+import dev.pschmitt.syncwich.data.db.dao.LabelDao
 import dev.pschmitt.syncwich.data.db.dao.MealPlanDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeActionDao
+import dev.pschmitt.syncwich.data.db.dao.RecipeAutomationDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeStepProgressDao
 import dev.pschmitt.syncwich.data.db.dao.RecipeTimelineEventDao
 import dev.pschmitt.syncwich.data.db.dao.ShoppingListDao
 import dev.pschmitt.syncwich.data.db.dao.TagDao
 import dev.pschmitt.syncwich.data.db.dao.ToolDao
+import dev.pschmitt.syncwich.data.db.dao.UnitDao
 import dev.pschmitt.syncwich.data.db.entity.CategoryEntity
 import dev.pschmitt.syncwich.data.db.entity.CookbookEntity
 import dev.pschmitt.syncwich.data.db.entity.FoodEntity
+import dev.pschmitt.syncwich.data.db.entity.LabelEntity
 import dev.pschmitt.syncwich.data.db.entity.MealPlanEntryEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeActionEntity
+import dev.pschmitt.syncwich.data.db.entity.RecipeAutomationEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeCategoryCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeCookbookCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeDetailEntity
@@ -25,10 +30,12 @@ import dev.pschmitt.syncwich.data.db.entity.RecipeStepProgressEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeTagCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeTimelineEventEntity
+import dev.pschmitt.syncwich.data.db.entity.RecipeToolCrossRef
 import dev.pschmitt.syncwich.data.db.entity.ShoppingListEntity
 import dev.pschmitt.syncwich.data.db.entity.ShoppingListItemEntity
 import dev.pschmitt.syncwich.data.db.entity.TagEntity
 import dev.pschmitt.syncwich.data.db.entity.ToolEntity
+import dev.pschmitt.syncwich.data.db.entity.UnitEntity
 
 /**
  * The offline recipe cache - see AGENTS.md's architecture section. Every read path in the app reads
@@ -57,7 +64,15 @@ import dev.pschmitt.syncwich.data.db.entity.ToolEntity
             RecipeCookbookCrossRef::class,
             FoodEntity::class,
             ToolEntity::class,
+            UnitEntity::class,
+            LabelEntity::class,
+            RecipeAutomationEntity::class,
+            RecipeToolCrossRef::class,
         ],
+    // v13: SW-139 adds cached dictionaries for Mealie's unit (`/api/units`), label (`/api/groups/
+    // labels`), and household recipe-action (`/api/households/recipe-actions`) catalogs; SW-142
+    // adds a recipe<->tool cross-ref so recipes can be filtered by tool offline, the same way
+    // they're already filtered by category/tag.
     // v12: SW-139 adds a cached dictionary of Mealie's recipe-tool organizer (`/api/organizers/
     // tools`) and mutation support for the already-cached category/tag dictionaries.
     // v11: SW-137 adds a cached dictionary of Mealie's structured ingredient-food catalog
@@ -79,7 +94,7 @@ import dev.pschmitt.syncwich.data.db.entity.ToolEntity
     // this pre-1.0, in their own worktrees, to different version numbers with different entities;
     // reconciled to v4 on merge. No migration path exists yet - see DatabaseModule's
     // fallbackToDestructiveMigration().
-    version = 12,
+    version = 13,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -105,7 +120,13 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun toolDao(): ToolDao
 
+    abstract fun unitDao(): UnitDao
+
+    abstract fun labelDao(): LabelDao
+
+    abstract fun recipeAutomationDao(): RecipeAutomationDao
+
     companion object {
-        const val SCHEMA_VERSION = 12
+        const val SCHEMA_VERSION = 13
     }
 }

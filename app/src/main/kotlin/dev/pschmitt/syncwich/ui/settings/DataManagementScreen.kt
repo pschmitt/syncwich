@@ -9,10 +9,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Egg
 import androidx.compose.material.icons.filled.Label
+import androidx.compose.material.icons.filled.Straighten
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,9 +31,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
 /**
- * A menu of Mealie's data-catalog verticals (Foods/Categories/Tags/Tools today; Units/Labels/
- * Recipe Actions land here as their own rows once built - see SW-139/SW-140 in TODO.md), each
- * reached from Settings' "Data Management" row rather than the flat top-level Settings list.
+ * A menu of Mealie's data-catalog verticals (SW-139/SW-140 in TODO.md), each reached from
+ * Settings' "Data Management" row rather than the flat top-level Settings list.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,6 +42,9 @@ fun DataManagementScreen(
     onCategoriesClick: () -> Unit,
     onTagsClick: () -> Unit,
     onToolsClick: () -> Unit,
+    onUnitsClick: () -> Unit,
+    onLabelsClick: () -> Unit,
+    onRecipeActionsClick: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -89,6 +93,30 @@ fun DataManagementScreen(
                     title = "Tools",
                     subtitle = "Kitchen equipment recipes can call for",
                     onClick = onToolsClick,
+                )
+            }
+            item {
+                DataManagementRow(
+                    icon = Icons.Filled.Straighten,
+                    title = "Units",
+                    subtitle = "Mealie's structured measurement catalog",
+                    onClick = onUnitsClick,
+                )
+            }
+            item {
+                DataManagementRow(
+                    icon = Icons.Filled.Label,
+                    title = "Labels",
+                    subtitle = "Color-coded organizer for foods and shopping lists",
+                    onClick = onLabelsClick,
+                )
+            }
+            item {
+                DataManagementRow(
+                    icon = Icons.Filled.Bolt,
+                    title = "Recipe Actions",
+                    subtitle = "Triggerable automations your household can run from a recipe",
+                    onClick = onRecipeActionsClick,
                 )
             }
         }

@@ -2160,8 +2160,17 @@ a data class), and `markdownTypography()` itself is `@Composable`.
       list/create/edit/delete vertical - confirmed live via `/openapi.json` that all of these have
       the same single-item CRUD shape (`GET/POST /api/<resource>`,
       `GET/PUT/DELETE /api/<resource>/{item_id}`):
-      - [ ] Units (`/api/units`)
-      - [ ] Labels (`/api/groups/labels`) - group-scoped, not `/api`-rooted like the others
+      - [x] Units (`/api/units`) - `UnitEntity`/`UnitDao`/`UnitRepository`/`UnitsApi`, a dedicated
+            (non-shared) editor since Mealie's `IngredientUnit` has far more fields than Categories/
+            Tags/Tools. `UnitEntity.rawJson` holds the full fetched `UnitDto` so `updateUnit` can
+            round-trip fraction/useAbbreviation/pluralAbbreviation/aliases/standardQuantity/
+            standardUnit/extras unchanged, since this app's editor only exposes name/pluralName/
+            description/abbreviation and a naive PUT would otherwise reset the rest to Kotlin
+            defaults
+      - [x] Labels (`/api/groups/labels`) - group-scoped, not `/api`-rooted like the others;
+            `LabelEntity`/`LabelDao`/`LabelRepository`/`LabelsApi`, dedicated editor with a color
+            hex field + swatch preview. Unlike Categories/Tags/Tools, Mealie's label `PUT` requires
+            `groupId`+`id` in the body itself, round-tripped from the cached entity
       - [x] Categories (`/api/organizers/categories`) - added create/edit/delete on top of the
             existing read-only `OrganizersApi.getCategories`/`CategoryEntity`/`CategoryDao`/
             `CategoryRepository` rather than duplicating the data layer; UI is the new shared
@@ -2173,29 +2182,34 @@ a data class), and `markdownTypography()` itself is `@Composable`.
             read-only `TagRepository`/`TagDao`
       - [x] Tools (`/api/organizers/tools`) - fully new data layer (`ToolEntity`/`ToolDao`/
             `ToolRepository`), same shared `SimpleCatalog*` UI; `AppDatabase` bumped to v12
-      - [ ] Recipe Actions (`/api/households/recipe-actions`) - Mealie's household-level automation
-            actions (triggerable per recipe, e.g. webhooks) - a distinct concept from this app's own
-            `RecipeActionEntity` (the local favorite/rating cache); pick a different local type name
-            to avoid confusion
+      - [x] Recipe Actions (`/api/households/recipe-actions`) - Mealie's household-level automation
+            actions (triggerable per recipe, e.g. webhooks) - modeled as `RecipeAutomationEntity`/
+            `RecipeAutomationDao`/`RecipeAutomationRepository`/`RecipeAutomationsApi` (a distinct
+            local name from this app's own `RecipeActionEntity`, the local favorite/rating cache,
+            to avoid confusion); editor has a Link/Post `actionType` picker + title + URL. Like
+            Labels, `PUT` requires `groupId`+`householdId` round-tripped from the cached entity
 - [x] Confirm each resource's actual field set against a live read (not just the public schema)
       before modeling its DTO, per this repo's established practice - confirmed `CategoryIn`/
-      `TagIn`/`RecipeToolCreate` are all just `{name}` via `/openapi.json`
+      `TagIn`/`RecipeToolCreate` are all just `{name}` via `/openapi.json`; `CreateIngredientUnit`/
+      `IngredientUnit-Output`, `MultiPurposeLabelCreate`/`-Out`/`-Update`, and
+      `CreateGroupRecipeAction`/`GroupRecipeActionOut`/`SaveGroupRecipeAction` schemas all confirmed
+      the same way for Units/Labels/Recipe Actions
 - [x] Decide navigation/IA together with SW-140 (the "Data Management" settings subscreen) rather
-      than bolting each one onto the flat Settings list individually - Categories/Tags/Tools rows
-      added to `DataManagementScreen`
+      than bolting each one onto the flat Settings list individually - all six verticals now have
+      rows in `DataManagementScreen`
 - [x] Add focused test coverage per vertical, mirroring SW-137's tests - extended
       `CategoryRepositoryTest`'s create/delete coverage (stands in for Tag/Tool since they mirror
-      `CategoryRepository`'s shape exactly, per this repo's convention of not exhaustively
-      duplicating near-identical coverage)
+      `CategoryRepository`'s shape exactly); new `UnitRepositoryTest` (covers the rawJson
+      round-trip-on-update risk) and `LabelRepositoryTest` (covers the groupId round-trip risk,
+      standing in for `RecipeAutomationRepository`'s identical shape), per this repo's convention of
+      not exhaustively duplicating near-identical coverage
 - [x] Wire each vertical into the background sync (`SyncWorker`), not just on-demand
       screen-open/pull-to-refresh - Categories/Tags were already refreshed there (pre-dating this
-      ticket, for recipe-filtering); added `foodRepository.refreshFoods()` and
-      `toolRepository.refreshTools()` alongside them so Foods/Tools stay current offline too, per
-      user report that they weren't being synced
+      ticket, for recipe-filtering); added refresh calls for Foods/Tools/Units/Labels/Recipe Actions
+      so all six stay current offline too, per user report that Foods/Tools weren't being synced
 
-Status: **in progress** - Categories/Tags/Tools done and CI-verified; Units/Labels/Recipe Actions
-remain (each needs a dedicated, non-shared screen: Units has more fields, Labels has a color field,
-Recipe Actions needs its own local type name).
+Status: **done** - all six verticals (Units/Labels/Categories/Tags/Tools/Recipe Actions) built,
+tested, and wired into background sync; CI-verified.
 
 ## SW-140: "Data Management" settings subscreen
 
@@ -2203,52 +2217,52 @@ Recipe Actions needs its own local type name).
 - [x] Give it its own settings subscreen (`DataManagementScreen`/`Route.DataManagement`, a real
       destination with a back stack) that hosts Foods (SW-137) and, so far, Categories/Tags/Tools
       (SW-139) as rows navigating into their own list/editor screens - mirrors how "Server"/"Sync"/
-      "Backup" etc. are already grouped under Settings, one level deeper. Units/Labels/Recipe
-      Actions rows land here once built.
+      "Backup" etc. are already grouped under Settings, one level deeper. Now hosts all six SW-139
+      verticals (Units/Labels/Categories/Tags/Tools/Recipe Actions).
 - [x] Verify the new subscreen visually on a real device
 
 Status: **done** (new SW-139 verticals get their own row here as they land).
 
 ## SW-141: Collapse SimpleCatalog FABs ("New tag"/"New tool"/"New category") like "New recipe"
 
-- [ ] `RecipesScreen`/`CookbooksScreen`/`ShoppingListDetailScreen`'s `ExtendedFloatingActionButton`s
+- [x] `RecipesScreen`/`CookbooksScreen`/`ShoppingListDetailScreen`'s `ExtendedFloatingActionButton`s
       already collapse to icon-only once their list scrolls away from the top and re-expand at the
-      top (`expanded = !state.canScrollBackward`, see commit 37d856f) - `SimpleCatalogScreen`'s
-      "New category"/"New tag"/"New tool" FAB (`ui/organizers/SimpleCatalogScreen.kt`) doesn't do
-      this yet; its `LazyColumn` has no `rememberLazyListState()` threaded through
-- [ ] Apply the same collapse/expand behavior for consistency with the rest of the app's list FABs
+      top (`expanded = !state.canScrollBackward`, see commit 37d856f) - applied the same
+      `rememberLazyListState()`/`expanded` wiring to `SimpleCatalogScreen`'s "New category"/"New
+      tag"/"New tool"/"New unit"/"New label" FAB and, for full consistency, `FoodsScreen`'s "New
+      food" FAB too (it had the same gap)
+- [x] Apply the same collapse/expand behavior for consistency with the rest of the app's list FABs
 
-Status: **not started**.
+Status: **done**.
 
 ## SW-142: Search/filter recipes by ingredient (food) and by tool, not just tags/categories
 
-- [ ] Today's recipe filtering is fully local/offline: `RecipesViewModel` picks one of
-      `observeRecipesByCategory`/`observeRecipesByTag`/`observeRecipes` (`RecipeDao.kt:24-40`, via
-      `recipe_category_cross_refs`/`recipe_tag_cross_refs`), then free-text searches only
-      `name`/`description` in-memory (`RecipeSearch.kt:12-20`). `RecipesApi.getRecipes` takes only
-      `page`/`perPage` - no server-side category/tag/tool/food query params exist client-side
-- [ ] `RecipeSummaryDto` (the list-endpoint DTO) has no `tools` or ingredient/food fields - Mealie's
-      list response doesn't return them (this repo's own `ignoreUnknownKeys` comment documents what's
-      dropped). Tool/ingredient data only exists in `RecipeDetailDto` (per-recipe full fetch), which
-      `SyncWorker`'s kdoc explicitly avoids bulk-fetching ("comparatively expensive - one request per
-      recipe")
-- [ ] Before implementing, confirm live (per this repo's established practice) whether Mealie's
-      `/api/recipes` list endpoint actually supports `tools`/`foods` query params for server-side
-      filtering (undocumented here today) - if yes, this is a much smaller job (add query params,
-      mirroring how tag/category filtering could have been server-side); if no, this needs new local
-      `recipe_tool_cross_refs`/`recipe_food_cross_refs` tables, which likely requires bulk-fetching
-      recipe detail (a real cost/architecture tradeoff, not a small addition)
-- [ ] Add ingredient/tool filter UI to `RecipesScreen` once the above is resolved, mirroring the
-      existing tag/category filter chips
+- [x] Confirmed live via `/openapi.json`: `GET /api/recipes` already accepts `tools`/`foods` query
+      params (plus `requireAllTools`/`requireAllFoods`), but this app's existing category/tag
+      filters are deliberately local/offline (`RecipeDao` cross-ref tables), not server-side calls -
+      matching that architecture matters more than using the existing query params directly
+- [x] `RecipeSummary` (confirmed live) embeds a `tools` array identical in shape to `tags`/
+      `recipeCategory` - added `RecipeSummaryDto.tools`, a new `recipe_tool_cross_refs` table
+      (`RecipeToolCrossRef`, mirroring `RecipeTagCrossRef`), `RecipeDao.observeByTool`, and
+      populated it in `RecipeRepository.refreshRecipes` exactly like categories/tags. `RecipesScreen`
+      /`RecipesViewModel` gained a fourth mutually-exclusive filter dimension (tool), with its own
+      filter-chip row in `RecipeFilterSheet`
+- [ ] `RecipeSummary` has no ingredient/food field at all (confirmed live) - only `RecipeDetailDto`
+      (per-recipe full fetch) carries ingredients, and `SyncWorker`'s kdoc explicitly avoids
+      bulk-fetching every recipe's detail ("comparatively expensive - one request per recipe"), so
+      offline food-based filtering isn't feasible without a real architecture tradeoff. Left open:
+      either accept the bulk-fetch cost, or make food search an online-only path that calls
+      `GET /api/recipes?foods=...` directly instead of filtering the local cache
 
-Status: **not started** - needs a live API capability check before scoping further.
+Status: **partially done** - tool-based filtering shipped (local/offline, matching the existing
+tag/category pattern); food-based filtering remains open pending a bulk-fetch-vs-online-search
+decision.
 
 ## SW-143: Move "Data Management" into the "Personalization" Settings card
 
-- [ ] `SettingsScreen.kt` currently has "Data Management" as its own top-level `SettingsGroupCard`
-      (`SettingsScreen.kt:101`), separate from "Personalization" (`SettingsScreen.kt:95`) - move the
-      "Data Management" row into the "Personalization" card instead of keeping it as a standalone
-      group
+- [x] `SettingsScreen.kt` had "Data Management" as its own top-level `SettingsGroupCard`, separate
+      from "Personalization" - moved the "Data Management" row into the "Personalization" card
+      instead of keeping it as a standalone group
 - [ ] Verify the change visually on a real device
 
-Status: **not started**.
+Status: **in progress** - pending real-device verification.

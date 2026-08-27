@@ -17,6 +17,7 @@ import dev.pschmitt.syncwich.data.db.entity.RecipeCookbookCrossRef
 import dev.pschmitt.syncwich.data.db.entity.RecipeDetailEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeSummaryEntity
 import dev.pschmitt.syncwich.data.db.entity.RecipeTagCrossRef
+import dev.pschmitt.syncwich.data.db.entity.RecipeToolCrossRef
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -330,6 +331,9 @@ class CookbookRepositoryTest {
         override fun observeByTag(tagId: String): Flow<List<RecipeSummaryEntity>> =
             error("not used by CookbookRepository")
 
+        override fun observeByTool(toolId: String): Flow<List<RecipeSummaryEntity>> =
+            error("not used by CookbookRepository")
+
         override fun observeDetail(id: String): Flow<RecipeDetailEntity?> =
             error("not used by CookbookRepository")
 
@@ -365,6 +369,8 @@ class CookbookRepositoryTest {
 
         override suspend fun deleteTagCrossRefs(recipeId: String) = Unit
 
+        override suspend fun deleteToolCrossRefs(recipeId: String) = Unit
+
         override suspend fun deleteRecipeCookbookCrossRefs(recipeId: String) {
             cookbookRefs.value = cookbookRefs.value.filterNot { it.recipeId == recipeId }
         }
@@ -385,6 +391,10 @@ class CookbookRepositoryTest {
             error("not used by CookbookRepository")
         }
 
+        override suspend fun insertToolCrossRefs(refs: List<RecipeToolCrossRef>) {
+            error("not used by CookbookRepository")
+        }
+
         override suspend fun insertCookbookCrossRefs(refs: List<RecipeCookbookCrossRef>) {
             cookbookRefs.value = cookbookRefs.value + refs
         }
@@ -398,6 +408,10 @@ class CookbookRepositoryTest {
         }
 
         override suspend fun deleteAllTagCrossRefs() {
+            error("not used by CookbookRepository")
+        }
+
+        override suspend fun deleteAllToolCrossRefs() {
             error("not used by CookbookRepository")
         }
 

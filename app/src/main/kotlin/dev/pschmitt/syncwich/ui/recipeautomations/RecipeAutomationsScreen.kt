@@ -1,4 +1,4 @@
-package dev.pschmitt.syncwich.ui.foods
+package dev.pschmitt.syncwich.ui.recipeautomations
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,8 +13,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Egg
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -36,32 +38,33 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.pschmitt.syncwich.data.db.entity.FoodEntity
+import dev.pschmitt.syncwich.data.db.entity.RecipeAutomationEntity
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
 import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
 import dev.pschmitt.syncwich.ui.common.SearchField
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FoodsScreen(
+fun RecipeAutomationsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    onFoodClick: (String) -> Unit = {},
+    onAutomationClick: (String) -> Unit = {},
     onCreateClick: () -> Unit = {},
-    viewModel: FoodsViewModel = hiltViewModel(),
+    viewModel: RecipeAutomationsViewModel = hiltViewModel(),
 ) {
-    val foods by viewModel.foods.collectAsStateWithLifecycle()
+    val automations by viewModel.automations.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val refreshState by viewModel.refreshState.collectAsStateWithLifecycle()
     var pendingDelete by rememberSaveable { mutableStateOf<String?>(null) }
-    val pendingDeleteFood = remember(foods, pendingDelete) { foods.find { it.id == pendingDelete } }
+    val pendingDeleteAutomation =
+        remember(automations, pendingDelete) { automations.find { it.id == pendingDelete } }
     val listState = rememberLazyListState()
 
     Scaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Foods") },
+                title = { Text("Recipe Actions") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -73,7 +76,7 @@ fun FoodsScreen(
             ExtendedFloatingActionButton(
                 onClick = onCreateClick,
                 icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                text = { Text("New food") },
+                text = { Text("New action") },
                 expanded = !listState.canScrollBackward,
             )
         },
@@ -88,16 +91,16 @@ fun FoodsScreen(
                 SearchField(
                     value = searchQuery,
                     onValueChange = viewModel::onSearchQueryChange,
-                    placeholder = "Search foods",
+                    placeholder = "Search recipe actions",
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                 )
-                if (foods.isEmpty()) {
+                if (automations.isEmpty()) {
                     PlaceholderScreen(
-                        icon = Icons.Filled.Egg,
-                        title = "No foods yet",
+                        icon = Icons.Filled.Bolt,
+                        title = "No recipe actions yet",
                         subtitle =
-                            "Foods are Mealie's structured ingredient catalog, separate from a " +
-                                "recipe's own ingredient text. Add one to get started.",
+                            "Recipe actions are triggerable automations (e.g. webhooks) your " +
+                                "household can run from a recipe. Add one to get started.",
                         modifier = Modifier.fillMaxSize(),
                     )
                 } else {
@@ -106,23 +109,32 @@ fun FoodsScreen(
                         contentPadding = PaddingValues(bottom = 96.dp),
                         verticalArrangement = Arrangement.spacedBy(0.dp),
                     ) {
-                        items(foods, key = FoodEntity::id) { food ->
+                        items(automations, key = RecipeAutomationEntity::id) { automation ->
                             ListItem(
-                                headlineContent = { Text(food.name) },
-                                supportingContent =
-                                    food.description
-                                        .takeIf { it.isNotBlank() }
-                                        ?.let { { Text(it) } },
+                                leadingContent = {
+                                    Icon(
+                                        if (automation.actionType == "link") {
+                                            Icons.Filled.Link
+                                        } else {
+                                            Icons.Filled.Send
+                                        },
+                                        contentDescription = null,
+                                    )
+                                },
+                                headlineContent = { Text(automation.title) },
+                                supportingContent = { Text(automation.url) },
                                 trailingContent = {
-                                    IconButton(onClick = { pendingDelete = food.id }) {
+                                    IconButton(onClick = { pendingDelete = automation.id }) {
                                         Icon(
                                             Icons.Filled.Delete,
-                                            contentDescription = "Delete ${food.name}",
+                                            contentDescription = "Delete ${automation.title}",
                                         )
                                     }
                                 },
                                 modifier =
-                                    Modifier.fillMaxWidth().clickable { onFoodClick(food.id) },
+                                    Modifier.fillMaxWidth().clickable {
+                                        onAutomationClick(automation.id)
+                                    },
                             )
                         }
                     }
@@ -131,20 +143,20 @@ fun FoodsScreen(
         }
     }
 
-    if (pendingDeleteFood != null) {
+    if (pendingDeleteAutomation != null) {
         AlertDialog(
             onDismissRequest = { pendingDelete = null },
-            title = { Text("Delete food?") },
+            title = { Text("Delete recipe action?") },
             text = {
                 Text(
-                    "\"${pendingDeleteFood.name}\" will be removed from Mealie's ingredient " +
-                        "catalog. This can't be undone."
+                    "\"${pendingDeleteAutomation.title}\" will be removed from Mealie. This " +
+                        "can't be undone."
                 )
             },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.deleteFood(pendingDeleteFood.id)
+                        viewModel.deleteAutomation(pendingDeleteAutomation.id)
                         pendingDelete = null
                     }
                 ) {

@@ -1,4 +1,4 @@
-package dev.pschmitt.syncwich.ui.foods
+package dev.pschmitt.syncwich.ui.units
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,7 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Egg
+import androidx.compose.material.icons.filled.Straighten
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -36,32 +36,32 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.pschmitt.syncwich.data.db.entity.FoodEntity
+import dev.pschmitt.syncwich.data.db.entity.UnitEntity
 import dev.pschmitt.syncwich.ui.common.PlaceholderScreen
 import dev.pschmitt.syncwich.ui.common.RefreshErrorBanner
 import dev.pschmitt.syncwich.ui.common.SearchField
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FoodsScreen(
+fun UnitsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    onFoodClick: (String) -> Unit = {},
+    onUnitClick: (String) -> Unit = {},
     onCreateClick: () -> Unit = {},
-    viewModel: FoodsViewModel = hiltViewModel(),
+    viewModel: UnitsViewModel = hiltViewModel(),
 ) {
-    val foods by viewModel.foods.collectAsStateWithLifecycle()
+    val units by viewModel.units.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val refreshState by viewModel.refreshState.collectAsStateWithLifecycle()
     var pendingDelete by rememberSaveable { mutableStateOf<String?>(null) }
-    val pendingDeleteFood = remember(foods, pendingDelete) { foods.find { it.id == pendingDelete } }
+    val pendingDeleteUnit = remember(units, pendingDelete) { units.find { it.id == pendingDelete } }
     val listState = rememberLazyListState()
 
     Scaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Foods") },
+                title = { Text("Units") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -73,7 +73,7 @@ fun FoodsScreen(
             ExtendedFloatingActionButton(
                 onClick = onCreateClick,
                 icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                text = { Text("New food") },
+                text = { Text("New unit") },
                 expanded = !listState.canScrollBackward,
             )
         },
@@ -88,16 +88,16 @@ fun FoodsScreen(
                 SearchField(
                     value = searchQuery,
                     onValueChange = viewModel::onSearchQueryChange,
-                    placeholder = "Search foods",
+                    placeholder = "Search units",
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                 )
-                if (foods.isEmpty()) {
+                if (units.isEmpty()) {
                     PlaceholderScreen(
-                        icon = Icons.Filled.Egg,
-                        title = "No foods yet",
+                        icon = Icons.Filled.Straighten,
+                        title = "No units yet",
                         subtitle =
-                            "Foods are Mealie's structured ingredient catalog, separate from a " +
-                                "recipe's own ingredient text. Add one to get started.",
+                            "Units are Mealie's structured measurement catalog (cups, grams, " +
+                                "tablespoons...). Add one to get started.",
                         modifier = Modifier.fillMaxSize(),
                     )
                 } else {
@@ -106,23 +106,23 @@ fun FoodsScreen(
                         contentPadding = PaddingValues(bottom = 96.dp),
                         verticalArrangement = Arrangement.spacedBy(0.dp),
                     ) {
-                        items(foods, key = FoodEntity::id) { food ->
+                        items(units, key = UnitEntity::id) { unit ->
                             ListItem(
-                                headlineContent = { Text(food.name) },
+                                headlineContent = { Text(unit.name) },
                                 supportingContent =
-                                    food.description
+                                    unit.abbreviation
                                         .takeIf { it.isNotBlank() }
                                         ?.let { { Text(it) } },
                                 trailingContent = {
-                                    IconButton(onClick = { pendingDelete = food.id }) {
+                                    IconButton(onClick = { pendingDelete = unit.id }) {
                                         Icon(
                                             Icons.Filled.Delete,
-                                            contentDescription = "Delete ${food.name}",
+                                            contentDescription = "Delete ${unit.name}",
                                         )
                                     }
                                 },
                                 modifier =
-                                    Modifier.fillMaxWidth().clickable { onFoodClick(food.id) },
+                                    Modifier.fillMaxWidth().clickable { onUnitClick(unit.id) },
                             )
                         }
                     }
@@ -131,20 +131,20 @@ fun FoodsScreen(
         }
     }
 
-    if (pendingDeleteFood != null) {
+    if (pendingDeleteUnit != null) {
         AlertDialog(
             onDismissRequest = { pendingDelete = null },
-            title = { Text("Delete food?") },
+            title = { Text("Delete unit?") },
             text = {
                 Text(
-                    "\"${pendingDeleteFood.name}\" will be removed from Mealie's ingredient " +
-                        "catalog. This can't be undone."
+                    "\"${pendingDeleteUnit.name}\" will be removed from Mealie's unit catalog. " +
+                        "This can't be undone."
                 )
             },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.deleteFood(pendingDeleteFood.id)
+                        viewModel.deleteUnit(pendingDeleteUnit.id)
                         pendingDelete = null
                     }
                 ) {

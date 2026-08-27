@@ -21,4 +21,5 @@ data class RecipeSummaryDto(
     val lastMade: String? = null,
     val recipeCategory: List<OrganizerDto> = emptyList(),
     val tags: List<OrganizerDto> = emptyList(),
+    val tools: List<OrganizerDto> = emptyList(),
 )

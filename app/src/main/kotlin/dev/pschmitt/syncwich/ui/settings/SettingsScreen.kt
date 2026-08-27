@@ -95,10 +95,6 @@ fun SettingsScreen(
                 SettingsGroupCard(title = "Personalization", icon = Icons.Filled.Palette) {
                     SettingsCategoryRow(SettingsCategory.Appearance, onCategoryClick)
                     SettingsCategoryRow(SettingsCategory.NavigationBar, onCategoryClick)
-                }
-            }
-            item {
-                SettingsGroupCard(title = "Data Management", icon = Icons.Filled.Egg) {
                     SettingsListItem(
                         modifier =
                             Modifier.fillMaxWidth()

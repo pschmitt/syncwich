@@ -10,13 +10,16 @@ import dev.pschmitt.syncwich.data.onboarding.OidcAuthClient
 import dev.pschmitt.syncwich.data.repository.CategoryRepository
 import dev.pschmitt.syncwich.data.repository.CookbookRepository
 import dev.pschmitt.syncwich.data.repository.FoodRepository
+import dev.pschmitt.syncwich.data.repository.LabelRepository
 import dev.pschmitt.syncwich.data.repository.MealPlanRepository
 import dev.pschmitt.syncwich.data.repository.RecipeActionRepository
+import dev.pschmitt.syncwich.data.repository.RecipeAutomationRepository
 import dev.pschmitt.syncwich.data.repository.RecipeRepository
 import dev.pschmitt.syncwich.data.repository.RecipeTimelineRepository
 import dev.pschmitt.syncwich.data.repository.ShoppingListRepository
 import dev.pschmitt.syncwich.data.repository.TagRepository
 import dev.pschmitt.syncwich.data.repository.ToolRepository
+import dev.pschmitt.syncwich.data.repository.UnitRepository
 import dev.pschmitt.syncwich.data.settings.MealieAuthMethod
 import dev.pschmitt.syncwich.data.settings.SettingsRepository
 import java.time.DayOfWeek
@@ -25,9 +28,10 @@ import kotlinx.coroutines.CancellationException
 import timber.log.Timber
 
 /**
- * Refreshes the offline recipe cache in the background: recipe list, category/tag/food/tool
- * dictionaries, cookbooks (plus each cookbook's matching recipes), the shopping list-of-lists, a
- * rolling meal-plan window, and best-effort image prefetching from the existing Room cache. Never
+ * Refreshes the offline recipe cache in the background: recipe list, category/tag/food/tool/unit/
+ * label/recipe-action dictionaries, cookbooks (plus each cookbook's matching recipes), the
+ * shopping list-of-lists, a rolling meal-plan window, and best-effort image prefetching from the
+ * existing Room cache. Never
  * wipes or blocks what's already cached on failure - each repository's own `refresh*` function
  * already logs and swallows its own errors (see [RecipeRepository.refreshRecipes]'s kdoc), so a bad
  * run here only means "still showing what's last cached", never a blank screen.
@@ -50,6 +54,9 @@ constructor(
     private val tagRepository: TagRepository,
     private val foodRepository: FoodRepository,
     private val toolRepository: ToolRepository,
+    private val unitRepository: UnitRepository,
+    private val labelRepository: LabelRepository,
+    private val recipeAutomationRepository: RecipeAutomationRepository,
     private val shoppingListRepository: ShoppingListRepository,
     private val cookbookRepository: CookbookRepository,
     private val mealPlanRepository: MealPlanRepository,
@@ -89,6 +96,11 @@ constructor(
                     syncStep("Refreshing tags…") { tagRepository.refreshTags() },
                     syncStep("Refreshing foods…") { foodRepository.refreshFoods() },
                     syncStep("Refreshing tools…") { toolRepository.refreshTools() },
+                    syncStep("Refreshing units…") { unitRepository.refreshUnits() },
+                    syncStep("Refreshing labels…") { labelRepository.refreshLabels() },
+                    syncStep("Refreshing recipe actions…") {
+                        recipeAutomationRepository.refreshAutomations()
+                    },
                     syncStep("Refreshing shopping lists…") {
                         shoppingListRepository.refreshLists()
                     },

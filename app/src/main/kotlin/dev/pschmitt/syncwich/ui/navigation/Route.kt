@@ -88,6 +88,21 @@ sealed interface Route {
 
     @Serializable data class ToolEditor(val toolId: String = "") : Route
 
+    /** Data Management > Units - SW-139. */
+    @Serializable data object Units : Route
+
+    @Serializable data class UnitEditor(val unitId: String = "") : Route
+
+    /** Data Management > Labels - SW-139. */
+    @Serializable data object Labels : Route
+
+    @Serializable data class LabelEditor(val labelId: String = "") : Route
+
+    /** Data Management > Recipe Actions (Mealie household automations) - SW-139. */
+    @Serializable data object RecipeAutomations : Route
+
+    @Serializable data class RecipeAutomationEditor(val automationId: String = "") : Route
+
     @Serializable data object Settings : Route
 
     /** Open-source dependency and license list, reached from Settings > About. */
@@ -180,6 +195,12 @@ enum class TopLevelDestination(
             Route.TagEditor::class,
             Route.Tools::class,
             Route.ToolEditor::class,
+            Route.Units::class,
+            Route.UnitEditor::class,
+            Route.Labels::class,
+            Route.LabelEditor::class,
+            Route.RecipeAutomations::class,
+            Route.RecipeAutomationEditor::class,
         ),
     ),
 }

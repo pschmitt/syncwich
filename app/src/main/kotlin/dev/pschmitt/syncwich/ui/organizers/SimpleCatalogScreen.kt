@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -60,6 +61,7 @@ fun SimpleCatalogScreen(
 ) {
     var pendingDelete by rememberSaveable { mutableStateOf<String?>(null) }
     val pendingDeleteItem = remember(items, pendingDelete) { items.find { it.id == pendingDelete } }
+    val listState = rememberLazyListState()
 
     Scaffold(
         topBar = {
@@ -77,6 +79,7 @@ fun SimpleCatalogScreen(
                 onClick = onCreateClick,
                 icon = { Icon(Icons.Filled.Add, contentDescription = null) },
                 text = { Text("New $itemNounSingular") },
+                expanded = !listState.canScrollBackward,
             )
         },
     ) { innerPadding ->
@@ -101,7 +104,7 @@ fun SimpleCatalogScreen(
                         modifier = Modifier.fillMaxSize(),
                     )
                 } else {
-                    LazyColumn(contentPadding = PaddingValues(bottom = 96.dp)) {
+                    LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 96.dp)) {
                         items(items, key = SimpleCatalogItem::id) { item ->
                             ListItem(
                                 headlineContent = { Text(item.name) },
