@@ -2209,7 +2209,9 @@ a data class), and `markdownTypography()` itself is `@Composable`.
       so all six stay current offline too, per user report that Foods/Tools weren't being synced
 
 Status: **done** - all six verticals (Units/Labels/Categories/Tags/Tools/Recipe Actions) built,
-tested, and wired into background sync; CI-verified.
+tested, and wired into background sync; CI-verified. Also confirmed live on the Zenfone 10: Units'
+real synced list (with abbreviations) and its editor round-tripping cached values, Labels' color
+swatches, and a full create+delete round-trip against the live Mealie server for Recipe Actions.
 
 ## SW-140: "Data Management" settings subscreen
 
@@ -2233,7 +2235,7 @@ Status: **done** (new SW-139 verticals get their own row here as they land).
       food" FAB too (it had the same gap)
 - [x] Apply the same collapse/expand behavior for consistency with the rest of the app's list FABs
 
-Status: **done**.
+Status: **done** - confirmed on the Zenfone 10.
 
 ## SW-142: Search/filter recipes by ingredient (food) and by tool, not just tags/categories
 
@@ -2255,14 +2257,15 @@ Status: **done**.
       `GET /api/recipes?foods=...` directly instead of filtering the local cache
 
 Status: **partially done** - tool-based filtering shipped (local/offline, matching the existing
-tag/category pattern); food-based filtering remains open pending a bulk-fetch-vs-online-search
-decision.
+tag/category pattern) and confirmed live on the Zenfone 10 (selecting a tool chip correctly
+narrowed the recipe grid to the matching recipe); food-based filtering remains open pending a
+bulk-fetch-vs-online-search decision.
 
 ## SW-143: Move "Data Management" into the "Personalization" Settings card
 
 - [x] `SettingsScreen.kt` had "Data Management" as its own top-level `SettingsGroupCard`, separate
       from "Personalization" - moved the "Data Management" row into the "Personalization" card
       instead of keeping it as a standalone group
-- [ ] Verify the change visually on a real device
+- [x] Verify the change visually on a real device - confirmed on the Zenfone 10
 
-Status: **in progress** - pending real-device verification.
+Status: **done**.
