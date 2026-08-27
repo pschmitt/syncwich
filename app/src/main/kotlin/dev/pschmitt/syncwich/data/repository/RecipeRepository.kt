@@ -397,11 +397,15 @@ constructor(
                             Timber.w(it, "Couldn't decode cached detail for '${summary.slug}'")
                         }
                 }
+                // A recipe can reference the same food across multiple ingredient lines (e.g. onion
+                // in both a marinade and a garnish step) - distinct() avoids a UNIQUE constraint
+                // violation on the (recipeId, foodId) primary key when inserting the batch.
+                val distinctFoodRefs = foodRefs.distinct()
                 database.withTransaction {
                     recipeDao.deleteAllFoodCrossRefs()
-                    if (foodRefs.isNotEmpty()) recipeDao.insertFoodCrossRefs(foodRefs)
+                    if (distinctFoodRefs.isNotEmpty()) recipeDao.insertFoodCrossRefs(distinctFoodRefs)
                 }
-                Timber.d("Recipe-food cross-ref refresh cached ${foodRefs.size} references")
+                Timber.d("Recipe-food cross-ref refresh cached ${distinctFoodRefs.size} references")
             }
                 .onFailure {
                     Timber.w(it, "Recipe food cross-ref refresh failed; keeping cached data")
