@@ -170,4 +170,5 @@ fun LabelsScreen(
 /** Falls back to a neutral gray for a color string Mealie didn't actually send as `#rrggbb`. */
 internal fun parseLabelColor(hex: String): Color = runCatching {
     Color(android.graphics.Color.parseColor(hex))
-}.getOrDefault(Color.Gray)
+}
+    .getOrDefault(Color.Gray)
