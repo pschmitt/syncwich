@@ -2323,3 +2323,24 @@ implementing `setForeground()`/`ForegroundInfo` in `SyncWorker` - note that doin
 showing a persistent, ongoing notification for the sync's full duration (a real UX tradeoff against
 `SyncNotifier`'s current deliberately-quiet, failure-only notification behavior), and would then
 need the real Play Store demo video this entry avoided fabricating.
+
+## SW-145: Publish tagged releases to the closed (alpha) testing track too, not just internal
+
+- [x] `.github/workflows/play-store.yaml` delegated to `pschmitt/android-app-ci`'s reusable
+      `play-store.yaml@main` without setting its `track` input, so every tagged release silently
+      fell back to that workflow's default (`internal`) only - closed testing (the highest track
+      this app is currently eligible for, short of full production review) never got a build
+- [x] Confirmed the reusable workflow already supports this: its `track` input is forwarded
+      verbatim to `r0adkll/upload-google-play@v1`'s `tracks:` parameter, which accepts a
+      comma-separated list and assigns one uploaded bundle to multiple tracks in a single edit -
+      no separate upload/promotion step needed
+- [x] Set `track: internal,alpha` in the `with:` block so every tagged release publishes to both
+      Internal and Closed testing (`alpha` is the Play Publishing API's id for the default closed
+      track, confirmed as the correct id for this app's Play Console setup) in one CI run
+- [x] Updated the `workflow_dispatch` `publish` input's description to mention both tracks instead
+      of only internal, so the manual-trigger UI doesn't read as stale/wrong now
+
+Status: **done**, 2026-08-28. CI-only change (`.github/workflows/play-store.yaml`), no app code or
+version change - takes effect starting with the next tag push. Not exercised with a real tag push
+in this task (would have meant cutting an otherwise-empty version bump just to test CI wiring);
+confirm both tracks receive the bundle on the next real tagged release.
