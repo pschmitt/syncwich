@@ -4,12 +4,6 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- Provisioned for a future foreground-service promotion of the periodic sync worker
-         (SyncWorker currently runs as a plain, comparatively quick WorkManager job - list +
-         category/tag refresh, not a bulk recipe-detail download - so it doesn't call
-         setForeground() yet). Kept declared so that doesn't require another manifest change. -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <!-- API 33+ runtime permission for optional background sync result notifications. Sync never
          depends on it being granted. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />

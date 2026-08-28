@@ -2283,3 +2283,43 @@ the existing tag/category pattern), CI-verified and confirmed live end-to-end on
 - [x] Verify the change visually on a real device - confirmed on the Zenfone 10
 
 Status: **done**.
+
+## SW-144: Remove unused FOREGROUND_SERVICE_DATA_SYNC permission
+
+- [x] Play Console's permissions declaration form flagged `FOREGROUND_SERVICE_DATA_SYNC`, asking
+      for a demo video of how the app uses it for one of the listed data-sync tasks (network
+      processing, backing up/restoring, etc.)
+- [x] Audited actual usage before producing anything: `AndroidManifest.xml` declared both
+      `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_DATA_SYNC`, but the manifest's own comment said
+      they were "provisioned for a future foreground-service promotion" and that `SyncWorker`
+      "doesn't call `setForeground()` yet" - confirmed with a repo-wide grep for
+      `setForeground`/`ForegroundInfo`/`createForegroundInfo`: zero matches anywhere in
+      `app/src/main/kotlin/`. `SyncWorker` runs as a plain periodic `CoroutineWorker`;
+      `SyncNotifier` posts a normal (non-foreground-service) notification, and only when the app
+      isn't in the foreground and only for failure/retry, never as an ongoing ForegroundInfo tied
+      to `startForeground()`
+- [x] Recording a "demo" of foreground-service behavior that doesn't exist in the shipped APK
+      would misrepresent the app to a Play reviewer, so declined to fabricate one (no Mealie demo
+      instance / device recording was set up for this) and removed the unused permission instead -
+      this resolves the Play Console flag directly with no video required
+- [x] Removed `<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />` and
+      `<uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />` plus
+      their justification comment from `AndroidManifest.xml`; confirmed via grep that no other
+      file (code, tests, fastlane metadata, other manifests) referenced either permission
+
+Status: **done**, 2026-08-28. Manifest-only change, no behavior change (the permissions were
+declared but never backed by real `setForeground()` usage). Not deployed/re-verified on a device
+since nothing runtime-observable changed - `just check` on rofl-13/14 is the appropriate
+verification for a manifest-only diff.
+
+Note for a future SW-N, if this comes up again: `SyncWorker`'s `refreshRecipeFoodCrossRefs()` step
+(added in SW-142) does a real per-recipe HTTP fetch loop for every recipe whose cached detail is
+missing/stale - the "bulk recipe-detail download" scenario the old manifest comment anticipated as
+the actual trigger for needing a real foreground service. For small-to-medium libraries this
+finishes as a quick background job with no issue; it only risks Doze/App-Standby throttling or the
+process getting killed mid-sync for a user with a very large library (several hundred+ recipes)
+who backgrounds the app during that first big sync. If that shows up as a real bug report, revisit
+implementing `setForeground()`/`ForegroundInfo` in `SyncWorker` - note that doing so requires
+showing a persistent, ongoing notification for the sync's full duration (a real UX tradeoff against
+`SyncNotifier`'s current deliberately-quiet, failure-only notification behavior), and would then
+need the real Play Store demo video this entry avoided fabricating.
