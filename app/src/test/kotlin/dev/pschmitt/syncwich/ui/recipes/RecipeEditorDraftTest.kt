@@ -1,14 +1,17 @@
 package dev.pschmitt.syncwich.ui.recipes
 
 import dev.pschmitt.syncwich.data.api.dto.CreateRecipeDto
+import dev.pschmitt.syncwich.data.api.dto.NoteReferenceInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeCategoryInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeIngredientInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeInputDto
+import dev.pschmitt.syncwich.data.api.dto.RecipeNoteInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeStepInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeTagInputDto
 import kotlinx.serialization.json.JsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class RecipeEditorDraftTest {
@@ -167,5 +170,118 @@ class RecipeEditorDraftTest {
         )
         assertEquals("content://photo/3", draft.withCoverImage("content://photo/3").coverImageUri)
         assertEquals(true, draft.withoutCoverImage().removeCoverImage)
+    }
+
+    @Test
+    fun `a new note gets a client-generated referenceId a step can link to before saving`() {
+        val draft = RecipeEditorDraft().withNoteAdded()
+        val note = draft.notes.single()
+
+        assertTrue(note.referenceId.isNotBlank())
+
+        val linked = draft.withStepNoteLinkToggled(0, note.referenceId)
+        assertEquals(setOf(note.referenceId), linked.normalizedInstructionNoteReferences()[0])
+
+        val unlinked = linked.withStepNoteLinkToggled(0, note.referenceId)
+        assertEquals(emptySet<String>(), unlinked.normalizedInstructionNoteReferences()[0])
+    }
+
+    @Test
+    fun `removing a note also unlinks it from every step`() {
+        val draft = RecipeEditorDraft().withNoteAdded()
+        val referenceId = draft.notes.single().referenceId
+        val linked = draft.withStepNoteLinkToggled(0, referenceId)
+
+        val afterRemoval = linked.withNoteRemoved(0)
+
+        assertEquals(emptyList<RecipeEditorNote>(), afterRemoval.notes)
+        assertEquals(emptySet<String>(), afterRemoval.normalizedInstructionNoteReferences()[0])
+    }
+
+    @Test
+    fun `adding, removing, and moving steps keeps note links aligned by index`() {
+        val draft =
+            RecipeEditorDraft(instructions = listOf("Step 1", "Step 2")).withNoteAdded()
+        val referenceId = draft.notes.single().referenceId
+        val linked = draft.withStepNoteLinkToggled(1, referenceId)
+
+        val withThirdStep = linked.withInstructionAdded()
+        assertEquals(3, withThirdStep.normalizedInstructionNoteReferences().size)
+        assertEquals(setOf(referenceId), withThirdStep.normalizedInstructionNoteReferences()[1])
+        assertEquals(emptySet<String>(), withThirdStep.normalizedInstructionNoteReferences()[2])
+
+        val moved = linked.withInstructionMoved(1, 0)
+        assertEquals(listOf("Step 2", "Step 1"), moved.instructions)
+        assertEquals(setOf(referenceId), moved.normalizedInstructionNoteReferences()[0])
+
+        val afterRemovingStepZero = linked.withInstructionRemoved(0)
+        assertEquals(listOf("Step 2"), afterRemovingStepZero.instructions)
+        assertEquals(setOf(referenceId), afterRemovingStepZero.normalizedInstructionNoteReferences()[0])
+    }
+
+    @Test
+    fun `saving sends notes and step note links, dropping blank notes and their links`() {
+        val draft = RecipeEditorDraft(name = "Soup", instructions = listOf("Simmer", "Serve"))
+        val withNote = draft.withNoteAdded()
+        val referenceId = withNote.notes.single().referenceId
+        val titled =
+            withNote
+                .withNoteTitleChanged(0, "  Tip  ")
+                .withNoteTextChanged(0, "  Use a fan oven.  ")
+                .withStepNoteLinkToggled(0, referenceId)
+                .withNoteAdded() // a second, still-blank note that should be dropped on save
+
+        val request = titled.toUpdateRequest()
+
+        assertEquals(
+            listOf(RecipeNoteInputDto(title = "Tip", text = "Use a fan oven.", referenceId = referenceId)),
+            request.notes,
+        )
+        assertEquals(
+            listOf(NoteReferenceInputDto(referenceId)),
+            request.recipeInstructions[0].noteReferences,
+        )
+        assertEquals(emptyList<NoteReferenceInputDto>(), request.recipeInstructions[1].noteReferences)
+    }
+
+    @Test
+    fun `saving drops a step's link to a note that was removed`() {
+        val draft = RecipeEditorDraft(name = "Soup", instructions = listOf("Simmer")).withNoteAdded()
+        val referenceId = draft.notes.single().referenceId
+        // Simulate a stale link surviving without going through withNoteRemoved (which already
+        // cleans this up) by dropping the note directly - toUpdateRequest must filter it too.
+        val linkedThenRemoved = draft.withStepNoteLinkToggled(0, referenceId).copy(notes = emptyList())
+
+        val request = linkedThenRemoved.toUpdateRequest()
+
+        assertEquals(emptyList<RecipeNoteInputDto>(), request.notes)
+        assertEquals(emptyList<NoteReferenceInputDto>(), request.recipeInstructions[0].noteReferences)
+    }
+
+    @Test
+    fun `an edit draft loads existing notes and each step's linked notes`() {
+        val referenceId = "9c6e1e2a-1111-4a1a-8888-abc123456789"
+        val input =
+            RecipeInputDto(
+                name = "Braised Beef",
+                recipeInstructions =
+                    listOf(
+                        RecipeStepInputDto(
+                            text = "Preheat the oven.",
+                            noteReferences = listOf(NoteReferenceInputDto(referenceId)),
+                        ),
+                        RecipeStepInputDto(text = "Sear the beef."),
+                    ),
+                notes = listOf(RecipeNoteInputDto(title = "Oven tip", text = "Use the fan setting.", referenceId = referenceId)),
+            )
+
+        val draft = RecipeEditorDraft.from(input, slug = "braised-beef")
+
+        assertEquals(
+            listOf(RecipeEditorNote(referenceId, "Oven tip", "Use the fan setting.")),
+            draft.notes,
+        )
+        assertEquals(setOf(referenceId), draft.normalizedInstructionNoteReferences()[0])
+        assertEquals(emptySet<String>(), draft.normalizedInstructionNoteReferences()[1])
     }
 }

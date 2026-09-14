@@ -133,6 +133,7 @@ import com.mikepenz.markdown.model.MarkdownTypography
 import dev.pschmitt.syncwich.data.api.dto.RecipeDetailDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeIngredientDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeInstructionDto
+import dev.pschmitt.syncwich.data.api.dto.RecipeNoteDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeNutritionDto
 import dev.pschmitt.syncwich.data.db.entity.CookbookEntity
 import dev.pschmitt.syncwich.data.image.RecipeImageReference
@@ -576,6 +577,7 @@ internal fun RecipeDetailContent(
                                 instruction = instruction,
                                 imageReferences =
                                     imageIndex.instructionReferences.getOrNull(index).orEmpty(),
+                                linkedNotes = linkedNotesFor(instruction, recipe.notes),
                                 onCompletedChange = { onStepCompleted(index, it) },
                                 onImageClick = {
                                     viewerPage =
@@ -648,6 +650,7 @@ internal fun RecipeDetailContent(
         FullScreenStepsDialog(
             recipeName = recipe.name,
             instructions = recipe.recipeInstructions,
+            notes = recipe.notes,
             imageReferences = imageIndex.instructionReferences,
             completedStepIndexes = completedStepIndexes,
             onStepCompleted = onStepCompleted,
@@ -924,6 +927,41 @@ internal fun RecipeDeleteConfirmationDialog(
     )
 }
 
+/** Notes referenced by [instruction], resolved from [notes] by `referenceId`. */
+internal fun linkedNotesFor(
+    instruction: RecipeInstructionDto,
+    notes: List<RecipeNoteDto>,
+): List<RecipeNoteDto> {
+    if (instruction.noteReferences.isEmpty() || notes.isEmpty()) return emptyList()
+    val referenceIds = instruction.noteReferences.mapNotNull { it.referenceId }.toSet()
+    if (referenceIds.isEmpty()) return emptyList()
+    return notes.filter { it.referenceId != null && it.referenceId in referenceIds }
+}
+
+@Composable
+private fun StepNotesDialog(notes: List<RecipeNoteDto>, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(Icons.AutoMirrored.Filled.StickyNote2, contentDescription = null) },
+        title = { Text("Linked notes") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                notes.forEach { note ->
+                    Column {
+                        if (!note.title.isNullOrBlank()) {
+                            Text(text = note.title, style = MaterialTheme.typography.titleSmall)
+                        }
+                        if (!note.text.isNullOrBlank()) {
+                            Text(text = note.text, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },
+    )
+}
+
 fun recipeImageGalleryUrls(serverUrl: String, recipe: RecipeDetailDto): List<String> =
     recipeImageIndex(serverUrl, recipe).galleryUrls
 
@@ -1079,10 +1117,12 @@ internal fun InstructionRow(
     number: Int,
     instruction: RecipeInstructionDto,
     imageReferences: List<RecipeImageReference>,
+    linkedNotes: List<RecipeNoteDto> = emptyList(),
     completed: Boolean = false,
     onCompletedChange: (Boolean) -> Unit = {},
     onImageClick: (String) -> Unit,
 ) {
+    var showLinkedNotes by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.Top,
@@ -1104,12 +1144,33 @@ internal fun InstructionRow(
             modifier = Modifier.padding(start = 4.dp, top = 12.dp, end = 12.dp),
         )
         Column(modifier = Modifier.fillMaxWidth()) {
-            if (!instruction.title.isNullOrBlank()) {
-                Text(
-                    text = instruction.title,
-                    style = MaterialTheme.typography.titleSmall,
-                    textDecoration = if (completed) TextDecoration.LineThrough else null,
-                )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (!instruction.title.isNullOrBlank()) {
+                    Text(
+                        text = instruction.title,
+                        style = MaterialTheme.typography.titleSmall,
+                        textDecoration = if (completed) TextDecoration.LineThrough else null,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                }
+                if (linkedNotes.isNotEmpty()) {
+                    IconButton(
+                        onClick = { showLinkedNotes = true },
+                        modifier = Modifier.size(32.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.StickyNote2,
+                            contentDescription =
+                                "Step $number has ${linkedNotes.size} linked " +
+                                    if (linkedNotes.size == 1) "note" else "notes",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                }
+            }
+            if (showLinkedNotes) {
+                StepNotesDialog(notes = linkedNotes, onDismiss = { showLinkedNotes = false })
             }
             val stepContent = stripLeadingStepNumber(stripRecipeImageSyntax(instruction.text))
             Markdown(
@@ -1195,6 +1256,7 @@ private val HTML_IMAGE_SYNTAX = Regex("""<img\b[^>]*>""", RegexOption.IGNORE_CAS
 private fun FullScreenStepsDialog(
     recipeName: String,
     instructions: List<RecipeInstructionDto>,
+    notes: List<RecipeNoteDto> = emptyList(),
     imageReferences: List<List<RecipeImageReference>>,
     completedStepIndexes: Set<Int>,
     onStepCompleted: (Int, Boolean) -> Unit,
@@ -1268,6 +1330,7 @@ private fun FullScreenStepsDialog(
                                 completed = index in completedStepIndexes,
                                 onCompletedChange = { onStepCompleted(index, it) },
                                 imageReferences = imageReferences.getOrNull(index).orEmpty(),
+                                linkedNotes = linkedNotesFor(instruction, notes),
                                 onImageClick = { url ->
                                     val page = images.indexOfFirst { it.url == url }
                                     if (page >= 0) viewerPage = page

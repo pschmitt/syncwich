@@ -113,4 +113,31 @@ class RecipeApiDtoTest {
         assertEquals(false, decoded.settings?.public)
         assertEquals("image.jpg", decoded.assets.single().name)
     }
+
+    @Test
+    fun `decodes step-linked note references added in Mealie v3_26`() {
+        val body =
+            """
+            {"id":"448f77cd","slug":"test-cake","name":"Test Cake",
+             "recipeIngredient":[],
+             "recipeInstructions":[
+               {"id":"27d14501","title":"","summary":"","text":"Preheat oven to 180C.",
+                "ingredientReferences":[],
+                "noteReferences":[{"referenceId":"9c6e1e2a-1111-4a1a-8888-abc123456789"}]}
+             ],
+             "notes":[
+               {"title":"Oven tip","text":"Use the fan setting.",
+                "referenceId":"9c6e1e2a-1111-4a1a-8888-abc123456789"}
+             ]}
+            """
+                .trimIndent()
+
+        val decoded = json.decodeFromString<RecipeDetailDto>(body)
+
+        val note = decoded.notes.single()
+        assertEquals("9c6e1e2a-1111-4a1a-8888-abc123456789", note.referenceId)
+
+        val noteReference = decoded.recipeInstructions.single().noteReferences.single()
+        assertEquals(note.referenceId, noteReference.referenceId)
+    }
 }

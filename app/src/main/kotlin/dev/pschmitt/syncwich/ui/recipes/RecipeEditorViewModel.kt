@@ -123,6 +123,20 @@ constructor(
 
     fun onInstructionMove(from: Int, to: Int) = updateDraft { withInstructionMoved(from, to) }
 
+    fun onStepNoteLinkToggled(stepIndex: Int, referenceId: String) = updateDraft {
+        withStepNoteLinkToggled(stepIndex, referenceId)
+    }
+
+    fun onNoteAdd() = updateDraft { withNoteAdded() }
+
+    fun onNoteTitleChange(index: Int, value: String) = updateDraft {
+        withNoteTitleChanged(index, value)
+    }
+
+    fun onNoteTextChange(index: Int, value: String) = updateDraft { withNoteTextChanged(index, value) }
+
+    fun onNoteRemove(index: Int) = updateDraft { withNoteRemoved(index) }
+
     fun onDescriptionImage(uri: String) =
         cacheSelectedImage(uri) { cachedUri -> withDescriptionImage(cachedUri) }
 

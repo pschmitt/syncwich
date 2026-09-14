@@ -1,12 +1,15 @@
 package dev.pschmitt.syncwich.ui.recipes
 
 import dev.pschmitt.syncwich.data.api.dto.CreateRecipeDto
+import dev.pschmitt.syncwich.data.api.dto.NoteReferenceInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeCategoryInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeIngredientInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeInputDto
+import dev.pschmitt.syncwich.data.api.dto.RecipeNoteInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeStepInputDto
 import dev.pschmitt.syncwich.data.api.dto.RecipeTagInputDto
 import java.util.Locale
+import java.util.UUID
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -20,6 +23,9 @@ import kotlinx.serialization.json.put
  * mirrors [dev.pschmitt.syncwich.ui.cookbooks.CookbookEditorDraft]. Ingredients/instructions are
  * edited as plain text lines; Mealie's structured `unit`/`food`/`ingredientReferences` fields are
  * left untouched by this bounded editor (see [RecipeIngredientInputDto]/[RecipeStepInputDto]).
+ * Notes are the exception: they're fully editable (title/text/add/remove), and each step can link
+ * to any of them (Mealie v3.26.0's step note-linking) via [instructionNoteReferences], a list kept
+ * index-aligned with [instructions] by every mutator below.
  */
 data class RecipeEditorDraft(
     val name: String = "",
@@ -33,12 +39,17 @@ data class RecipeEditorDraft(
     val tools: String = "",
     val ingredients: List<String> = listOf(""),
     val instructions: List<String> = listOf(""),
+    val notes: List<RecipeEditorNote> = emptyList(),
+    // Index-aligned with [instructions]: instructionNoteReferences[i] is the set of note
+    // referenceIds linked to instructions[i]. Use [normalizedInstructionNoteReferences] rather
+    // than indexing this directly - it may be shorter than [instructions] (e.g. the default `[]`).
+    val instructionNoteReferences: List<Set<String>> = emptyList(),
     val coverImageUri: String? = null,
     val removeCoverImage: Boolean = false,
     val existingSlug: String? = null,
     // Every field this bounded editor doesn't expose (id, image, category/tags, nutrition,
-    // settings, assets, notes, extras, comments, tools) is preserved from the cached recipe so
-    // saving an edit never silently discards it - see AGENTS.md's offline-cache rule.
+    // settings, assets, extras, comments, tools) is preserved from the cached recipe so saving an
+    // edit never silently discards it - see AGENTS.md's offline-cache rule.
     val baseInput: RecipeInputDto? = null,
 ) {
 
@@ -54,7 +65,10 @@ data class RecipeEditorDraft(
 
     fun toUpdateRequest(): RecipeInputDto {
         val trimmedIngredients = ingredients.map(String::trim).filter(String::isNotEmpty)
-        val trimmedInstructions = instructions.map(String::trim).filter(String::isNotEmpty)
+        val nonBlankInstructionIndexes = instructions.indices.filter { instructions[it].isNotBlank() }
+        val normalizedNoteReferences = normalizedInstructionNoteReferences()
+        val trimmedNotes = notes.filter { it.title.isNotBlank() || it.text.isNotBlank() }
+        val survivingNoteIds = trimmedNotes.map(RecipeEditorNote::referenceId).toSet()
         val base = baseInput ?: RecipeInputDto()
         return base.copy(
             name = name.trim(),
@@ -71,9 +85,32 @@ data class RecipeEditorDraft(
                     RecipeIngredientInputDto(display = text, note = text, originalText = text)
                 },
             recipeInstructions =
-                trimmedInstructions.map { text -> RecipeStepInputDto(text = text) },
+                nonBlankInstructionIndexes.map { index ->
+                    RecipeStepInputDto(
+                        text = instructions[index].trim(),
+                        noteReferences =
+                            normalizedNoteReferences[index]
+                                .filter { it in survivingNoteIds }
+                                .map { referenceId -> NoteReferenceInputDto(referenceId) },
+                    )
+                },
+            notes =
+                trimmedNotes.map { note ->
+                    RecipeNoteInputDto(
+                        title = note.title.trim(),
+                        text = note.text.trim(),
+                        referenceId = note.referenceId,
+                    )
+                },
         )
     }
+
+    /**
+     * [instructionNoteReferences] padded/truncated to [instructions]' size - safe to index
+     * positionally, unlike the raw field (which may be shorter, e.g. the default `[]`).
+     */
+    fun normalizedInstructionNoteReferences(): List<Set<String>> =
+        List(instructions.size) { instructionNoteReferences.getOrElse(it) { emptySet() } }
 
     fun withIngredientChanged(index: Int, value: String): RecipeEditorDraft =
         copy(ingredients = ingredients.toMutableList().apply { set(index, value) })
@@ -87,17 +124,34 @@ data class RecipeEditorDraft(
     fun withInstructionChanged(index: Int, value: String): RecipeEditorDraft =
         copy(instructions = instructions.toMutableList().apply { set(index, value) })
 
-    fun withInstructionAdded(): RecipeEditorDraft = copy(instructions = instructions + "")
+    fun withInstructionAdded(): RecipeEditorDraft =
+        copy(
+            instructions = instructions + "",
+            instructionNoteReferences = normalizedInstructionNoteReferences() + emptySet(),
+        )
 
     fun withInstructionRemoved(index: Int): RecipeEditorDraft =
-        if (instructions.size <= 1) copy(instructions = listOf(""))
-        else copy(instructions = instructions.toMutableList().apply { removeAt(index) })
+        if (instructions.size <= 1) {
+            copy(instructions = listOf(""), instructionNoteReferences = listOf(emptySet()))
+        } else {
+            copy(
+                instructions = instructions.toMutableList().apply { removeAt(index) },
+                instructionNoteReferences =
+                    normalizedInstructionNoteReferences().toMutableList().apply {
+                        removeAt(index)
+                    },
+            )
+        }
 
     fun withInstructionMoved(from: Int, to: Int): RecipeEditorDraft {
         if (from !in instructions.indices || to !in instructions.indices || from == to) return this
         return copy(
             instructions =
-                instructions.toMutableList().also { items -> items.add(to, items.removeAt(from)) }
+                instructions.toMutableList().also { items -> items.add(to, items.removeAt(from)) },
+            instructionNoteReferences =
+                normalizedInstructionNoteReferences().toMutableList().also { items ->
+                    items.add(to, items.removeAt(from))
+                },
         )
     }
 
@@ -106,6 +160,34 @@ data class RecipeEditorDraft(
 
     fun withInstructionImage(index: Int, uri: String): RecipeEditorDraft =
         withInstructionChanged(index, appendMarkdownImage(instructions[index], uri))
+
+    fun withStepNoteLinkToggled(stepIndex: Int, referenceId: String): RecipeEditorDraft {
+        val updated =
+            normalizedInstructionNoteReferences().toMutableList().apply {
+                val current = this[stepIndex]
+                this[stepIndex] =
+                    if (referenceId in current) current - referenceId else current + referenceId
+            }
+        return copy(instructionNoteReferences = updated)
+    }
+
+    fun withNoteAdded(): RecipeEditorDraft =
+        copy(notes = notes + RecipeEditorNote(referenceId = UUID.randomUUID().toString()))
+
+    fun withNoteTitleChanged(index: Int, value: String): RecipeEditorDraft =
+        copy(notes = notes.toMutableList().apply { set(index, this[index].copy(title = value)) })
+
+    fun withNoteTextChanged(index: Int, value: String): RecipeEditorDraft =
+        copy(notes = notes.toMutableList().apply { set(index, this[index].copy(text = value)) })
+
+    fun withNoteRemoved(index: Int): RecipeEditorDraft {
+        val removedId = notes[index].referenceId
+        return copy(
+            notes = notes.toMutableList().apply { removeAt(index) },
+            instructionNoteReferences =
+                normalizedInstructionNoteReferences().map { it - removedId },
+        )
+    }
 
     fun withCoverImage(uri: String): RecipeEditorDraft =
         copy(coverImageUri = uri, removeCoverImage = false)
@@ -131,12 +213,31 @@ data class RecipeEditorDraft(
                     input.recipeIngredient
                         .map { it.display.takeIf(String::isNotBlank) ?: it.note.orEmpty() }
                         .ifEmpty { listOf("") },
-                instructions = input.recipeInstructions.map { it.text }.ifEmpty { listOf("") },
+                instructions =
+                    input.recipeInstructions.map { it.text }.ifEmpty { listOf("") },
+                notes =
+                    input.notes.map { note ->
+                        RecipeEditorNote(
+                            referenceId = note.referenceId ?: UUID.randomUUID().toString(),
+                            title = note.title,
+                            text = note.text,
+                        )
+                    },
+                instructionNoteReferences =
+                    input.recipeInstructions
+                        .map { step -> step.noteReferences.mapNotNull { it.referenceId }.toSet() }
+                        .ifEmpty { listOf(emptySet()) },
                 existingSlug = slug,
                 baseInput = input,
             )
     }
 }
+
+/**
+ * One recipe note as edited locally; `referenceId` is a UUID4, generated up front so a step can
+ * link to a brand-new note before it's ever saved (Mealie accepts a client-supplied referenceId).
+ */
+data class RecipeEditorNote(val referenceId: String, val title: String = "", val text: String = "")
 
 internal fun appendMarkdownImage(content: String, uri: String): String =
     listOf(content.trimEnd(), "![Image]($uri)").filter(String::isNotBlank).joinToString("\n\n")

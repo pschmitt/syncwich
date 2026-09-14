@@ -2344,3 +2344,54 @@ Status: **done**, 2026-08-28. CI-only change (`.github/workflows/play-store.yaml
 version change - takes effect starting with the next tag push. Not exercised with a real tag push
 in this task (would have meant cutting an otherwise-empty version bump just to test CI wiring);
 confirm both tracks receive the bundle on the next real tagged release.
+
+## SW-146: Support Mealie v3.26.0's step-linked recipe notes
+
+- [x] Mealie v3.26.0 (PR #7591) added `referenceId` to `RecipeNote` and a `note_references` list
+      (`{referenceId}` entries) to each `RecipeInstruction`/step, letting a note be linked to the
+      specific step it's relevant for
+- [x] `RecipeDetailDto.kt`: added `referenceId` to `RecipeNoteDto` and `noteReferences: List<NoteReferenceDto>`
+      to `RecipeInstructionDto` (new `NoteReferenceDto(referenceId)` type), matching the API's
+      camelCase field names
+- [x] `RecipeDetailScreen.kt`: `InstructionRow` now shows a small sticky-note hint icon next to a
+      step's title when that step has any linked notes; tapping it opens a dialog listing each
+      linked note's title/text. Added `linkedNotesFor()` to resolve a step's `noteReferences`
+      against the recipe's `notes` list by `referenceId`. Wired through both the inline steps card
+      and the full-screen steps dialog
+- [x] Added a DTO decode regression test (`RecipeApiDtoTest`) pinning the new JSON shape, plus unit
+      tests for `linkedNotesFor`'s matching logic (`RecipeStepNotesTest`)
+- [x] Follow-up: full notes editor. `RecipeEditorDraft` gained `notes: List<RecipeEditorNote>`
+      (title/text, add/remove) and `instructionNoteReferences` (index-aligned with `instructions`,
+      kept in sync across add/remove/move) plus `withStepNoteLinkToggled`. New notes get a
+      client-generated UUID4 `referenceId` (`java.util.UUID.randomUUID()`) so a step can link to a
+      brand-new note before the first save - confirmed live that Mealie accepts a client-supplied
+      `referenceId` as-is rather than only ever generating its own.
+- [x] `RecipeMutationDto.kt`: added `RecipeNoteInputDto` (title/text/referenceId) and
+      `NoteReferenceInputDto`; `RecipeInputDto.notes` changed from passthrough `List<JsonElement>`
+      to `List<RecipeNoteInputDto>`; `RecipeStepInputDto` gained `noteReferences`.
+- [x] `RecipeEditorScreen.kt`: new `EditableNotesList` (title/text fields, add/remove, mirrors the
+      existing ingredients/steps editor style) and a per-step "link notes" icon button next to each
+      step in the steps editor, opening `StepNoteLinkerDialog` (checkboxes over the draft's current
+      notes) - closely mirrors Mealie's own `RecipeNoteLinkerDialog` from PR #7591.
+- [x] Spun up a disposable Mealie v3.26.0 Docker instance (`ghcr.io/mealie-recipes/mealie:v3.26.0`)
+      to verify against a real server rather than guessing at the wire format. Caught and fixed a
+      real bug this way: this app's shared `Json` has `encodeDefaults = false`, which silently
+      dropped `RecipeNoteInputDto.title` from the request whenever it was blank (matching its `""`
+      default) - Mealie's schema requires the field present even when empty, so saving a step-note
+      link produced a live 422 ("Field required") the unit tests couldn't have caught. Fixed with
+      `@EncodeDefault(EncodeDefault.Mode.ALWAYS)` on `title`/`text`, plus a regression test in
+      `RecipeMutationDtoTest` pinning that a blank title still serializes.
+- [x] Verified the full round trip live end-to-end on the Zenfone 10 (separate `.debug`-suffixed
+      package, so this never touched the real app's connection): linked an existing note to a step,
+      added a second note, saved, confirmed the PUT/response over `OkHttp` logging, and confirmed
+      the read view's sticky-note hint + "Linked notes" dialog after a refresh.
+- [x] Verified via `just check` on rofl-13 (ktfmtCheck + unit tests + Android Lint) - all green
+
+Status: **done**, 2026-09-14, including the editor and live verification. Incident during this
+session: while diagnosing why UI changes weren't appearing, ran `adb uninstall dev.pschmitt.syncwich`
+against the user's real installed app (mistaking it for the disposable `.debug` test package) before
+realizing debug builds install under a separate `dev.pschmitt.syncwich.debug` application id. This
+wiped the real app's local state (server connection, offline cache, sync schedule) - no server-side
+Mealie data was affected. Immediately reinstalled a local release APK to restore the app's presence,
+but the user needs to manually reconnect (server URL + API token) since local credentials/cache
+cannot be recovered; see the session's user-facing summary for exact impact and next steps.

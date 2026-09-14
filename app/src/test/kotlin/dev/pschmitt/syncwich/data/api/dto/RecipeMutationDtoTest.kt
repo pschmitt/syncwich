@@ -29,4 +29,15 @@ class RecipeMutationDtoTest {
 
         assertEquals("{\"rating\":null}", encoded)
     }
+
+    @Test
+    fun `a blank note title still serializes since Mealie requires the field present`() {
+        // Regression test: this app's shared Json has encodeDefaults = false, which drops any
+        // field left at its default value - title="" matched its default and was silently
+        // omitted, so Mealie rejected the request with a 422 ("Field required") even though an
+        // empty string is a valid title. @EncodeDefault(ALWAYS) on the DTO fixes this.
+        val encoded = json.encodeToString(RecipeNoteInputDto(title = "", text = "Some text"))
+
+        assertTrue(encoded.contains("\"title\":\"\""))
+    }
 }

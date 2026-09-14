@@ -1,5 +1,7 @@
 package dev.pschmitt.syncwich.data.api.dto
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -54,9 +56,24 @@ data class RecipeInputDto(
     val nutrition: JsonElement? = null,
     val settings: JsonElement? = null,
     val assets: List<JsonElement> = emptyList(),
-    val notes: List<JsonElement> = emptyList(),
+    val notes: List<RecipeNoteInputDto> = emptyList(),
     val extras: JsonElement? = null,
     val comments: List<JsonElement> = emptyList(),
+)
+
+/**
+ * `referenceId` (a UUID4 string) lets a [RecipeStepInputDto] link to this note via
+ * [NoteReferenceInputDto]. `title`/`text` are `@EncodeDefault`-forced: Mealie's schema requires
+ * both present even when blank, but this app's shared [kotlinx.serialization.json.Json] has
+ * `encodeDefaults = false`, which would otherwise drop a blank one from the request entirely and
+ * fail server-side validation with a 422 ("Field required").
+ */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class RecipeNoteInputDto(
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val title: String = "",
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val text: String = "",
+    val referenceId: String? = null,
 )
 
 @Serializable
@@ -95,4 +112,7 @@ data class RecipeStepInputDto(
     val summary: String? = null,
     val text: String,
     val ingredientReferences: List<JsonElement> = emptyList(),
+    val noteReferences: List<NoteReferenceInputDto> = emptyList(),
 )
+
+@Serializable data class NoteReferenceInputDto(val referenceId: String? = null)
