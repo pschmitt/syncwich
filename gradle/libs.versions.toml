@@ -7,7 +7,7 @@ androidx-compose = "1.11.4"
 # foundation versions, so it's safe to pin independently (same call as the sibling nyetbox app).
 androidx-compose-material-icons-extended = "1.7.8"
 androidx-compose-material3 = "1.4.0"
-androidx-core = "1.19.0"
+androidx-core = "1.19.1"
 androidx-core-splashscreen = "1.2.0"
 androidx-datastore = "1.1.7"
 androidx-hilt = "1.4.0"
