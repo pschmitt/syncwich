@@ -12,7 +12,7 @@ services:
       - ./dex-config.yaml:/etc/dex/config.yaml:ro
 
   mealie:
-    image: ghcr.io/mealie-recipes/mealie:v3.22.0
+    image: ghcr.io/mealie-recipes/mealie:v3.28.0
     depends_on:
       - dex
     ports:
