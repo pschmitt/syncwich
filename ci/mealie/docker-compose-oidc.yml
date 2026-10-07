@@ -2,7 +2,7 @@
 # Set SYNCWICH_TEST_HOST to this machine's LAN address when it is not 10.5.0.125.
 services:
   dex:
-    image: ghcr.io/dexidp/dex:v2.41.1
+    image: ghcr.io/dexidp/dex:v2.46.0
     command: ["dex", "serve", "/etc/dex/config.yaml"]
     ports:
       - "5556:5556"
