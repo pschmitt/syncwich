@@ -1,7 +1,7 @@
 [versions]
 android-plugin = "9.3.1"
 androidx-activity = "1.13.0"
-androidx-compose = "1.11.4"
+androidx-compose = "1.12.1"
 # Decoupled from androidx-compose above - this artifact's release cadence lags the rest of Compose,
 # but it's just a large set of static ImageVector vals with no API coupling to newer compose-ui/
 # foundation versions, so it's safe to pin independently (same call as the sibling nyetbox app).
