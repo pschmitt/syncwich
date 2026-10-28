@@ -133,7 +133,9 @@ constructor(
         withNoteTitleChanged(index, value)
     }
 
-    fun onNoteTextChange(index: Int, value: String) = updateDraft { withNoteTextChanged(index, value) }
+    fun onNoteTextChange(index: Int, value: String) = updateDraft {
+        withNoteTextChanged(index, value)
+    }
 
     fun onNoteRemove(index: Int) = updateDraft { withNoteRemoved(index) }
 

@@ -65,7 +65,8 @@ data class RecipeEditorDraft(
 
     fun toUpdateRequest(): RecipeInputDto {
         val trimmedIngredients = ingredients.map(String::trim).filter(String::isNotEmpty)
-        val nonBlankInstructionIndexes = instructions.indices.filter { instructions[it].isNotBlank() }
+        val nonBlankInstructionIndexes =
+            instructions.indices.filter { instructions[it].isNotBlank() }
         val normalizedNoteReferences = normalizedInstructionNoteReferences()
         val trimmedNotes = notes.filter { it.title.isNotBlank() || it.text.isNotBlank() }
         val survivingNoteIds = trimmedNotes.map(RecipeEditorNote::referenceId).toSet()
@@ -137,9 +138,7 @@ data class RecipeEditorDraft(
             copy(
                 instructions = instructions.toMutableList().apply { removeAt(index) },
                 instructionNoteReferences =
-                    normalizedInstructionNoteReferences().toMutableList().apply {
-                        removeAt(index)
-                    },
+                    normalizedInstructionNoteReferences().toMutableList().apply { removeAt(index) },
             )
         }
 
@@ -213,8 +212,7 @@ data class RecipeEditorDraft(
                     input.recipeIngredient
                         .map { it.display.takeIf(String::isNotBlank) ?: it.note.orEmpty() }
                         .ifEmpty { listOf("") },
-                instructions =
-                    input.recipeInstructions.map { it.text }.ifEmpty { listOf("") },
+                instructions = input.recipeInstructions.map { it.text }.ifEmpty { listOf("") },
                 notes =
                     input.notes.map { note ->
                         RecipeEditorNote(
