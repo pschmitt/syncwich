@@ -553,17 +553,14 @@ private fun StepNoteLinkerDialog(
                 notes.forEach { note ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier =
-                            Modifier.fillMaxWidth().clickable { onToggle(note.referenceId) },
+                        modifier = Modifier.fillMaxWidth().clickable { onToggle(note.referenceId) },
                     ) {
                         Checkbox(
                             checked = note.referenceId in linkedReferenceIds,
                             onCheckedChange = { onToggle(note.referenceId) },
                         )
                         Text(
-                            text =
-                                note.title
-                                    .ifBlank { note.text.ifBlank { "Untitled note" } },
+                            text = note.title.ifBlank { note.text.ifBlank { "Untitled note" } },
                             modifier = Modifier.padding(start = 4.dp),
                         )
                     }

@@ -200,8 +200,7 @@ class RecipeEditorDraftTest {
 
     @Test
     fun `adding, removing, and moving steps keeps note links aligned by index`() {
-        val draft =
-            RecipeEditorDraft(instructions = listOf("Step 1", "Step 2")).withNoteAdded()
+        val draft = RecipeEditorDraft(instructions = listOf("Step 1", "Step 2")).withNoteAdded()
         val referenceId = draft.notes.single().referenceId
         val linked = draft.withStepNoteLinkToggled(1, referenceId)
 
@@ -216,7 +215,10 @@ class RecipeEditorDraftTest {
 
         val afterRemovingStepZero = linked.withInstructionRemoved(0)
         assertEquals(listOf("Step 2"), afterRemovingStepZero.instructions)
-        assertEquals(setOf(referenceId), afterRemovingStepZero.normalizedInstructionNoteReferences()[0])
+        assertEquals(
+            setOf(referenceId),
+            afterRemovingStepZero.normalizedInstructionNoteReferences()[0],
+        )
     }
 
     @Test
@@ -234,28 +236,42 @@ class RecipeEditorDraftTest {
         val request = titled.toUpdateRequest()
 
         assertEquals(
-            listOf(RecipeNoteInputDto(title = "Tip", text = "Use a fan oven.", referenceId = referenceId)),
+            listOf(
+                RecipeNoteInputDto(
+                    title = "Tip",
+                    text = "Use a fan oven.",
+                    referenceId = referenceId,
+                )
+            ),
             request.notes,
         )
         assertEquals(
             listOf(NoteReferenceInputDto(referenceId)),
             request.recipeInstructions[0].noteReferences,
         )
-        assertEquals(emptyList<NoteReferenceInputDto>(), request.recipeInstructions[1].noteReferences)
+        assertEquals(
+            emptyList<NoteReferenceInputDto>(),
+            request.recipeInstructions[1].noteReferences,
+        )
     }
 
     @Test
     fun `saving drops a step's link to a note that was removed`() {
-        val draft = RecipeEditorDraft(name = "Soup", instructions = listOf("Simmer")).withNoteAdded()
+        val draft =
+            RecipeEditorDraft(name = "Soup", instructions = listOf("Simmer")).withNoteAdded()
         val referenceId = draft.notes.single().referenceId
         // Simulate a stale link surviving without going through withNoteRemoved (which already
         // cleans this up) by dropping the note directly - toUpdateRequest must filter it too.
-        val linkedThenRemoved = draft.withStepNoteLinkToggled(0, referenceId).copy(notes = emptyList())
+        val linkedThenRemoved =
+            draft.withStepNoteLinkToggled(0, referenceId).copy(notes = emptyList())
 
         val request = linkedThenRemoved.toUpdateRequest()
 
         assertEquals(emptyList<RecipeNoteInputDto>(), request.notes)
-        assertEquals(emptyList<NoteReferenceInputDto>(), request.recipeInstructions[0].noteReferences)
+        assertEquals(
+            emptyList<NoteReferenceInputDto>(),
+            request.recipeInstructions[0].noteReferences,
+        )
     }
 
     @Test
@@ -272,7 +288,14 @@ class RecipeEditorDraftTest {
                         ),
                         RecipeStepInputDto(text = "Sear the beef."),
                     ),
-                notes = listOf(RecipeNoteInputDto(title = "Oven tip", text = "Use the fan setting.", referenceId = referenceId)),
+                notes =
+                    listOf(
+                        RecipeNoteInputDto(
+                            title = "Oven tip",
+                            text = "Use the fan setting.",
+                            referenceId = referenceId,
+                        )
+                    ),
             )
 
         val draft = RecipeEditorDraft.from(input, slug = "braised-beef")

@@ -9,8 +9,10 @@ import org.junit.Test
 
 class RecipeStepNotesTest {
 
-    private val linkedNote = RecipeNoteDto(title = "Tip", text = "Use a fan oven.", referenceId = "ref-1")
-    private val otherNote = RecipeNoteDto(title = "Other", text = "Unrelated.", referenceId = "ref-2")
+    private val linkedNote =
+        RecipeNoteDto(title = "Tip", text = "Use a fan oven.", referenceId = "ref-1")
+    private val otherNote =
+        RecipeNoteDto(title = "Other", text = "Unrelated.", referenceId = "ref-2")
 
     @Test
     fun `resolves notes referenced by a step`() {

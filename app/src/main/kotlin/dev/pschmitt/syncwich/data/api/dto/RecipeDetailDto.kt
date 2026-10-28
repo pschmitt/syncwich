@@ -75,7 +75,9 @@ data class RecipeInstructionDto(
     val noteReferences: List<NoteReferenceDto> = emptyList(),
 )
 
-/** A step's link to a [RecipeNoteDto], by that note's `referenceId` - Mealie v3.26.0's note-linking. */
+/**
+ * A step's link to a [RecipeNoteDto], by that note's `referenceId` - Mealie v3.26.0's note-linking.
+ */
 @Serializable data class NoteReferenceDto(val referenceId: String? = null)
 
 @Serializable
@@ -110,7 +112,9 @@ data class RecipeAssetDto(
     val fileName: String? = null,
 )
 
-/** `referenceId` was added in Mealie v3.26.0, letting a [RecipeInstructionDto] step link to a note. */
+/**
+ * `referenceId` was added in Mealie v3.26.0, letting a [RecipeInstructionDto] step link to a note.
+ */
 @Serializable
 data class RecipeNoteDto(
     val title: String? = null,
