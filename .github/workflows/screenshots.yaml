@@ -58,14 +58,20 @@ jobs:
       - name: Cache Mealie Docker image
         uses: actions/cache@v4
         with:
-          path: /tmp/syncwich-mealie-v3.22.0.tar.gz
-          key: syncwich-mealie-v3.22.0-${{ runner.os }}-v1
+          path: /tmp/syncwich-mealie-image.tar.gz
+          key: syncwich-mealie-${{ hashFiles('ci/mealie/docker-compose.yml') }}-${{ runner.os }}-v1
 
       - name: Load or pull Mealie Docker image
         run: |
-          image="ghcr.io/mealie-recipes/mealie:v3.22.0"
-          archive=/tmp/syncwich-mealie-v3.22.0.tar.gz
-          if [ -s "$archive" ]; then
+          image="$(docker compose -f ci/mealie/docker-compose.yml config --images | head -n 1)"
+          archive=/tmp/syncwich-mealie-image.tar.gz
+          if [[ -z "$image" ]]
+          then
+            printf 'Mealie image not found in ci/mealie/docker-compose.yml\n' >&2
+            exit 1
+          fi
+          if [[ -s "$archive" ]]
+          then
             gzip -dc "$archive" | docker load
           else
             docker pull "$image"
