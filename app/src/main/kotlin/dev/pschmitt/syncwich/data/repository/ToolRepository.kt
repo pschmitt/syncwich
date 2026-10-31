@@ -25,20 +25,20 @@ constructor(private val organizersApi: OrganizersApi, private val toolDao: ToolD
     suspend fun refreshTools(): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                val allItems = mutableListOf<OrganizerDto>()
-                var page = 1
-                while (true) {
-                    val response =
-                        organizersApi.getTools(
-                            page = page,
-                            perPage = OrganizersApi.DEFAULT_PAGE_SIZE,
-                        )
-                    allItems += response.items
-                    if (response.items.isEmpty() || page >= response.totalPages) break
-                    page++
+                    val allItems = mutableListOf<OrganizerDto>()
+                    var page = 1
+                    while (true) {
+                        val response =
+                            organizersApi.getTools(
+                                page = page,
+                                perPage = OrganizersApi.DEFAULT_PAGE_SIZE,
+                            )
+                        allItems += response.items
+                        if (response.items.isEmpty() || page >= response.totalPages) break
+                        page++
+                    }
+                    toolDao.replaceAll(allItems.map { it.toEntity() })
                 }
-                toolDao.replaceAll(allItems.map { it.toEntity() })
-            }
                 .onFailure { Timber.w(it, "Tool refresh failed; keeping cached data") }
         }
 
@@ -53,9 +53,9 @@ constructor(private val organizersApi: OrganizersApi, private val toolDao: ToolD
     suspend fun deleteTool(toolId: String): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                organizersApi.deleteTool(toolId).use {}
-                toolDao.deleteById(toolId)
-            }
+                    organizersApi.deleteTool(toolId).use {}
+                    toolDao.deleteById(toolId)
+                }
                 .onFailure {
                     Timber.w(it, "Tool deletion failed for '$toolId'; keeping cached data")
                 }
@@ -64,10 +64,10 @@ constructor(private val organizersApi: OrganizersApi, private val toolDao: ToolD
     private suspend fun mutate(request: suspend () -> OrganizerDto): Result<ToolEntity> =
         withContext(Dispatchers.IO) {
             runCatching {
-                val entity = request().toEntity()
-                toolDao.upsertAll(listOf(entity))
-                entity
-            }
+                    val entity = request().toEntity()
+                    toolDao.upsertAll(listOf(entity))
+                    entity
+                }
                 .onFailure { Timber.w(it, "Tool mutation failed; keeping cached data") }
         }
 

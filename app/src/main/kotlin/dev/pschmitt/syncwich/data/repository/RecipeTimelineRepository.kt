@@ -84,9 +84,9 @@ constructor(
     suspend fun refreshFromServer(recipeId: String): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                val response = timelineApi.getEvents(queryFilter = recipeIdFilter(recipeId))
-                recipeTimelineEventDao.upsertAll(response.items.map { it.toEntity() })
-            }
+                    val response = timelineApi.getEvents(queryFilter = recipeIdFilter(recipeId))
+                    recipeTimelineEventDao.upsertAll(response.items.map { it.toEntity() })
+                }
                 .onFailure { Timber.w(it, "Timeline refresh failed; keeping cached events") }
         }
 
@@ -94,34 +94,36 @@ constructor(
     suspend fun syncPendingEvents(): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                recipeTimelineEventDao.getPending().forEach { event ->
-                    syncEvent(event).getOrThrow()
+                    recipeTimelineEventDao.getPending().forEach { event ->
+                        syncEvent(event).getOrThrow()
+                    }
                 }
-            }
                 .onFailure {
                     Timber.w(it, "Pending timeline event sync failed; keeping pending events")
                 }
         }
 
-    private suspend fun syncEvent(event: RecipeTimelineEventEntity): Result<Unit> = runCatching {
-        val subject =
-            if (event.subject == PENDING_SUBJECT) "${displayName()} made this" else event.subject
-        val created =
-            timelineApi.createEvent(
-                RecipeTimelineEventInDto(
-                    recipeId = event.recipeId,
-                    subject = subject,
-                    eventType = event.eventType,
-                    eventMessage = event.eventMessage,
-                    timestamp = Instant.ofEpochMilli(event.timestamp).toString(),
-                )
-            )
-        // Swap the client-generated placeholder for the server's own id so a later
-        // refreshFromServer upserts onto the same row instead of duplicating it.
-        recipeTimelineEventDao.delete(event.localId)
-        recipeTimelineEventDao.upsert(created.toEntity())
-    }
-        .onFailure { Timber.w(it, "Timeline event create failed; keeping it pending") }
+    private suspend fun syncEvent(event: RecipeTimelineEventEntity): Result<Unit> =
+        runCatching {
+                val subject =
+                    if (event.subject == PENDING_SUBJECT) "${displayName()} made this"
+                    else event.subject
+                val created =
+                    timelineApi.createEvent(
+                        RecipeTimelineEventInDto(
+                            recipeId = event.recipeId,
+                            subject = subject,
+                            eventType = event.eventType,
+                            eventMessage = event.eventMessage,
+                            timestamp = Instant.ofEpochMilli(event.timestamp).toString(),
+                        )
+                    )
+                // Swap the client-generated placeholder for the server's own id so a later
+                // refreshFromServer upserts onto the same row instead of duplicating it.
+                recipeTimelineEventDao.delete(event.localId)
+                recipeTimelineEventDao.upsert(created.toEntity())
+            }
+            .onFailure { Timber.w(it, "Timeline event create failed; keeping it pending") }
 
     private suspend fun displayName(): String {
         val self = usersApi.getSelf()

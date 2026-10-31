@@ -42,24 +42,24 @@ constructor(private val mealPlanApi: MealPlanApi, private val mealPlanDao: MealP
     suspend fun refreshMealPlan(startDate: LocalDate, endDate: LocalDate): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                val start = startDate.toString()
-                val end = endDate.toString()
-                val allItems = mutableListOf<MealPlanEntryDto>()
-                var page = 1
-                while (true) {
-                    val response =
-                        mealPlanApi.getMealPlans(
-                            startDate = start,
-                            endDate = end,
-                            page = page,
-                            perPage = MealPlanApi.DEFAULT_PAGE_SIZE,
-                        )
-                    allItems += response.items
-                    if (response.items.isEmpty() || page >= response.totalPages) break
-                    page++
+                    val start = startDate.toString()
+                    val end = endDate.toString()
+                    val allItems = mutableListOf<MealPlanEntryDto>()
+                    var page = 1
+                    while (true) {
+                        val response =
+                            mealPlanApi.getMealPlans(
+                                startDate = start,
+                                endDate = end,
+                                page = page,
+                                perPage = MealPlanApi.DEFAULT_PAGE_SIZE,
+                            )
+                        allItems += response.items
+                        if (response.items.isEmpty() || page >= response.totalPages) break
+                        page++
+                    }
+                    mealPlanDao.replaceRange(start, end, allItems.map { it.toEntity() })
                 }
-                mealPlanDao.replaceRange(start, end, allItems.map { it.toEntity() })
-            }
                 .onFailure { Timber.w(it, "Meal plan refresh failed; keeping cached data") }
         }
 
@@ -77,20 +77,20 @@ constructor(private val mealPlanApi: MealPlanApi, private val mealPlanDao: MealP
     ): Result<MealPlanEntryEntity> =
         withContext(Dispatchers.IO) {
             runCatching {
-                val response =
-                    mealPlanApi.createMealPlanEntry(
-                        CreatePlanEntryDto(
-                            date = date.toString(),
-                            entryType = entryType,
-                            title = title,
-                            text = text,
-                            recipeId = recipeId,
+                    val response =
+                        mealPlanApi.createMealPlanEntry(
+                            CreatePlanEntryDto(
+                                date = date.toString(),
+                                entryType = entryType,
+                                title = title,
+                                text = text,
+                                recipeId = recipeId,
+                            )
                         )
-                    )
-                val entity = response.toEntity()
-                mealPlanDao.upsertAll(listOf(entity))
-                entity
-            }
+                    val entity = response.toEntity()
+                    mealPlanDao.upsertAll(listOf(entity))
+                    entity
+                }
                 .onFailure { Timber.w(it, "Meal plan entry create failed; keeping cached data") }
         }
 
@@ -108,28 +108,28 @@ constructor(private val mealPlanApi: MealPlanApi, private val mealPlanDao: MealP
     ): Result<MealPlanEntryEntity> =
         withContext(Dispatchers.IO) {
             runCatching {
-                val existing =
-                    mealPlanDao.getById(id)
-                        ?: error("This meal plan entry is not cached on this device")
-                val response =
-                    mealPlanApi.updateMealPlanEntry(
-                        id = id.toInt(),
-                        request =
-                            UpdatePlanEntryDto(
-                                date = date.toString(),
-                                entryType = entryType,
-                                title = title,
-                                text = text,
-                                recipeId = recipeId,
-                                id = id.toInt(),
-                                groupId = existing.groupId,
-                                userId = existing.userId,
-                            ),
-                    )
-                val entity = response.toEntity()
-                mealPlanDao.upsertAll(listOf(entity))
-                entity
-            }
+                    val existing =
+                        mealPlanDao.getById(id)
+                            ?: error("This meal plan entry is not cached on this device")
+                    val response =
+                        mealPlanApi.updateMealPlanEntry(
+                            id = id.toInt(),
+                            request =
+                                UpdatePlanEntryDto(
+                                    date = date.toString(),
+                                    entryType = entryType,
+                                    title = title,
+                                    text = text,
+                                    recipeId = recipeId,
+                                    id = id.toInt(),
+                                    groupId = existing.groupId,
+                                    userId = existing.userId,
+                                ),
+                        )
+                    val entity = response.toEntity()
+                    mealPlanDao.upsertAll(listOf(entity))
+                    entity
+                }
                 .onFailure { Timber.w(it, "Meal plan entry update failed; keeping cached data") }
         }
 
@@ -137,9 +137,9 @@ constructor(private val mealPlanApi: MealPlanApi, private val mealPlanDao: MealP
     suspend fun deleteEntry(id: Long): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                mealPlanApi.deleteMealPlanEntry(id.toInt()).close()
-                mealPlanDao.deleteById(id)
-            }
+                    mealPlanApi.deleteMealPlanEntry(id.toInt()).close()
+                    mealPlanDao.deleteById(id)
+                }
                 .onFailure { Timber.w(it, "Meal plan entry delete failed; keeping cached data") }
         }
 

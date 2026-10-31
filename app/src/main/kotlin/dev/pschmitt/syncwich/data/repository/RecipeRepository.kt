@@ -91,9 +91,9 @@ constructor(
     suspend fun createRecipe(request: CreateRecipeDto): Result<String> =
         withContext(Dispatchers.IO) {
             runCatching {
-                require(request.name.isNotBlank()) { "Recipe name must not be blank" }
-                recipesApi.createRecipe(request).use { it.string() }
-            }
+                    require(request.name.isNotBlank()) { "Recipe name must not be blank" }
+                    recipesApi.createRecipe(request).use { it.string() }
+                }
                 .onFailure { Timber.w(it, "Recipe create failed; keeping cached data") }
         }
 
@@ -109,11 +109,11 @@ constructor(
     suspend fun deleteRecipe(recipeId: String, slug: String): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                recipesApi.deleteRecipe(slug).use {}
-                recipeDao.deleteRecipeCache(recipeId)
-                recipeActionDao.delete(recipeId)
-                recipeStepProgressDao.deleteForRecipe(recipeId)
-            }
+                    recipesApi.deleteRecipe(slug).use {}
+                    recipeDao.deleteRecipeCache(recipeId)
+                    recipeActionDao.delete(recipeId)
+                    recipeStepProgressDao.deleteForRecipe(recipeId)
+                }
                 .onFailure {
                     Timber.w(it, "Recipe deletion failed for '$slug'; keeping cached data")
                 }
@@ -126,12 +126,12 @@ constructor(
     suspend fun parseRecipeUrl(url: String): Result<String> =
         withContext(Dispatchers.IO) {
             runCatching {
-                require(url.isNotBlank()) { "Recipe URL must not be blank" }
-                recipesApi
-                    .parseRecipeUrl(ScrapeRecipeDto(url = url.trim()))
-                    .use { it.string().trim().trim('"') }
-                    .also { require(it.isNotBlank()) { "Mealie returned no recipe reference" } }
-            }
+                    require(url.isNotBlank()) { "Recipe URL must not be blank" }
+                    recipesApi
+                        .parseRecipeUrl(ScrapeRecipeDto(url = url.trim()))
+                        .use { it.string().trim().trim('"') }
+                        .also { require(it.isNotBlank()) { "Mealie returned no recipe reference" } }
+                }
                 .onFailure { Timber.w(it, "Recipe URL parsing failed; keeping cached data") }
         }
 
@@ -142,21 +142,21 @@ constructor(
     ): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                val media = readLocalMedia(uri, contentResolver)
-                val image =
-                    MultipartBody.Part.createFormData(
-                        "image",
-                        media.fileName,
-                        media.bytes.toRequestBody(media.mimeType.toMediaType()),
-                    )
-                recipesApi
-                    .updateRecipeImage(
-                        slug,
-                        image,
-                        media.extension.toRequestBody("text/plain".toMediaType()),
-                    )
-                    .use {}
-            }
+                    val media = readLocalMedia(uri, contentResolver)
+                    val image =
+                        MultipartBody.Part.createFormData(
+                            "image",
+                            media.fileName,
+                            media.bytes.toRequestBody(media.mimeType.toMediaType()),
+                        )
+                    recipesApi
+                        .updateRecipeImage(
+                            slug,
+                            image,
+                            media.extension.toRequestBody("text/plain".toMediaType()),
+                        )
+                        .use {}
+                }
                 .onFailure { Timber.w(it, "Recipe cover image update failed; keeping draft") }
         }
 
@@ -174,21 +174,21 @@ constructor(
     ): Result<RecipeAssetDto> =
         withContext(Dispatchers.IO) {
             runCatching {
-                val media = readLocalMedia(uri, contentResolver)
-                val file =
-                    MultipartBody.Part.createFormData(
-                        "file",
-                        media.fileName,
-                        media.bytes.toRequestBody(media.mimeType.toMediaType()),
+                    val media = readLocalMedia(uri, contentResolver)
+                    val file =
+                        MultipartBody.Part.createFormData(
+                            "file",
+                            media.fileName,
+                            media.bytes.toRequestBody(media.mimeType.toMediaType()),
+                        )
+                    recipesApi.uploadRecipeAsset(
+                        slug,
+                        name.toRequestBody("text/plain".toMediaType()),
+                        "image".toRequestBody("text/plain".toMediaType()),
+                        media.extension.toRequestBody("text/plain".toMediaType()),
+                        file,
                     )
-                recipesApi.uploadRecipeAsset(
-                    slug,
-                    name.toRequestBody("text/plain".toMediaType()),
-                    "image".toRequestBody("text/plain".toMediaType()),
-                    media.extension.toRequestBody("text/plain".toMediaType()),
-                    file,
-                )
-            }
+                }
                 .onFailure { Timber.w(it, "Recipe asset upload failed; keeping draft") }
         }
 
@@ -236,69 +236,74 @@ constructor(
                     return@withLock Result.success(Unit)
                 }
                 runCatching {
-                    val allItems = mutableListOf<RecipeSummaryDto>()
-                    var page = 1
-                    while (true) {
-                        val response =
-                            recipesApi.getRecipes(
-                                page = page,
-                                perPage = RecipesApi.DEFAULT_PAGE_SIZE,
-                            )
-                        allItems += response.items
-                        if (response.items.isEmpty() || page >= response.totalPages) break
-                        page++
-                    }
+                        val allItems = mutableListOf<RecipeSummaryDto>()
+                        var page = 1
+                        while (true) {
+                            val response =
+                                recipesApi.getRecipes(
+                                    page = page,
+                                    perPage = RecipesApi.DEFAULT_PAGE_SIZE,
+                                )
+                            allItems += response.items
+                            if (response.items.isEmpty() || page >= response.totalPages) break
+                            page++
+                        }
 
-                    val categories = mutableMapOf<String, CategoryEntity>()
-                    val tags = mutableMapOf<String, TagEntity>()
-                    val tools = mutableMapOf<String, ToolEntity>()
-                    val categoryRefs = mutableListOf<RecipeCategoryCrossRef>()
-                    val tagRefs = mutableListOf<RecipeTagCrossRef>()
-                    val toolRefs = mutableListOf<RecipeToolCrossRef>()
-                    val recipes = allItems.map { dto ->
-                        dto.recipeCategory.forEach { category ->
-                            categories[category.id] = category.toCategoryEntity()
-                            categoryRefs +=
-                                RecipeCategoryCrossRef(recipeId = dto.id, categoryId = category.id)
+                        val categories = mutableMapOf<String, CategoryEntity>()
+                        val tags = mutableMapOf<String, TagEntity>()
+                        val tools = mutableMapOf<String, ToolEntity>()
+                        val categoryRefs = mutableListOf<RecipeCategoryCrossRef>()
+                        val tagRefs = mutableListOf<RecipeTagCrossRef>()
+                        val toolRefs = mutableListOf<RecipeToolCrossRef>()
+                        val recipes = allItems.map { dto ->
+                            dto.recipeCategory.forEach { category ->
+                                categories[category.id] = category.toCategoryEntity()
+                                categoryRefs +=
+                                    RecipeCategoryCrossRef(
+                                        recipeId = dto.id,
+                                        categoryId = category.id,
+                                    )
+                            }
+                            dto.tags.forEach { tag ->
+                                tags[tag.id] = tag.toTagEntity()
+                                tagRefs += RecipeTagCrossRef(recipeId = dto.id, tagId = tag.id)
+                            }
+                            dto.tools.forEach { tool ->
+                                tools[tool.id] = tool.toToolEntity()
+                                toolRefs += RecipeToolCrossRef(recipeId = dto.id, toolId = tool.id)
+                            }
+                            dto.toEntity()
                         }
-                        dto.tags.forEach { tag ->
-                            tags[tag.id] = tag.toTagEntity()
-                            tagRefs += RecipeTagCrossRef(recipeId = dto.id, tagId = tag.id)
-                        }
-                        dto.tools.forEach { tool ->
-                            tools[tool.id] = tool.toToolEntity()
-                            toolRefs += RecipeToolCrossRef(recipeId = dto.id, toolId = tool.id)
-                        }
-                        dto.toEntity()
-                    }
 
-                    database.withTransaction {
-                        recipeDao.deleteAll()
-                        recipeDao.deleteAllCategoryCrossRefs()
-                        recipeDao.deleteAllTagCrossRefs()
-                        recipeDao.deleteAllToolCrossRefs()
-                        // Non-destructive: unlike the recipe list itself, the category/tag/tool
-                        // dictionaries
-                        // are authoritatively refreshed by CategoryRepository/TagRepository/
-                        // ToolRepository - upsert
-                        // here only so a name/slug embedded in this response is never stale,
-                        // without
-                        // racing a delete of a category that has no recipes (and thus never shows
-                        // up
-                        // in this loop) out from under CategoryRepository's own refresh.
-                        if (categories.isNotEmpty())
-                            database.categoryDao().upsertAll(categories.values.toList())
-                        if (tags.isNotEmpty()) database.tagDao().upsertAll(tags.values.toList())
-                        if (tools.isNotEmpty()) database.toolDao().upsertAll(tools.values.toList())
-                        recipeDao.upsertAll(recipes)
-                        if (categoryRefs.isNotEmpty())
-                            recipeDao.insertCategoryCrossRefs(categoryRefs)
-                        if (tagRefs.isNotEmpty()) recipeDao.insertTagCrossRefs(tagRefs)
-                        if (toolRefs.isNotEmpty()) recipeDao.insertToolCrossRefs(toolRefs)
+                        database.withTransaction {
+                            recipeDao.deleteAll()
+                            recipeDao.deleteAllCategoryCrossRefs()
+                            recipeDao.deleteAllTagCrossRefs()
+                            recipeDao.deleteAllToolCrossRefs()
+                            // Non-destructive: unlike the recipe list itself, the category/tag/tool
+                            // dictionaries
+                            // are authoritatively refreshed by CategoryRepository/TagRepository/
+                            // ToolRepository - upsert
+                            // here only so a name/slug embedded in this response is never stale,
+                            // without
+                            // racing a delete of a category that has no recipes (and thus never
+                            // shows
+                            // up
+                            // in this loop) out from under CategoryRepository's own refresh.
+                            if (categories.isNotEmpty())
+                                database.categoryDao().upsertAll(categories.values.toList())
+                            if (tags.isNotEmpty()) database.tagDao().upsertAll(tags.values.toList())
+                            if (tools.isNotEmpty())
+                                database.toolDao().upsertAll(tools.values.toList())
+                            recipeDao.upsertAll(recipes)
+                            if (categoryRefs.isNotEmpty())
+                                recipeDao.insertCategoryCrossRefs(categoryRefs)
+                            if (tagRefs.isNotEmpty()) recipeDao.insertTagCrossRefs(tagRefs)
+                            if (toolRefs.isNotEmpty()) recipeDao.insertToolCrossRefs(toolRefs)
+                        }
+                        lastRecipeListRefreshAt = System.currentTimeMillis()
+                        Timber.d("Recipe-list refresh cached ${recipes.size} summaries")
                     }
-                    lastRecipeListRefreshAt = System.currentTimeMillis()
-                    Timber.d("Recipe-list refresh cached ${recipes.size} summaries")
-                }
                     .onFailure { Timber.w(it, "Recipe list refresh failed; keeping cached data") }
             }
         }
@@ -316,21 +321,21 @@ constructor(
                     return@withLock Result.success(Unit)
                 }
                 runCatching {
-                    val body = recipesApi.getRecipeDetailRaw(slug).string()
-                    val cachedId = recipeId.ifBlank {
-                        json.decodeFromString<RecipeDetailDto>(body).id
-                    }
-                    recipeDao.upsertDetail(
-                        RecipeDetailEntity(
-                            id = cachedId,
-                            slug = slug,
-                            detailJson = body,
-                            fetchedAt = System.currentTimeMillis(),
+                        val body = recipesApi.getRecipeDetailRaw(slug).string()
+                        val cachedId = recipeId.ifBlank {
+                            json.decodeFromString<RecipeDetailDto>(body).id
+                        }
+                        recipeDao.upsertDetail(
+                            RecipeDetailEntity(
+                                id = cachedId,
+                                slug = slug,
+                                detailJson = body,
+                                fetchedAt = System.currentTimeMillis(),
+                            )
                         )
-                    )
-                    lastDetailRefreshAt[cachedId] = System.currentTimeMillis()
-                    Timber.d("Recipe-detail refresh cached $cachedId")
-                }
+                        lastDetailRefreshAt[cachedId] = System.currentTimeMillis()
+                        Timber.d("Recipe-detail refresh cached $cachedId")
+                    }
                     .onFailure {
                         Timber.w(
                             it,
@@ -353,61 +358,68 @@ constructor(
     suspend fun refreshRecipeFoodCrossRefs(): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                val summaries = recipeDao.getAll()
-                val cachedDetails = recipeDao.getAllDetails().associateBy { it.id }
-                val foodRefs = mutableListOf<RecipeFoodCrossRef>()
-                for (summary in summaries) {
-                    val cached = cachedDetails[summary.id]
-                    val detailJson =
-                        if (cached != null && cached.sourceUpdatedAt == summary.dateUpdated) {
-                            cached.detailJson
-                        } else {
-                            runCatching { recipesApi.getRecipeDetailRaw(summary.slug).string() }
-                                .onSuccess { body ->
-                                    recipeDao.upsertDetail(
-                                        RecipeDetailEntity(
-                                            id = summary.id,
-                                            slug = summary.slug,
-                                            detailJson = body,
-                                            fetchedAt = System.currentTimeMillis(),
-                                            sourceUpdatedAt = summary.dateUpdated,
+                    val summaries = recipeDao.getAll()
+                    val cachedDetails = recipeDao.getAllDetails().associateBy { it.id }
+                    val foodRefs = mutableListOf<RecipeFoodCrossRef>()
+                    for (summary in summaries) {
+                        val cached = cachedDetails[summary.id]
+                        val detailJson =
+                            if (cached != null && cached.sourceUpdatedAt == summary.dateUpdated) {
+                                cached.detailJson
+                            } else {
+                                runCatching { recipesApi.getRecipeDetailRaw(summary.slug).string() }
+                                    .onSuccess { body ->
+                                        recipeDao.upsertDetail(
+                                            RecipeDetailEntity(
+                                                id = summary.id,
+                                                slug = summary.slug,
+                                                detailJson = body,
+                                                fetchedAt = System.currentTimeMillis(),
+                                                sourceUpdatedAt = summary.dateUpdated,
+                                            )
                                         )
-                                    )
-                                }
-                                .onFailure {
-                                    Timber.w(
-                                        it,
-                                        "Recipe detail fetch failed for '${summary.slug}' during" +
-                                            " food cross-ref refresh; using stale/no cached detail",
-                                    )
-                                }
-                                .getOrNull() ?: cached?.detailJson
-                        }
-                    detailJson ?: continue
-                    runCatching { json.decodeFromString<RecipeDetailDto>(detailJson) }
-                        .onSuccess { detail ->
-                            detail.recipeIngredient.forEach { ingredient ->
-                                ingredient.food?.id?.let { foodId ->
-                                    foodRefs +=
-                                        RecipeFoodCrossRef(recipeId = summary.id, foodId = foodId)
+                                    }
+                                    .onFailure {
+                                        Timber.w(
+                                            it,
+                                            "Recipe detail fetch failed for '${summary.slug}' during" +
+                                                " food cross-ref refresh; using stale/no cached detail",
+                                        )
+                                    }
+                                    .getOrNull() ?: cached?.detailJson
+                            }
+                        detailJson ?: continue
+                        runCatching { json.decodeFromString<RecipeDetailDto>(detailJson) }
+                            .onSuccess { detail ->
+                                detail.recipeIngredient.forEach { ingredient ->
+                                    ingredient.food?.id?.let { foodId ->
+                                        foodRefs +=
+                                            RecipeFoodCrossRef(
+                                                recipeId = summary.id,
+                                                foodId = foodId,
+                                            )
+                                    }
                                 }
                             }
-                        }
-                        .onFailure {
-                            Timber.w(it, "Couldn't decode cached detail for '${summary.slug}'")
-                        }
+                            .onFailure {
+                                Timber.w(it, "Couldn't decode cached detail for '${summary.slug}'")
+                            }
+                    }
+                    // A recipe can reference the same food across multiple ingredient lines (e.g.
+                    // onion
+                    // in both a marinade and a garnish step) - distinct() avoids a UNIQUE
+                    // constraint
+                    // violation on the (recipeId, foodId) primary key when inserting the batch.
+                    val distinctFoodRefs = foodRefs.distinct()
+                    database.withTransaction {
+                        recipeDao.deleteAllFoodCrossRefs()
+                        if (distinctFoodRefs.isNotEmpty())
+                            recipeDao.insertFoodCrossRefs(distinctFoodRefs)
+                    }
+                    Timber.d(
+                        "Recipe-food cross-ref refresh cached ${distinctFoodRefs.size} references"
+                    )
                 }
-                // A recipe can reference the same food across multiple ingredient lines (e.g. onion
-                // in both a marinade and a garnish step) - distinct() avoids a UNIQUE constraint
-                // violation on the (recipeId, foodId) primary key when inserting the batch.
-                val distinctFoodRefs = foodRefs.distinct()
-                database.withTransaction {
-                    recipeDao.deleteAllFoodCrossRefs()
-                    if (distinctFoodRefs.isNotEmpty())
-                        recipeDao.insertFoodCrossRefs(distinctFoodRefs)
-                }
-                Timber.d("Recipe-food cross-ref refresh cached ${distinctFoodRefs.size} references")
-            }
                 .onFailure {
                     Timber.w(it, "Recipe food cross-ref refresh failed; keeping cached data")
                 }

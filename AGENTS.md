@@ -47,6 +47,8 @@ over raw `./gradlew`/`ssh`/`adb` invocations - run `just --list` for the full se
 - Release builds are signed with the persistent CI keystore, fetched from the rbw entry
   `"Syncwich CI Signing Keystore"` (create it before the first release build - see justfile's
   `build variant=release` comment).
+- ktfmt is nix-only (nixpkgs ktfmt, kotlinlang style, via `nix develop .#ktfmt`): there is no ktfmt
+  Gradle plugin and no `ktfmtCheck`/`ktfmtFormat` task. Use `just lint`/`just format`.
 - See the shared doc for the CI-lint-authority rule and `ktfmt-diff-patch` retrieval procedure.
   One difference here: `lint.yaml`'s ktfmt job deliberately does not create formatting PRs or
   push an agent-generated branch automatically (unlike the sibling apps) - apply the patch on the

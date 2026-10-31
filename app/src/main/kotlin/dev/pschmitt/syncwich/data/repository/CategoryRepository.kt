@@ -31,20 +31,20 @@ constructor(private val organizersApi: OrganizersApi, private val categoryDao: C
     suspend fun refreshCategories(): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                val allItems = mutableListOf<OrganizerDto>()
-                var page = 1
-                while (true) {
-                    val response =
-                        organizersApi.getCategories(
-                            page = page,
-                            perPage = OrganizersApi.DEFAULT_PAGE_SIZE,
-                        )
-                    allItems += response.items
-                    if (response.items.isEmpty() || page >= response.totalPages) break
-                    page++
+                    val allItems = mutableListOf<OrganizerDto>()
+                    var page = 1
+                    while (true) {
+                        val response =
+                            organizersApi.getCategories(
+                                page = page,
+                                perPage = OrganizersApi.DEFAULT_PAGE_SIZE,
+                            )
+                        allItems += response.items
+                        if (response.items.isEmpty() || page >= response.totalPages) break
+                        page++
+                    }
+                    categoryDao.replaceAll(allItems.map { it.toEntity() })
                 }
-                categoryDao.replaceAll(allItems.map { it.toEntity() })
-            }
                 .onFailure { Timber.w(it, "Category refresh failed; keeping cached data") }
         }
 
@@ -59,9 +59,9 @@ constructor(private val organizersApi: OrganizersApi, private val categoryDao: C
     suspend fun deleteCategory(categoryId: String): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                organizersApi.deleteCategory(categoryId).use {}
-                categoryDao.deleteById(categoryId)
-            }
+                    organizersApi.deleteCategory(categoryId).use {}
+                    categoryDao.deleteById(categoryId)
+                }
                 .onFailure {
                     Timber.w(it, "Category deletion failed for '$categoryId'; keeping cached data")
                 }
@@ -70,10 +70,10 @@ constructor(private val organizersApi: OrganizersApi, private val categoryDao: C
     private suspend fun mutate(request: suspend () -> OrganizerDto): Result<CategoryEntity> =
         withContext(Dispatchers.IO) {
             runCatching {
-                val entity = request().toEntity()
-                categoryDao.upsertAll(listOf(entity))
-                entity
-            }
+                    val entity = request().toEntity()
+                    categoryDao.upsertAll(listOf(entity))
+                    entity
+                }
                 .onFailure { Timber.w(it, "Category mutation failed; keeping cached data") }
         }
 

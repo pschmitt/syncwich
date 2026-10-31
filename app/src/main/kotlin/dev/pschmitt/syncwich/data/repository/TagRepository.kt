@@ -25,20 +25,20 @@ constructor(private val organizersApi: OrganizersApi, private val tagDao: TagDao
     suspend fun refreshTags(): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                val allItems = mutableListOf<OrganizerDto>()
-                var page = 1
-                while (true) {
-                    val response =
-                        organizersApi.getTags(
-                            page = page,
-                            perPage = OrganizersApi.DEFAULT_PAGE_SIZE,
-                        )
-                    allItems += response.items
-                    if (response.items.isEmpty() || page >= response.totalPages) break
-                    page++
+                    val allItems = mutableListOf<OrganizerDto>()
+                    var page = 1
+                    while (true) {
+                        val response =
+                            organizersApi.getTags(
+                                page = page,
+                                perPage = OrganizersApi.DEFAULT_PAGE_SIZE,
+                            )
+                        allItems += response.items
+                        if (response.items.isEmpty() || page >= response.totalPages) break
+                        page++
+                    }
+                    tagDao.replaceAll(allItems.map { it.toEntity() })
                 }
-                tagDao.replaceAll(allItems.map { it.toEntity() })
-            }
                 .onFailure { Timber.w(it, "Tag refresh failed; keeping cached data") }
         }
 
@@ -53,19 +53,19 @@ constructor(private val organizersApi: OrganizersApi, private val tagDao: TagDao
     suspend fun deleteTag(tagId: String): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                organizersApi.deleteTag(tagId).use {}
-                tagDao.deleteById(tagId)
-            }
+                    organizersApi.deleteTag(tagId).use {}
+                    tagDao.deleteById(tagId)
+                }
                 .onFailure { Timber.w(it, "Tag deletion failed for '$tagId'; keeping cached data") }
         }
 
     private suspend fun mutate(request: suspend () -> OrganizerDto): Result<TagEntity> =
         withContext(Dispatchers.IO) {
             runCatching {
-                val entity = request().toEntity()
-                tagDao.upsertAll(listOf(entity))
-                entity
-            }
+                    val entity = request().toEntity()
+                    tagDao.upsertAll(listOf(entity))
+                    entity
+                }
                 .onFailure { Timber.w(it, "Tag mutation failed; keeping cached data") }
         }
 

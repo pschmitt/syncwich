@@ -31,51 +31,51 @@ constructor(private val labelsApi: LabelsApi, private val labelDao: LabelDao) {
     suspend fun refreshLabels(): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                val allItems = mutableListOf<LabelDto>()
-                var page = 1
-                while (true) {
-                    val response =
-                        labelsApi.getLabels(page = page, perPage = LabelsApi.DEFAULT_PAGE_SIZE)
-                    allItems += response.items
-                    if (response.items.isEmpty() || page >= response.totalPages) break
-                    page++
+                    val allItems = mutableListOf<LabelDto>()
+                    var page = 1
+                    while (true) {
+                        val response =
+                            labelsApi.getLabels(page = page, perPage = LabelsApi.DEFAULT_PAGE_SIZE)
+                        allItems += response.items
+                        if (response.items.isEmpty() || page >= response.totalPages) break
+                        page++
+                    }
+                    labelDao.replaceAll(allItems.map { it.toEntity() })
                 }
-                labelDao.replaceAll(allItems.map { it.toEntity() })
-            }
                 .onFailure { Timber.w(it, "Label refresh failed; keeping cached data") }
         }
 
     suspend fun createLabel(name: String, color: String): Result<LabelEntity> =
         withContext(Dispatchers.IO) {
             runCatching {
-                val entity = labelsApi.createLabel(LabelCreateDto(name, color)).toEntity()
-                labelDao.upsertAll(listOf(entity))
-                entity
-            }
+                    val entity = labelsApi.createLabel(LabelCreateDto(name, color)).toEntity()
+                    labelDao.upsertAll(listOf(entity))
+                    entity
+                }
                 .onFailure { Timber.w(it, "Label creation failed; keeping cached data") }
         }
 
     suspend fun updateLabel(labelId: String, name: String, color: String): Result<LabelEntity> =
         withContext(Dispatchers.IO) {
             runCatching {
-                val cached =
-                    labelDao.observeById(labelId).first()
-                        ?: error("No cached label '$labelId' to round-trip groupId from")
-                val entity =
-                    labelsApi
-                        .updateLabel(
-                            labelId,
-                            LabelUpdateDto(
-                                name = name,
-                                color = color,
-                                groupId = cached.groupId,
-                                id = labelId,
-                            ),
-                        )
-                        .toEntity()
-                labelDao.upsertAll(listOf(entity))
-                entity
-            }
+                    val cached =
+                        labelDao.observeById(labelId).first()
+                            ?: error("No cached label '$labelId' to round-trip groupId from")
+                    val entity =
+                        labelsApi
+                            .updateLabel(
+                                labelId,
+                                LabelUpdateDto(
+                                    name = name,
+                                    color = color,
+                                    groupId = cached.groupId,
+                                    id = labelId,
+                                ),
+                            )
+                            .toEntity()
+                    labelDao.upsertAll(listOf(entity))
+                    entity
+                }
                 .onFailure {
                     Timber.w(it, "Label update failed for '$labelId'; keeping cached data")
                 }
@@ -84,9 +84,9 @@ constructor(private val labelsApi: LabelsApi, private val labelDao: LabelDao) {
     suspend fun deleteLabel(labelId: String): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                labelsApi.deleteLabel(labelId).use {}
-                labelDao.deleteById(labelId)
-            }
+                    labelsApi.deleteLabel(labelId).use {}
+                    labelDao.deleteById(labelId)
+                }
                 .onFailure {
                     Timber.w(it, "Label deletion failed for '$labelId'; keeping cached data")
                 }

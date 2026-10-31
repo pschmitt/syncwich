@@ -101,14 +101,14 @@ constructor(
     fun isExpiringSoon(token: String, nowMillis: Long = System.currentTimeMillis()): Boolean {
         val expiresAt =
             runCatching {
-                val payload = token.split('.').getOrNull(1) ?: return false
-                val decoded = Base64.getUrlDecoder().decode(payload.withBase64Padding())
-                json
-                    .parseToJsonElement(decoded.decodeToString())
-                    .jsonObject["exp"]
-                    ?.toString()
-                    ?.toLongOrNull()
-            }
+                    val payload = token.split('.').getOrNull(1) ?: return false
+                    val decoded = Base64.getUrlDecoder().decode(payload.withBase64Padding())
+                    json
+                        .parseToJsonElement(decoded.decodeToString())
+                        .jsonObject["exp"]
+                        ?.toString()
+                        ?.toLongOrNull()
+                }
                 .getOrNull() ?: return true
         return expiresAt * 1_000L - nowMillis <= REFRESH_WINDOW_MILLIS
     }

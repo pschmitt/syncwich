@@ -2395,3 +2395,16 @@ wiped the real app's local state (server connection, offline cache, sync schedul
 Mealie data was affected. Immediately reinstalled a local release APK to restore the app's presence,
 but the user needs to manually reconnect (server URL + API token) since local credentials/cache
 cannot be recovered; see the session's user-facing summary for exact impact and next steps.
+
+## SW-147: ktfmt via nix only, drop the ktfmt Gradle plugin
+
+- [x] Removed the `com.ncorti.ktfmt.gradle` plugin (alias/apply/configure in `build.gradle.kts`,
+      version + plugin entries in `gradle/libs.versions.toml`); no more `ktfmtCheck`/`ktfmtFormat`
+- [x] Bumped the `android-app-ci` flake input and the `.just/android-app-ci` submodule to
+      `5f6ff4a` (always-on nixpkgs ktfmt pre-commit hook, `.#ktfmt` devShell, local `just lint`)
+- [x] `just check` is now local nix ktfmt (`just lint`) plus remote unit tests and Android Lint
+- [x] Reformatted every tracked `.kt`/`.kts` once with the nixpkgs ktfmt (kotlinlang style)
+- [x] Updated `AGENTS.md` and `README.md`
+
+Status: **done**, 2026-10-31. `ktfmt --dry-run --set-exit-if-changed` clean over all tracked
+Kotlin; `:app:compileDebugKotlin :app:testDebugUnitTest` green on rofl-13 without the plugin.

@@ -56,8 +56,8 @@ default:
 import '.just/android-app-ci/just/common.just'
 import '.just/android-app-ci/just/single-module.just'
 
-# ktfmtCheck + unit tests + Android Lint, remotely - the full local pre-push check.
-check host=remote_host: (gradle host "ktfmtCheck :app:testDebugUnitTest lintDebug")
+# nix ktfmt check (local) + unit tests + Android Lint (remote) - the full local pre-push check.
+check host=remote_host: lint (gradle host ":app:testDebugUnitTest lintDebug")
 
 # --- Play Console uploads ---------------------------------------------------
 

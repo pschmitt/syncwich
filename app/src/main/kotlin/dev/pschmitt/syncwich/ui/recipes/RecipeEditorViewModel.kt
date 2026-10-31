@@ -343,22 +343,25 @@ constructor(
         viewModelScope.launch {
             val cachedUri =
                 runCatching {
-                    withContext(kotlinx.coroutines.Dispatchers.IO) {
-                        val source = Uri.parse(sourceUri)
-                        val resolver = context.contentResolver
-                        val mimeType = resolver.getType(source) ?: "image/jpeg"
-                        val extension =
-                            mimeType.substringAfter('/', "jpg").lowercase().replace("jpeg", "jpg")
-                        val directory =
-                            File(context.cacheDir, "recipe-editor-media").apply { mkdirs() }
-                        val destination = File(directory, "${UUID.randomUUID()}.$extension")
-                        resolver.openInputStream(source)?.use { input ->
-                            destination.outputStream().use { output -> input.copyTo(output) }
-                        } ?: error("Couldn't read the selected image")
-                        require(destination.length() > 0) { "The selected image is empty" }
-                        Uri.fromFile(destination).toString()
+                        withContext(kotlinx.coroutines.Dispatchers.IO) {
+                            val source = Uri.parse(sourceUri)
+                            val resolver = context.contentResolver
+                            val mimeType = resolver.getType(source) ?: "image/jpeg"
+                            val extension =
+                                mimeType
+                                    .substringAfter('/', "jpg")
+                                    .lowercase()
+                                    .replace("jpeg", "jpg")
+                            val directory =
+                                File(context.cacheDir, "recipe-editor-media").apply { mkdirs() }
+                            val destination = File(directory, "${UUID.randomUUID()}.$extension")
+                            resolver.openInputStream(source)?.use { input ->
+                                destination.outputStream().use { output -> input.copyTo(output) }
+                            } ?: error("Couldn't read the selected image")
+                            require(destination.length() > 0) { "The selected image is empty" }
+                            Uri.fromFile(destination).toString()
+                        }
                     }
-                }
                     .getOrElse {
                         _saveState.value =
                             RecipeEditorSaveState.Error("Couldn't read the selected image")
@@ -379,7 +382,8 @@ constructor(
  * `NetworkModule`), so fields this editor doesn't model are simply carried through unread rather
  * than failing the decode.
  */
-internal fun decodeRecipeInput(json: Json, rawJson: String): RecipeInputDto? = runCatching {
-    json.decodeFromString<RecipeInputDto>(rawJson)
-}
-    .getOrNull()
+internal fun decodeRecipeInput(json: Json, rawJson: String): RecipeInputDto? =
+    runCatching {
+            json.decodeFromString<RecipeInputDto>(rawJson)
+        }
+        .getOrNull()

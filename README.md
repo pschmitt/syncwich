@@ -105,7 +105,8 @@ just build debug
 just deploy-all debug
 ```
 
-`just check` runs ktfmt checks, unit tests, and Android Lint remotely. `just build-fetch debug`
+`just check` runs the nix ktfmt check locally (the same nixpkgs ktfmt as the pre-commit hook and CI;
+there is no ktfmt Gradle plugin), then unit tests and Android Lint remotely. `just build-fetch debug`
 builds remotely and copies the debug APK to `./dist`; `just deploy-all debug` then installs it on
 every attached ADB device (Zenfone 10, Mi Pad 4, and Pixel 5 when connected). The debug
 application id is `dev.pschmitt.syncwich.debug`.

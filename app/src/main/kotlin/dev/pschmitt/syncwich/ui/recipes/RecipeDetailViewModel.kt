@@ -323,10 +323,11 @@ internal fun recipeDetailUiState(
         else -> RecipeDetailUiState.Unavailable(refresh.errorMessage)
     }
 
-internal fun decodeRecipeDetail(json: Json, rawJson: String): RecipeDetailDto? = runCatching {
-    json.decodeFromString<RecipeDetailDto>(rawJson)
-}
-    .getOrNull()
+internal fun decodeRecipeDetail(json: Json, rawJson: String): RecipeDetailDto? =
+    runCatching {
+            json.decodeFromString<RecipeDetailDto>(rawJson)
+        }
+        .getOrNull()
 
 internal fun recipeImageIndex(serverUrl: String, recipe: RecipeDetailDto): RecipeImageIndex {
     val coverUrl = recipeImageUrl(serverUrl, recipe.id, recipe.image)

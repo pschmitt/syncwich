@@ -80,10 +80,10 @@ constructor(
     suspend fun deleteCookbook(cookbookId: String): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                cookbooksApi.deleteCookbook(cookbookId).use {}
-                cookbookDao.deleteById(cookbookId)
-                recipeDao.deleteCookbookCrossRefs(cookbookId)
-            }
+                    cookbooksApi.deleteCookbook(cookbookId).use {}
+                    cookbookDao.deleteById(cookbookId)
+                    recipeDao.deleteCookbookCrossRefs(cookbookId)
+                }
                 .onFailure {
                     Timber.w(
                         it,
@@ -100,41 +100,46 @@ constructor(
                     return@withLock Result.success(Unit)
                 }
                 runCatching {
-                    val cookbooks = fetchAllPages { page -> cookbooksApi.getCookbooks(page = page) }
-
-                    val recipeSummaries = mutableMapOf<String, RecipeSummaryEntity>()
-                    val cookbookRefs = mutableListOf<RecipeCookbookCrossRef>()
-                    cookbooks.forEach { cookbook ->
-                        val recipes = fetchAllPages { page ->
-                            recipesApi.getRecipesByCookbook(cookbookId = cookbook.id, page = page)
+                        val cookbooks = fetchAllPages { page ->
+                            cookbooksApi.getCookbooks(page = page)
                         }
-                        recipes.forEach { recipe ->
-                            recipeSummaries[recipe.id] = recipe.toEntity()
-                            cookbookRefs +=
-                                RecipeCookbookCrossRef(
-                                    recipeId = recipe.id,
+
+                        val recipeSummaries = mutableMapOf<String, RecipeSummaryEntity>()
+                        val cookbookRefs = mutableListOf<RecipeCookbookCrossRef>()
+                        cookbooks.forEach { cookbook ->
+                            val recipes = fetchAllPages { page ->
+                                recipesApi.getRecipesByCookbook(
                                     cookbookId = cookbook.id,
+                                    page = page,
                                 )
+                            }
+                            recipes.forEach { recipe ->
+                                recipeSummaries[recipe.id] = recipe.toEntity()
+                                cookbookRefs +=
+                                    RecipeCookbookCrossRef(
+                                        recipeId = recipe.id,
+                                        cookbookId = cookbook.id,
+                                    )
+                            }
                         }
-                    }
 
-                    // Non-destructive: recipes seen here are opportunistically kept fresh, but
-                    // RecipeRepository.refreshRecipes remains the sole authoritative full-list
-                    // replace -
-                    // see its kdoc for the equivalent category/tag rationale.
-                    if (recipeSummaries.isNotEmpty())
-                        recipeDao.upsertAll(recipeSummaries.values.toList())
-                    recipeDao.replaceCookbookCrossRefs(cookbookRefs)
-                    cookbookDao.replaceAll(cookbooks.map { it.toEntity() })
-                    val refreshedAt = System.currentTimeMillis()
-                    lastCookbookDictionaryRefreshAt = refreshedAt
-                    lastCookbookRefreshAt.clear()
-                    cookbooks.forEach { lastCookbookRefreshAt[it.id] = refreshedAt }
-                    Timber.d(
-                        "Cookbook refresh cached ${cookbooks.size} cookbooks and " +
-                            "${recipeSummaries.size} recipe summaries"
-                    )
-                }
+                        // Non-destructive: recipes seen here are opportunistically kept fresh, but
+                        // RecipeRepository.refreshRecipes remains the sole authoritative full-list
+                        // replace -
+                        // see its kdoc for the equivalent category/tag rationale.
+                        if (recipeSummaries.isNotEmpty())
+                            recipeDao.upsertAll(recipeSummaries.values.toList())
+                        recipeDao.replaceCookbookCrossRefs(cookbookRefs)
+                        cookbookDao.replaceAll(cookbooks.map { it.toEntity() })
+                        val refreshedAt = System.currentTimeMillis()
+                        lastCookbookDictionaryRefreshAt = refreshedAt
+                        lastCookbookRefreshAt.clear()
+                        cookbooks.forEach { lastCookbookRefreshAt[it.id] = refreshedAt }
+                        Timber.d(
+                            "Cookbook refresh cached ${cookbooks.size} cookbooks and " +
+                                "${recipeSummaries.size} recipe summaries"
+                        )
+                    }
                     .onFailure { Timber.w(it, "Cookbook refresh failed; keeping cached data") }
             }
         }
@@ -151,20 +156,20 @@ constructor(
                     return@withLock Result.success(Unit)
                 }
                 runCatching {
-                    val recipes = fetchAllPages { page ->
-                        recipesApi.getRecipesByCookbook(cookbookId = cookbookId, page = page)
+                        val recipes = fetchAllPages { page ->
+                            recipesApi.getRecipesByCookbook(cookbookId = cookbookId, page = page)
+                        }
+                        val entities = recipes.map { it.toEntity() }
+                        recipeDao.replaceCookbookRecipeCache(
+                            cookbookId = cookbookId,
+                            recipes = entities,
+                            refs = recipes.map { RecipeCookbookCrossRef(it.id, cookbookId) },
+                        )
+                        lastCookbookRefreshAt[cookbookId] = System.currentTimeMillis()
+                        Timber.d(
+                            "Cookbook recipe refresh cached ${entities.size} summaries for $cookbookId"
+                        )
                     }
-                    val entities = recipes.map { it.toEntity() }
-                    recipeDao.replaceCookbookRecipeCache(
-                        cookbookId = cookbookId,
-                        recipes = entities,
-                        refs = recipes.map { RecipeCookbookCrossRef(it.id, cookbookId) },
-                    )
-                    lastCookbookRefreshAt[cookbookId] = System.currentTimeMillis()
-                    Timber.d(
-                        "Cookbook recipe refresh cached ${entities.size} summaries for $cookbookId"
-                    )
-                }
                     .onFailure {
                         Timber.w(
                             it,
@@ -206,10 +211,10 @@ constructor(
     private suspend fun mutateCookbook(request: suspend () -> CookbookDto): Result<CookbookEntity> =
         withContext(Dispatchers.IO) {
             runCatching {
-                val entity = request().toEntity()
-                cookbookDao.upsertAll(listOf(entity))
-                entity
-            }
+                    val entity = request().toEntity()
+                    cookbookDao.upsertAll(listOf(entity))
+                    entity
+                }
                 .onFailure { Timber.w(it, "Cookbook mutation failed; keeping cached data") }
         }
 
