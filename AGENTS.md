@@ -1,10 +1,15 @@
 # AGENTS.md
 
+## Private infrastructure details
+
+Do not include private hostnames, device identifiers, network addresses or topology here. Use placeholders and consult the private `brkn-infra` skill for specific host or device details.
+
+
 Repository instructions for AI coding agents working on Syncwich.
 
 See `.just/android-app-ci/AGENTS-shared.md` for the fleet-wide task-tracking convention, dev
 environment (`nix develop`/`git-hooks.nix`), CI-is-the-sole-lint-authority rule, and physical test
-device docs (this app has all three: Zenfone 10, Mi Pad 4, Pixel 5) - read it alongside this file,
+device docs (this app has all three: <phone>, <tablet>, <phone>) - read it alongside this file,
 not instead of it.
 
 ## Project shape
@@ -41,8 +46,8 @@ over raw `./gradlew`/`ssh`/`adb` invocations - run `just --list` for the full se
 
 ## Builds
 
-- **Never run Gradle builds locally on this machine** - always build on `rofl-13.brkn.lol` or
-  `rofl-14.brkn.lol` instead (`just sync`, `just gradle`, `just build [variant]`, `just lint`,
+- **Never run Gradle builds locally on this machine** - always build on `<private-domain>` or
+  `<private-domain>` instead (`just sync`, `just gradle`, `just build [variant]`, `just lint`,
   `just test`, `just check`, `just fetch`, `just build-fetch`).
 - Release builds are signed with the persistent CI keystore, fetched from the rbw entry
   `"Syncwich CI Signing Keystore"` (create it before the first release build - see justfile's
@@ -56,8 +61,8 @@ over raw `./gradlew`/`ssh`/`adb` invocations - run `just --list` for the full se
 
 ## Physical test devices
 
-See the shared doc - this app has recipes for all three fleet devices (Zenfone 10, Mi Pad 4,
-Pixel 5), default to `just deploy-all [variant]`.
+See the shared doc - this app has recipes for all three fleet devices (<phone>, <tablet>,
+<phone>), default to `just deploy-all [variant]`.
 
 ## Architecture
 
