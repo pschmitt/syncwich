@@ -3,7 +3,7 @@ name: Screenshots
 # Screenshot capture is intentionally manual. It drives the app via fastlane screengrab (see
 # fastlane/Screengrabfile and app/src/androidTest/kotlin/.../ScreenshotTest.kt) on disposable
 # GitHub-hosted emulators, then uploads the reviewed images as a build artifact (or, with
-# open_pr, opens/updates a PR with them committed - see pschmitt/android-app-ci's
+# open_pr, opens/updates a PR with them committed - see pschmitt/ci-workflows'
 # screenshots-open-pr.yaml reusable workflow).
 on:
   workflow_dispatch:
@@ -46,7 +46,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - uses: pschmitt/android-app-ci/.github/actions/setup-jdk-gradle@main
+      - uses: pschmitt/ci-workflows/.github/actions/setup-jdk-gradle@main
 
       - name: Set up Ruby and fastlane
         uses: ruby/setup-ruby@v1
@@ -108,7 +108,7 @@ jobs:
           cp "${debug_apks[0]}" dist/app-debug.apk
           cp "${test_apks[0]}" dist/app-debug-androidTest.apk
 
-      - uses: pschmitt/android-app-ci/.github/actions/enable-kvm@main
+      - uses: pschmitt/ci-workflows/.github/actions/enable-kvm@main
 
       - name: Capture screenshots in a ${{ matrix.device_type }} emulator
         uses: reactivecircus/android-emulator-runner@v2
@@ -159,7 +159,7 @@ jobs:
   open-pr:
     needs: capture
     if: ${{ !cancelled() && !failure() && inputs.open_pr }}
-    uses: pschmitt/android-app-ci/.github/workflows/screenshots-open-pr.yaml@main
+    uses: pschmitt/ci-workflows/.github/workflows/screenshots-open-pr.yaml@main
     with:
       artifact-label: syncwich
       commit-message: "chore: update Play Store screenshots (phone, 7in, 10in tablet)"

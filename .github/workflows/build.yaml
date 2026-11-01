@@ -6,6 +6,6 @@ on:
 
 jobs:
   build:
-    uses: pschmitt/android-app-ci/.github/workflows/build.yaml@main
+    uses: pschmitt/ci-workflows/.github/workflows/build.yaml@main
     with:
       compute-version-name: true

@@ -3,7 +3,7 @@ name: Play Store Release
 # Stable semantic-version tags publish a signed bundle to both the internal and closed (alpha)
 # testing tracks in one upload - closed testing is the highest track this app is currently
 # eligible for, so every tagged release goes out to both simultaneously rather than needing a
-# separate promotion step. Delegates the actual build/publish to pschmitt/android-app-ci's
+# separate promotion step. Delegates the actual build/publish to pschmitt/ci-workflows'
 # reusable play-store.yaml, which additionally requires the repository variable
 # PLAY_PUBLISH_ENABLED=true (set that only after Play Console and service-account setup) - a tag
 # push safely fails loudly instead of silently publishing on a fresh checkout, unlike this
@@ -91,7 +91,7 @@ jobs:
 
   play-store:
     needs: version
-    uses: pschmitt/android-app-ci/.github/workflows/play-store.yaml@main
+    uses: pschmitt/ci-workflows/.github/workflows/play-store.yaml@main
     with:
       application-id: dev.pschmitt.syncwich
       artifact-label: syncwich
