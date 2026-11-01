@@ -99,3 +99,7 @@ See the shared doc - this app has recipes for all three fleet devices (<phone>, 
   `material-icons-extended` freely - icon+label for every button, menu item, and labeled row.
 
 # vim: set ft=markdown et ts=2 sw=2 :
+
+## Shared GitHub Actions
+
+- Before changing GitHub Actions, inspect the current guidance in `pschmitt/ci-workflows`. Use `@main` in every `uses:` reference to a shared workflow or action.
